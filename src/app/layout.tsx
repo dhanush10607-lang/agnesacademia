@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { NotificationPrompt } from "@/components/notifications/NotificationPrompt";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({
         <main className="flex-1 min-w-0 w-full">{children}</main>
         <Footer />
         <NotificationPrompt />
+        <Toaster />
       </body>
     </html>
   );
