@@ -19,12 +19,12 @@ export default async function GlobalAcademicSettingsPage() {
 
   // Fetch global setting
   const { data: globalLockSetting } = await supabase
-    .from("admin_settings")
+    .from("app_settings")
     .select("value")
-    .eq("key", "global_academic_lock")
+    .eq("key", "global_academic_profile_lock")
     .single();
 
-  const isGloballyLocked = globalLockSetting?.value === true;
+  const isGloballyLocked = globalLockSetting?.value === "true";
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-4xl space-y-6">
@@ -68,14 +68,12 @@ export default async function GlobalAcademicSettingsPage() {
               const supabase = await createClient();
               const { data: { user } } = await supabase.auth.getUser();
               const newStatus = !isGloballyLocked;
-              await supabase.from("admin_settings").upsert({
-                key: "global_academic_lock",
-                value: newStatus,
+              await supabase.from("app_settings").upsert({
+                key: "global_academic_profile_lock",
+                value: newStatus ? "true" : "false",
                 updated_by: user?.id,
                 updated_at: new Date().toISOString()
               });
-              // Also update all students if locking globally?
-              // The prompt says "When locked, students cannot change...". It can be enforced server-side.
             }}>
               <Button 
                 type="submit" 
