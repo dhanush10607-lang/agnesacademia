@@ -38,6 +38,7 @@ export async function Navbar() {
     { href: "/my-semester",     label: "My Subjects",    icon: Library },
     { href: "/upload",          label: "Upload",         icon: Upload },
     { href: "/my-submissions",  label: "My Submissions", icon: BookOpen },
+    { href: "/profile",         label: "Profile Settings", icon: Settings },
     { href: "/notices",         label: "Notices",        icon: Bell },
     { href: "/ai",              label: "Ask AGNES",      icon: Sparkles, highlight: true },
   ];
@@ -55,9 +56,17 @@ export async function Navbar() {
     { href: "/ai",              label: "Ask AGNES",      icon: Sparkles, highlight: true },
   ];
 
+  const adminLinks = [
+    { href: "/admin",           label: "Admin Console", icon: LayoutDashboard },
+    { href: "/admin/users",     label: "Users",         icon: Settings },
+    { href: "/upload",          label: "Upload",        icon: Upload },
+    { href: "/notices",         label: "Notices",       icon: Bell },
+    { href: "/ai",              label: "Ask AGNES",     icon: Sparkles, highlight: true },
+  ];
+
   const desktopLinks = role === "student"
     ? studentLinks
-    : (role === "faculty" ? facultyLinks : guestLinks);
+    : (role === "faculty" ? facultyLinks : (role === "administrator" ? adminLinks : guestLinks));
 
   return (
     <>
