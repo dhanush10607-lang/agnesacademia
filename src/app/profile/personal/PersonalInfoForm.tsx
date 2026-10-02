@@ -98,22 +98,6 @@ export function PersonalInfoForm({
         <p className="text-xs text-muted-foreground">Provide a link to an image to use as your avatar.</p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="phone">Phone Number <span className="text-muted-foreground font-normal">(Optional)</span></Label>
-        <div className="relative">
-          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input 
-            id="phone" 
-            name="phone" 
-            type="tel"
-            placeholder="+1 (555) 000-0000"
-            defaultValue={profile.phone || ""} 
-            className="pl-9"
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">Used for urgent academic alerts only.</p>
-      </div>
-
       <div className="flex gap-2">
         <Button type="submit" disabled={isPending} className="flex-1">
           {isPending ? "Saving..." : "Save Changes"}
