@@ -7,14 +7,14 @@ const urlParams = new URLSearchParams(location.search);
 // We need a way to pass config to the service worker.
 // The easiest way is for the client to register the service worker with query params.
 const firebaseConfig = {
-  apiKey: urlParams.get('apiKey'),
-  authDomain: urlParams.get('authDomain'),
-  projectId: urlParams.get('projectId'),
-  messagingSenderId: urlParams.get('messagingSenderId'),
-  appId: urlParams.get('appId'),
+  apiKey: urlParams.get('apiKey') === 'undefined' ? null : urlParams.get('apiKey'),
+  authDomain: urlParams.get('authDomain') === 'undefined' ? null : urlParams.get('authDomain'),
+  projectId: urlParams.get('projectId') === 'undefined' ? null : urlParams.get('projectId'),
+  messagingSenderId: urlParams.get('messagingSenderId') === 'undefined' ? null : urlParams.get('messagingSenderId'),
+  appId: urlParams.get('appId') === 'undefined' ? null : urlParams.get('appId'),
 };
 
-if (firebaseConfig.apiKey) {
+if (firebaseConfig.apiKey && firebaseConfig.projectId) {
   firebase.initializeApp(firebaseConfig);
   const messaging = firebase.messaging();
 
