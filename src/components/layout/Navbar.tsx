@@ -60,8 +60,8 @@ export async function Navbar() {
   const adminLinks = [
     { href: "/admin",           label: "Admin Console", icon: LayoutDashboard },
     { href: "/admin/users",     label: "Users",         icon: Settings },
+    { href: "/admin/notifications", label: "Push Center", icon: Bell },
     { href: "/upload",          label: "Upload",        icon: Upload },
-    { href: "/notices",         label: "Notices",       icon: Bell },
     { href: "/ai",              label: "Ask AGNES",     icon: Sparkles, highlight: true },
   ];
 

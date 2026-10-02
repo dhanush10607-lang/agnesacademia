@@ -3,15 +3,58 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Bell, CheckCircle } from "lucide-react";
+import { ArrowLeft, Bell, CheckCircle, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { updateUserSettingsAction } from "@/app/actions/settings";
+import { requestForToken } from "@/lib/firebase/client";
+import { registerDeviceAction } from "@/app/actions/notifications";
 
 export default function NotificationsClient({ initialSettings }: { initialSettings: any }) {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [permissionState, setPermissionState] = useState<string>("Checking...");
+
+  useEffect(() => {
+    if ("Notification" in window) {
+      if (Notification.permission === "granted") setPermissionState("🟢 Enabled");
+      else if (Notification.permission === "denied") setPermissionState("🔴 Blocked by Browser");
+      else setPermissionState("⚪ Not Enabled");
+    } else {
+      setPermissionState("🔴 Unsupported by Browser");
+    }
+  }, []);
+
+  const handleEnablePush = async () => {
+    try {
+      const token = await requestForToken();
+      if (token) {
+        const ua = navigator.userAgent;
+        let os = "Unknown";
+        if (ua.indexOf("Win") !== -1) os = "Windows";
+        if (ua.indexOf("Mac") !== -1) os = "MacOS";
+        if (ua.indexOf("Linux") !== -1) os = "Linux";
+        if (ua.indexOf("Android") !== -1) os = "Android";
+        if (ua.indexOf("like Mac") !== -1) os = "iOS";
+
+        let browser = "Unknown";
+        if (ua.indexOf("Chrome") !== -1) browser = "Chrome";
+        else if (ua.indexOf("Safari") !== -1) browser = "Safari";
+        else if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
+        else if (ua.indexOf("Edge") !== -1) browser = "Edge";
+
+        const deviceType = /Mobile|Android|iP(ad|hone)/.test(ua) ? "mobile" : "desktop";
+
+        await registerDeviceAction(token, browser, os, deviceType);
+        setPermissionState("🟢 Enabled");
+      } else {
+        setPermissionState("🔴 Blocked by Browser");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,8 +91,34 @@ export default function NotificationsClient({ initialSettings }: { initialSettin
 
       <Card className="border-border shadow-sm">
         <CardHeader className="bg-muted/30 border-b">
-          <CardTitle>In-App Alerts</CardTitle>
-          <CardDescription>Choose which notifications appear in your dashboard.</CardDescription>
+          <CardTitle>Device Registration</CardTitle>
+          <CardDescription>Current device push notification status.</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between p-4 rounded-md border shadow-sm bg-card">
+            <div className="flex items-center gap-3">
+              <Smartphone className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <p className="font-semibold">Push Notifications</p>
+                <p className="text-sm font-medium">{permissionState}</p>
+                {permissionState.includes("Blocked") && (
+                  <p className="text-xs text-muted-foreground mt-1 max-w-[200px] md:max-w-xs">
+                    Please allow notifications in your browser settings to receive updates.
+                  </p>
+                )}
+              </div>
+            </div>
+            {permissionState.includes("Not Enabled") && (
+              <Button size="sm" onClick={handleEnablePush}>Enable</Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border shadow-sm">
+        <CardHeader className="bg-muted/30 border-b">
+          <CardTitle>Notification Preferences</CardTitle>
+          <CardDescription>Choose which types of alerts you want to receive globally.</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -67,9 +136,9 @@ export default function NotificationsClient({ initialSettings }: { initialSettin
               <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-card">
                 <Checkbox id="push_notifications" name="push_notifications" defaultChecked={initialSettings?.push_notifications !== false} />
                 <div className="space-y-1 leading-none">
-                  <Label htmlFor="push_notifications" className="font-semibold">Push Notifications</Label>
+                  <Label htmlFor="push_notifications" className="font-semibold">Global Push Preference</Label>
                   <p className="text-sm text-muted-foreground">
-                    Receive alerts natively on your device.
+                    If disabled, no push notifications will be sent to any of your registered devices.
                   </p>
                 </div>
               </div>

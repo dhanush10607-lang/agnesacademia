@@ -84,3 +84,72 @@ export async function markAllNotificationsReadAction() {
   revalidatePath("/notifications");
   return { success: true };
 }
+
+export async function sendAdminNotificationAction(data: {
+  title: string;
+  message: string;
+  category: string;
+  priority: string;
+  actionUrl: string;
+  sendPush: boolean;
+  targeting: {
+    departmentId: string | null;
+    programmeId: string | null;
+    semesterId: string | null;
+  }
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Not authenticated" };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (profile?.role !== "administrator") return { success: false, error: "Unauthorized" };
+
+  try {
+    const { getTargetUserIds } = await import("@/lib/notifications/targeting");
+    const { sendNotifications } = await import("@/lib/notifications/delivery");
+
+    const targetIds = await getTargetUserIds(
+      data.targeting.departmentId,
+      data.targeting.programmeId,
+      data.targeting.semesterId
+    );
+
+    if (targetIds.length === 0) {
+      return { success: false, error: "No users matched the selected targeting criteria." };
+    }
+
+    if (data.sendPush) {
+      await sendNotifications({
+        userIds: targetIds,
+        title: data.title,
+        message: data.message,
+        category: data.category,
+        actionUrl: data.actionUrl,
+        priority: data.priority as any,
+      });
+    } else {
+      // Just insert in-app notifications if push is disabled
+      const notificationsToInsert = targetIds.map((userId) => ({
+        user_id: userId,
+        title: data.title,
+        message: data.message,
+        category: data.category,
+        action_url: data.actionUrl,
+        priority: data.priority,
+      }));
+    
+      const { error: insertError } = await supabase
+        .from("notifications")
+        .insert(notificationsToInsert);
+        
+      if (insertError) throw insertError;
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send admin notification:", error);
+    return { success: false, error: "Internal server error" };
+  }
+}
