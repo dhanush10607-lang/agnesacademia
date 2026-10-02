@@ -3,7 +3,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import {
   BookOpen, Search, Bookmark, LayoutDashboard, Home,
   Sparkles, GraduationCap, HelpCircle, Upload, Bell,
-  Calendar, Library
+  Calendar, Library, Settings
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/actions/auth";
@@ -123,9 +123,10 @@ export async function Navbar() {
                 <div className="hidden lg:block">
                   <Link
                     href="/profile"
-                    className={buttonVariants({ variant: "ghost" })}
+                    className={buttonVariants({ variant: "ghost" }) + " flex items-center gap-2"}
                   >
-                    Profile
+                    <Settings className="w-4 h-4" />
+                    Profile & Settings
                   </Link>
                 </div>
 
