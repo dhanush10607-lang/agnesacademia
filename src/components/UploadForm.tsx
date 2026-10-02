@@ -22,6 +22,7 @@ export function UploadForm({
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [uploadProgress, setUploadProgress] = useState("");
+  const [progressPercent, setProgressPercent] = useState(0);
   const router = useRouter();
   const supabase = createClient();
 
@@ -37,6 +38,7 @@ export function UploadForm({
     setIsSubmitting(true);
     setErrorMsg("");
     setUploadProgress("");
+    setProgressPercent(0);
 
     const formData = new FormData(e.currentTarget);
     const files = formData.getAll("files") as File[];
@@ -64,6 +66,7 @@ export function UploadForm({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       setUploadProgress(`Uploading file ${i + 1} of ${files.length}: ${file.name}...`);
+      setProgressPercent(0);
 
       if (!ALLOWED_TYPES.includes(file.type)) {
         setErrorMsg(`File type not supported for ${file.name}. Please upload PDF, DOCX, PPTX, JPG, PNG, or ZIP.`);
@@ -80,6 +83,13 @@ export function UploadForm({
       const safeFilename = `${crypto.randomUUID()}.${fileExt}`;
       const filePath = `uploads/${user.id}/${safeFilename}`;
 
+      // Simulate progress visually for the user
+      let currentProgress = 0;
+      const progressInterval = setInterval(() => {
+        currentProgress += (95 - currentProgress) * 0.1;
+        setProgressPercent(Math.floor(currentProgress));
+      }, 200);
+
       // Chunk-wise / Stream upload natively via supabase-js
       const { error: uploadError } = await supabase.storage
         .from("resources")
@@ -87,6 +97,9 @@ export function UploadForm({
           cacheControl: '3600',
           upsert: false
         });
+
+      clearInterval(progressInterval);
+      setProgressPercent(100);
 
       if (uploadError) {
         console.error("Storage error:", uploadError);
@@ -110,6 +123,7 @@ export function UploadForm({
     }
 
     setUploadProgress("Finalizing submission...");
+    setProgressPercent(100);
     const result = await createResourceRecords(recordsToInsert);
     
     setIsSubmitting(false);
@@ -133,7 +147,7 @@ export function UploadForm({
           Your resources have been submitted for review. Once approved by a moderator, they will be published.
         </p>
         <div className="flex gap-4 mt-6">
-          <Button onClick={() => { setSuccess(false); setUploadProgress(""); }} variant="outline">Upload More</Button>
+          <Button onClick={() => { setSuccess(false); setUploadProgress(""); setProgressPercent(0); }} variant="outline">Upload More</Button>
           <Button onClick={() => router.push("/my-submissions")}>View My Submissions</Button>
         </div>
       </div>
@@ -149,14 +163,23 @@ export function UploadForm({
       )}
       
       {uploadProgress && (
-        <div className="p-3 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-md text-sm font-medium animate-pulse">
-          {uploadProgress}
+        <div className="p-4 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-900/50 rounded-xl space-y-3">
+          <div className="flex justify-between text-sm font-medium text-blue-800 dark:text-blue-300">
+            <span>{uploadProgress}</span>
+            <span>{progressPercent}%</span>
+          </div>
+          <div className="w-full bg-blue-200/50 dark:bg-blue-950 rounded-full h-2 overflow-hidden">
+            <div 
+              className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out" 
+              style={{ width: `${progressPercent}%` }}
+            ></div>
+          </div>
         </div>
       )}
 
       <div className="space-y-2">
         <Label htmlFor="category_id">Resource Type <span className="text-red-500">*</span></Label>
-        <Select name="category_id" required>
+        <Select name="category_id" required disabled={isSubmitting}>
           <SelectTrigger>
             <SelectValue placeholder="Select resource type" />
           </SelectTrigger>
@@ -170,7 +193,7 @@ export function UploadForm({
 
       <div className="space-y-2">
         <Label htmlFor="subject_id">Subject <span className="text-red-500">*</span></Label>
-        <Select name="subject_id" required>
+        <Select name="subject_id" required disabled={isSubmitting}>
           <SelectTrigger>
             <SelectValue placeholder="Select subject" />
           </SelectTrigger>
@@ -184,17 +207,17 @@ export function UploadForm({
 
       <div className="space-y-2">
         <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
-        <Input id="title" name="title" placeholder="E.g., Module 3 Handwritten Notes" required />
+        <Input id="title" name="title" placeholder="E.g., Module 3 Handwritten Notes" required disabled={isSubmitting} />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
-        <Textarea id="description" name="description" placeholder="Briefly describe what this resource contains..." rows={3} />
+        <Textarea id="description" name="description" placeholder="Briefly describe what this resource contains..." rows={3} disabled={isSubmitting} />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="files">Files (Batch Upload) <span className="text-red-500">*</span></Label>
-        <Input id="files" name="files" type="file" required multiple className="cursor-pointer" />
+        <Input id="files" name="files" type="file" required multiple className="cursor-pointer" disabled={isSubmitting} />
         <p className="text-xs text-muted-foreground mt-1">
           Max size: 50MB per file. Allowed: PDF, DOC, PPT, Images, ZIP. You can select multiple files at once.
         </p>
