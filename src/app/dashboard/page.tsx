@@ -172,7 +172,7 @@ export default async function DashboardPage() {
                     <Link href="/onboarding" className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors">
                       <CheckCircle className="w-4 h-4" /> Choose My Programme
                     </Link>
-                    <Link href="/subjects" className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-border bg-background rounded-xl text-sm font-semibold hover:bg-muted transition-colors">
+                    <Link href="/departments" className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-border bg-background rounded-xl text-sm font-semibold hover:bg-muted transition-colors">
                       Explore All Subjects
                     </Link>
                   </div>
