@@ -31,8 +31,13 @@ export default async function QuestionBankDetailPage({
 
   if (error || !bank) notFound();
 
-  if (bank.status !== 'published' && (!user || user.id !== bank.created_by)) {
-    notFound();
+  const { data: profile } = user ? await supabase.from('profiles').select('role').eq('id', user.id).single() : { data: null };
+  if (bank.status !== 'published') {
+    const isCreator = user && user.id === bank.created_by;
+    const isModeratorOrAdmin = profile && (profile.role === 'moderator' || profile.role === 'administrator' || profile.role === 'faculty');
+    if (!isCreator && !isModeratorOrAdmin) {
+      notFound();
+    }
   }
 
   const isBookmarked = await checkIsBookmarked('question_bank', bank.id);

@@ -35,8 +35,13 @@ export default async function QuestionPaperDetailPage({
 
   if (error || !paper) notFound();
   
-  if (paper.status !== 'published' && (!user || user.id !== paper.uploader_id)) {
-    notFound();
+  const { data: profile } = user ? await supabase.from('profiles').select('role').eq('id', user.id).single() : { data: null };
+  if (paper.status !== 'published') {
+    const isUploader = user && user.id === paper.uploader_id;
+    const isModeratorOrAdmin = profile && (profile.role === 'moderator' || profile.role === 'administrator' || profile.role === 'faculty');
+    if (!isUploader && !isModeratorOrAdmin) {
+      notFound();
+    }
   }
 
   const isBookmarked = await checkIsBookmarked('question_paper', paper.id);

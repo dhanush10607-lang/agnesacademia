@@ -36,9 +36,14 @@ export default async function ResourceDetailPage({
     notFound();
   }
 
-  // Determine if user can view this resource (either published, or they are the uploader)
+  // Fetch user profile to check role
+  const { data: profile } = user ? await supabase.from('profiles').select('role').eq('id', user.id).single() : { data: null };
+
+  // Determine if user can view this resource (either published, or they are the uploader, or they are moderator/admin)
   if (resource.status !== 'published') {
-    if (!user || user.id !== resource.uploader_id) {
+    const isUploader = user && user.id === resource.uploader_id;
+    const isModeratorOrAdmin = profile && (profile.role === 'moderator' || profile.role === 'administrator' || profile.role === 'faculty');
+    if (!isUploader && !isModeratorOrAdmin) {
       notFound();
     }
   }
