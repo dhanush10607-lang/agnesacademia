@@ -25,11 +25,14 @@ export function NotificationPrompt() {
     }
 
     // Set up foreground listener if permission is granted
+    // If permission was denied, show prompt to allow retry
+    if (permission === "denied") {
+      setShowPrompt(true);
+    }
     if (permission === "granted" && "serviceWorker" in navigator) {
       try {
         const messaging = getMessaging(app);
         onMessage(messaging, (payload) => {
-          // Toast or handle foreground notification
           toast.message(payload.notification?.title || "New Notification", {
             description: payload.notification?.body,
             icon: <Bell className="w-4 h-4" />
