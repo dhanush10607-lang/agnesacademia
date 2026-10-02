@@ -33,7 +33,7 @@ export default async function ProfilePage() {
     redirect("/onboarding");
   }
 
-  const menuItems = [
+  let menuItems = [
     {
       title: "Personal Information",
       description: "Manage your name, email, and contact details",
@@ -48,7 +48,8 @@ export default async function ProfilePage() {
       icon: GraduationCap,
       href: "/profile/academic",
       color: "text-indigo-500",
-      bgColor: "bg-indigo-50 dark:bg-indigo-950/50"
+      bgColor: "bg-indigo-50 dark:bg-indigo-950/50",
+      studentOnly: true
     },
     {
       title: "My Subjects",
@@ -56,7 +57,8 @@ export default async function ProfilePage() {
       icon: BookOpen,
       href: "/profile/subjects",
       color: "text-green-500",
-      bgColor: "bg-green-50 dark:bg-green-950/50"
+      bgColor: "bg-green-50 dark:bg-green-950/50",
+      studentOnly: true
     },
     {
       title: "Appearance",
@@ -91,6 +93,10 @@ export default async function ProfilePage() {
       bgColor: "bg-slate-50 dark:bg-slate-900"
     }
   ];
+
+  if (profile.role !== "student") {
+    menuItems = menuItems.filter(item => !item.studentOnly);
+  }
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-4xl space-y-8 pb-20 md:pb-8">

@@ -31,6 +31,20 @@ export async function login(formData: FormData) {
       .select("role, onboarding_complete")
       .eq("id", user.id)
       .single()
+      
+    if (profile?.role === "administrator") {
+      revalidatePath("/", "layout")
+      redirect("/admin")
+    }
+    if (profile?.role === "faculty") {
+      revalidatePath("/", "layout")
+      redirect("/faculty")
+    }
+    if (profile?.role === "moderator") {
+      revalidatePath("/", "layout")
+      redirect("/moderation")
+    }
+      
     if (profile?.role === "student" && !(profile as any)?.onboarding_complete) {
       revalidatePath("/", "layout")
       redirect("/onboarding")
