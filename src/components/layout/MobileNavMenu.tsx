@@ -90,12 +90,13 @@ export function MobileNavMenu({ role }: Props) {
       ],
     },
     {
-      title: "Users",
+      title: "Users & Security",
       links: [
         { href: "/admin/users?role=student", label: "Students", icon: Users },
         { href: "/admin/users?role=faculty", label: "Faculty", icon: Users },
         { href: "/admin/users?role=moderator", label: "Moderators", icon: Shield },
         { href: "/admin/users?role=administrator", label: "Administrators", icon: Settings },
+        { href: "/admin/academic-profile-settings", label: "Profile Settings", icon: Settings },
       ],
     },
     {
@@ -105,14 +106,6 @@ export function MobileNavMenu({ role }: Props) {
         { href: "/admin/resources?status=pending_review", label: "Pending Resources", icon: Upload },
         { href: "/admin/resources/reports", label: "Reports", icon: Bell },
         { href: "/admin/resources/categories", label: "Categories", icon: Library },
-      ],
-    },
-    {
-      title: "Users & Security",
-      links: [
-        { href: "/admin/users?role=student", label: "Students", icon: Users },
-        { href: "/admin/users?role=faculty", label: "Faculty", icon: Users },
-        { href: "/admin/academic-profile-settings", label: "Profile Settings", icon: Settings },
       ],
     },
     {
