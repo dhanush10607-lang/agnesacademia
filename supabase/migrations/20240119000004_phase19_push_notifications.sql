@@ -66,15 +66,25 @@ CREATE POLICY "Users can view their own deliveries"
     );
 
 -- 5. Triggers for updated_at
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 DROP TRIGGER IF EXISTS set_updated_at_notifications ON public.notifications;
 CREATE TRIGGER set_updated_at_notifications
     BEFORE UPDATE ON public.notifications
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_push_devices ON public.push_devices;
 CREATE TRIGGER set_updated_at_push_devices
     BEFORE UPDATE ON public.push_devices
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_notification_deliveries ON public.notification_deliveries;
 CREATE TRIGGER set_updated_at_notification_deliveries
     BEFORE UPDATE ON public.notification_deliveries
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
