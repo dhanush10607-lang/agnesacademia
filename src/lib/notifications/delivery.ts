@@ -3,9 +3,13 @@ import { createClient } from "@supabase/supabase-js"; // Use a service role clie
 
 // Use a dedicated service role client for background notification delivery
 function getServiceRoleSupabase() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.warn("Missing SUPABASE_SERVICE_ROLE_KEY. Notification delivery tracking will fail.");
+    return null;
+  }
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
     { auth: { persistSession: false } }
   );
 }
@@ -24,6 +28,7 @@ export async function sendNotifications(payload: NotificationPayload) {
   const supabase = getServiceRoleSupabase();
   const admin = getFirebaseAdmin();
   
+  if (!supabase) return; // Cannot process without service role key
   if (payload.userIds.length === 0) return;
 
   // 1. Fetch user preferences (for the relevant category)
