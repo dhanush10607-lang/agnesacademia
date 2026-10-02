@@ -8,16 +8,29 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/actions/auth";
 import { MobileNavMenu } from "./MobileNavMenu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export async function Navbar() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: profile } = user
-    ? await supabase.from("profiles").select("role, full_name").eq("id", user.id).single()
+    ? await supabase.from("profiles").select("role, full_name, avatar_url").eq("id", user.id).single()
     : { data: null };
 
   const role = profile?.role;
+  const fullName = profile?.full_name || "User";
+  const avatarUrl = profile?.avatar_url || "";
+  const initials = fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
   // Role-based desktop nav links
   const studentLinks = [
@@ -119,27 +132,6 @@ export async function Navbar() {
                   </Link>
                 </div>
 
-                {/* Profile */}
-                <div className="hidden lg:block">
-                  <Link
-                    href="/profile"
-                    className={buttonVariants({ variant: "ghost" }) + " flex items-center gap-2"}
-                  >
-                    <Settings className="w-4 h-4" />
-                    Profile & Settings
-                  </Link>
-                </div>
-
-                {/* Dashboard */}
-                <div className="hidden lg:block">
-                  <Link
-                    href="/dashboard"
-                    className={buttonVariants({ variant: "ghost" })}
-                  >
-                    Dashboard
-                  </Link>
-                </div>
-
                 {/* Help */}
                 <div className="hidden lg:block">
                   <Link
@@ -151,12 +143,68 @@ export async function Navbar() {
                   </Link>
                 </div>
 
-                {/* Sign Out */}
-                <form action={logout} className="hidden lg:block">
-                  <Button type="submit" variant="outline" size="sm">
-                    Sign Out
-                  </Button>
-                </form>
+                {/* User Profile Dropdown */}
+                <div className="hidden lg:block pl-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-9 w-9 rounded-full border border-border/50 bg-muted/50 hover:bg-muted">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={avatarUrl} alt={fullName} />
+                          <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                      <DropdownMenuLabel className="font-normal">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">{fullName}</p>
+                          <p className="text-xs leading-none text-muted-foreground capitalize">
+                            {role}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard" className="cursor-pointer flex w-full items-center">
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            <span>Dashboard</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/profile" className="cursor-pointer flex w-full items-center">
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Profile & Settings</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        {role === "student" && (
+                          <DropdownMenuItem asChild>
+                            <Link href="/profile/academic" className="cursor-pointer flex w-full items-center">
+                              <GraduationCap className="mr-2 h-4 w-4" />
+                              <span>Academic Information</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                        {role === "student" && (
+                          <DropdownMenuItem asChild>
+                            <Link href="/my-semester" className="cursor-pointer flex w-full items-center">
+                              <Library className="mr-2 h-4 w-4" />
+                              <span>My Subjects</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <form action={logout} className="w-full">
+                          <button type="submit" className="flex w-full cursor-pointer items-center text-red-600 dark:text-red-400">
+                            Sign Out
+                          </button>
+                        </form>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
                 {/* Mobile hamburger */}
                 <MobileNavMenu role={role || "student"} />

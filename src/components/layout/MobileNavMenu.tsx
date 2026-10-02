@@ -226,9 +226,12 @@ export function MobileNavMenu({ role }: Props) {
             </nav>
 
             {role !== "guest" && (
-              <div className="p-4 border-t">
+              <div className="p-4 border-t space-y-2">
+                <Link href="/profile" className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border rounded-xl text-sm font-semibold hover:bg-muted transition-colors" onClick={() => setOpen(false)}>
+                  <Settings className="w-4 h-4" /> Profile & Settings
+                </Link>
                 <form action={logout} onSubmit={() => setOpen(false)}>
-                  <Button type="submit" variant="outline" className="w-full">
+                  <Button type="submit" variant="destructive" className="w-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/50">
                     Sign Out
                   </Button>
                 </form>
