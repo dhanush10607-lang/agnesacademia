@@ -1,19 +1,15 @@
 -- Phase 19: Push Notifications System
 
--- 1. Notifications Table (In-app)
-CREATE TABLE IF NOT EXISTS public.notifications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    message TEXT NOT NULL,
-    category TEXT NOT NULL, -- e.g., 'notice', 'calendar', 'system'
-    action_url TEXT,
-    is_read BOOLEAN DEFAULT false,
-    priority TEXT DEFAULT 'normal', -- 'low', 'normal', 'high', 'critical'
-    metadata JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- 1. Alter Existing Notifications Table (Created in Phase 10)
+ALTER TABLE public.notifications 
+ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'system',
+ADD COLUMN IF NOT EXISTS action_url TEXT,
+ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'normal',
+ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb,
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Migrate old 'type' and 'link' to new schema if needed (optional, keeping both for backwards compatibility)
+-- The application code has been updated to use category and action_url.
 
 -- 2. Push Devices Table
 CREATE TABLE IF NOT EXISTS public.push_devices (
@@ -45,19 +41,11 @@ CREATE TABLE IF NOT EXISTS public.notification_deliveries (
 );
 
 -- 4. RLS Policies
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.push_devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notification_deliveries ENABLE ROW LEVEL SECURITY;
 
--- Notifications Policies
-CREATE POLICY "Users can view their own notifications"
-    ON public.notifications FOR SELECT
-    USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own notifications"
-    ON public.notifications FOR UPDATE
-    USING (auth.uid() = user_id);
-
+-- Notifications Policies (Additional policy for admins)
+DROP POLICY IF EXISTS "Admins can insert notifications" ON public.notifications;
 CREATE POLICY "Admins can insert notifications"
     ON public.notifications FOR INSERT
     WITH CHECK (
@@ -71,7 +59,6 @@ CREATE POLICY "Users can manage their own devices"
     WITH CHECK (auth.uid() = user_id);
 
 -- Deliveries Policies
--- Service Role will primarily handle deliveries, but for UI checking:
 CREATE POLICY "Users can view their own deliveries"
     ON public.notification_deliveries FOR SELECT
     USING (
@@ -79,6 +66,7 @@ CREATE POLICY "Users can view their own deliveries"
     );
 
 -- 5. Triggers for updated_at
+DROP TRIGGER IF EXISTS set_updated_at_notifications ON public.notifications;
 CREATE TRIGGER set_updated_at_notifications
     BEFORE UPDATE ON public.notifications
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -90,3 +78,4 @@ CREATE TRIGGER set_updated_at_push_devices
 CREATE TRIGGER set_updated_at_notification_deliveries
     BEFORE UPDATE ON public.notification_deliveries
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
