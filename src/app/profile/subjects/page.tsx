@@ -44,7 +44,7 @@ export default async function SubjectsPage() {
           <BookOpen className="w-8 h-8 mr-3 text-green-500" /> My Subjects
         </h1>
         <p className="text-muted-foreground mt-2">
-          Select your enrolled subjects for {profile.programme?.name} - {profile.semester?.name}.
+          Select your enrolled subjects for {(profile.programme as any)?.name} - {(profile.semester as any)?.name}.
         </p>
       </div>
 

@@ -51,7 +51,10 @@ export default async function PersonalInfoPage() {
           <CardDescription>Update your personal information below.</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <form action={updatePersonalProfileAction} className="space-y-6">
+          <form action={async (formData) => {
+            "use server";
+            await updatePersonalProfileAction(formData);
+          }} className="space-y-6">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="full_name">Full Name</Label>

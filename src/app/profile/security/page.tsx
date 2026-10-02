@@ -47,7 +47,10 @@ export default async function SecurityPage() {
               You are signed in using a third-party provider (e.g., Google). Password management is handled by your provider.
             </div>
           ) : (
-            <form action={updatePasswordAction} className="space-y-4">
+            <form action={async (formData) => {
+              "use server";
+              await updatePasswordAction(formData);
+            }} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="current_password">Current Password</Label>
                 <Input id="current_password" name="current_password" type="password" required />
