@@ -40,11 +40,11 @@ export default async function EditAcademicProfilePage() {
     if (data) initialProgrammes = data;
   }
   if (profile.programme_id) {
-    const { data } = await supabase.from("academic_years").select("id, name").eq("programme_id", profile.programme_id).order("year_number");
+    const { data } = await supabase.from("academic_years").select("id, name").eq("programme_id", profile.programme_id).order("name");
     if (data) initialYears = data;
   }
   if (profile.academic_year_id) {
-    const { data } = await supabase.from("semesters").select("id, name").eq("academic_year_id", profile.academic_year_id).order("semester_number");
+    const { data } = await supabase.from("semesters").select("id, name").eq("academic_year_id", profile.academic_year_id).order("name");
     if (data) initialSemesters = data;
   }
 

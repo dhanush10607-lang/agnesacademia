@@ -48,14 +48,14 @@ export default function AcademicEditForm({
   // Load Years when Prog changes
   useEffect(() => {
     if (!progId) return;
-    supabase.from("academic_years").select("id, name").eq("programme_id", progId).order("year_number")
+    supabase.from("academic_years").select("id, name").eq("programme_id", progId).order("name")
       .then(({ data }) => setYears(data || []));
   }, [progId, supabase]);
 
   // Load Semesters when Year changes
   useEffect(() => {
     if (!yearId) return;
-    supabase.from("semesters").select("id, name").eq("academic_year_id", yearId).order("semester_number")
+    supabase.from("semesters").select("id, name").eq("academic_year_id", yearId).order("name")
       .then(({ data }) => setSemesters(data || []));
   }, [yearId, supabase]);
 
