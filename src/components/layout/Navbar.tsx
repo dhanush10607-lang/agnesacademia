@@ -146,15 +146,15 @@ export async function Navbar() {
                 {/* User Profile Dropdown */}
                 <div className="hidden lg:block pl-2">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-9 w-9 rounded-full border border-border/50 bg-muted/50 hover:bg-muted">
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={avatarUrl} alt={fullName} />
-                          <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
-                        </Avatar>
-                      </Button>
+                    <DropdownMenuTrigger render={
+                      <Button variant="ghost" className="relative h-9 w-9 rounded-full border border-border/50 bg-muted/50 hover:bg-muted" />
+                    }>
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={avatarUrl} alt={fullName} />
+                        <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
+                      </Avatar>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuContent className="w-56" align="end">
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
                           <p className="text-sm font-medium leading-none">{fullName}</p>
@@ -165,37 +165,37 @@ export async function Navbar() {
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
-                        <DropdownMenuItem asChild>
-                          <Link href="/dashboard" className="cursor-pointer flex w-full items-center">
+                        <DropdownMenuItem render={<Link href="/dashboard" />}>
+                          <div className="cursor-pointer flex w-full items-center">
                             <LayoutDashboard className="mr-2 h-4 w-4" />
                             <span>Dashboard</span>
-                          </Link>
+                          </div>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/profile" className="cursor-pointer flex w-full items-center">
+                        <DropdownMenuItem render={<Link href="/profile" />}>
+                          <div className="cursor-pointer flex w-full items-center">
                             <Settings className="mr-2 h-4 w-4" />
                             <span>Profile & Settings</span>
-                          </Link>
+                          </div>
                         </DropdownMenuItem>
                         {role === "student" && (
-                          <DropdownMenuItem asChild>
-                            <Link href="/profile/academic" className="cursor-pointer flex w-full items-center">
+                          <DropdownMenuItem render={<Link href="/profile/academic" />}>
+                            <div className="cursor-pointer flex w-full items-center">
                               <GraduationCap className="mr-2 h-4 w-4" />
                               <span>Academic Information</span>
-                            </Link>
+                            </div>
                           </DropdownMenuItem>
                         )}
                         {role === "student" && (
-                          <DropdownMenuItem asChild>
-                            <Link href="/my-semester" className="cursor-pointer flex w-full items-center">
+                          <DropdownMenuItem render={<Link href="/my-semester" />}>
+                            <div className="cursor-pointer flex w-full items-center">
                               <Library className="mr-2 h-4 w-4" />
                               <span>My Subjects</span>
-                            </Link>
+                            </div>
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
+                      <DropdownMenuItem>
                         <form action={logout} className="w-full">
                           <button type="submit" className="flex w-full cursor-pointer items-center text-red-600 dark:text-red-400">
                             Sign Out
