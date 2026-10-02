@@ -23,8 +23,9 @@ export async function Navbar() {
   const studentLinks = [
     { href: "/search",          label: "Search",         icon: Search },
     { href: "/my-semester",     label: "My Subjects",    icon: Library },
+    { href: "/upload",          label: "Upload",         icon: Upload },
+    { href: "/my-submissions",  label: "My Submissions", icon: BookOpen },
     { href: "/notices",         label: "Notices",        icon: Bell },
-    { href: "/calendar",        label: "Calendar",       icon: Calendar },
     { href: "/ai",              label: "Ask AGNES",      icon: Sparkles, highlight: true },
   ];
 

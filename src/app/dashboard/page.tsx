@@ -114,13 +114,23 @@ export default async function DashboardPage() {
             <p className="text-muted-foreground mt-1">Here is your academic overview.</p>
           )}
         </div>
-        <div className="flex gap-2">
-          {role === 'student' && profile?.semester_id && (
-            <Link href="/my-semester" className={buttonVariants({ variant: "outline" })}>
-              <BookOpen className="w-4 h-4 mr-2" /> My Semester
-            </Link>
+        <div className="flex flex-wrap gap-2">
+          {role === 'student' && (
+            <>
+              <Link href="/upload" className={buttonVariants({ variant: "default" })}>
+                <FileText className="w-4 h-4 mr-2" /> Upload Note
+              </Link>
+              <Link href="/my-submissions" className={buttonVariants({ variant: "outline" })}>
+                <BookOpen className="w-4 h-4 mr-2" /> My Submissions
+              </Link>
+              {profile?.semester_id && (
+                <Link href="/my-semester" className={buttonVariants({ variant: "outline" })}>
+                  <Library className="w-4 h-4 mr-2" /> My Semester
+                </Link>
+              )}
+            </>
           )}
-          <Badge variant="outline" className="text-sm px-3 py-1 capitalize border-primary text-primary bg-primary/5">
+          <Badge variant="outline" className="text-sm px-3 py-1 capitalize border-primary text-primary bg-primary/5 h-10 flex items-center">
             {role}
           </Badge>
         </div>
