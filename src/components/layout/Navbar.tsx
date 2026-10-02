@@ -85,53 +85,63 @@ export async function Navbar() {
               <>
                 {/* Moderator */}
                 {(role === "moderator" || role === "administrator") && (
-                  <Link
-                    href="/moderation"
-                    className={buttonVariants({ variant: "ghost", className: "hidden lg:inline-flex text-yellow-600 hover:text-yellow-700 dark:text-yellow-500" })}
-                  >
-                    Moderation
-                  </Link>
+                  <div className="hidden lg:block">
+                    <Link
+                      href="/moderation"
+                      className={buttonVariants({ variant: "ghost", className: "text-yellow-600 hover:text-yellow-700 dark:text-yellow-500" })}
+                    >
+                      Moderation
+                    </Link>
+                  </div>
                 )}
 
                 {/* Admin */}
                 {role === "administrator" && (
-                  <Link
-                    href="/admin"
-                    className={buttonVariants({ variant: "outline", className: "hidden lg:inline-flex border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/30" })}
-                  >
-                    Admin
-                  </Link>
+                  <div className="hidden lg:block">
+                    <Link
+                      href="/admin"
+                      className={buttonVariants({ variant: "outline", className: "border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/30" })}
+                    >
+                      Admin
+                    </Link>
+                  </div>
                 )}
 
                 {/* Bookmarks */}
-                <Link
-                  href="/bookmarks"
-                  className={buttonVariants({ variant: "ghost", size: "icon", className: "hidden lg:inline-flex text-muted-foreground hover:text-primary" })}
-                  aria-label="Bookmarks"
-                >
-                  <Bookmark className="h-5 w-5" />
-                </Link>
+                <div className="hidden lg:block">
+                  <Link
+                    href="/bookmarks"
+                    className={buttonVariants({ variant: "ghost", size: "icon", className: "text-muted-foreground hover:text-primary" })}
+                    aria-label="Bookmarks"
+                  >
+                    <Bookmark className="h-5 w-5" />
+                  </Link>
+                </div>
 
                 {/* Dashboard */}
-                <Link
-                  href="/dashboard"
-                  className={buttonVariants({ variant: "ghost", className: "hidden lg:inline-flex" })}
-                >
-                  Dashboard
-                </Link>
+                <div className="hidden lg:block">
+                  <Link
+                    href="/dashboard"
+                    className={buttonVariants({ variant: "ghost" })}
+                  >
+                    Dashboard
+                  </Link>
+                </div>
 
                 {/* Help */}
-                <Link
-                  href="/help"
-                  className={buttonVariants({ variant: "ghost", size: "icon", className: "hidden lg:inline-flex text-muted-foreground hover:text-primary" })}
-                  aria-label="Help & Guide"
-                >
-                  <HelpCircle className="h-5 w-5" />
-                </Link>
+                <div className="hidden lg:block">
+                  <Link
+                    href="/help"
+                    className={buttonVariants({ variant: "ghost", size: "icon", className: "text-muted-foreground hover:text-primary" })}
+                    aria-label="Help & Guide"
+                  >
+                    <HelpCircle className="h-5 w-5" />
+                  </Link>
+                </div>
 
                 {/* Sign Out */}
-                <form action={logout}>
-                  <Button type="submit" variant="outline" size="sm" className="hidden lg:inline-flex">
+                <form action={logout} className="hidden lg:block">
+                  <Button type="submit" variant="outline" size="sm">
                     Sign Out
                   </Button>
                 </form>
