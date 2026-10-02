@@ -1,13 +1,14 @@
 import { createClient } from '@/lib/supabase/server';
 import { embeddingModel } from '@/lib/ai/provider';
 import { embedMany } from 'ai';
-// @ts-expect-error - pdf-parse has no default export in its types but works at runtime
-import pdfParse from 'pdf-parse';
 
 export const maxDuration = 120; // 2 minutes for processing
 
 export async function POST(req: Request) {
   try {
+    // Dynamically require pdf-parse to avoid static evaluation issues during Next.js build
+    const pdfParse = require('pdf-parse');
+
     const { resource_id } = await req.json();
     if (!resource_id) return new Response('Missing resource_id', { status: 400 });
 
