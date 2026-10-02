@@ -134,7 +134,7 @@ export async function sendNotifications(payload: NotificationPayload) {
           notification_id: notification.id,
         },
         android: {
-          priority: payload.priority === 'high' || payload.priority === 'critical' ? 'high' : 'normal',
+          priority: (payload.priority === 'high' || payload.priority === 'critical' ? 'high' : 'normal') as "high" | "normal",
         }
       };
 
