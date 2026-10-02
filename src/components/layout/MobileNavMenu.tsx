@@ -45,6 +45,7 @@ export function MobileNavMenu({ role }: Props) {
     { href: "/calendar",    label: "Academic Calendar",  icon: CalendarDays },
     { href: "/bookmarks",   label: "Bookmarks",          icon: BookOpen },
     { href: "/dashboard",   label: "Dashboard",          icon: LayoutDashboard },
+    { href: "/profile",     label: "Profile & Settings", icon: Settings },
     { href: "/help",        label: "Help & Guide",       icon: HelpCircle },
   ];
 
@@ -54,6 +55,7 @@ export function MobileNavMenu({ role }: Props) {
     { href: "/notices",  label: "Notices",         icon: Bell },
     { href: "/calendar", label: "Academic Calendar", icon: CalendarDays },
     { href: "/dashboard",label: "Dashboard",       icon: LayoutDashboard },
+    { href: "/profile",  label: "Profile & Settings", icon: Settings },
     { href: "/help",     label: "Help & Guide",    icon: HelpCircle },
   ];
 
@@ -63,6 +65,7 @@ export function MobileNavMenu({ role }: Props) {
     { href: "/notices",     label: "Notices",           icon: Bell },
     { href: "/calendar",    label: "Academic Calendar", icon: CalendarDays },
     { href: "/dashboard",   label: "Dashboard",         icon: LayoutDashboard },
+    { href: "/profile",     label: "Profile & Settings", icon: Settings },
     { href: "/moderation",  label: "Moderation",        icon: Shield },
     { href: "/admin",       label: "Admin Console",     icon: Settings },
     { href: "/help",        label: "Help & Guide",      icon: HelpCircle },

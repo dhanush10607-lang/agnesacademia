@@ -119,6 +119,16 @@ export async function Navbar() {
                   </Link>
                 </div>
 
+                {/* Profile */}
+                <div className="hidden lg:block">
+                  <Link
+                    href="/profile"
+                    className={buttonVariants({ variant: "ghost" })}
+                  >
+                    Profile
+                  </Link>
+                </div>
+
                 {/* Dashboard */}
                 <div className="hidden lg:block">
                   <Link
