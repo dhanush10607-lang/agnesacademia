@@ -51,9 +51,39 @@ export function UserStatusToggle({ userId, currentStatus }: { userId: string, cu
     <button 
       onClick={toggleStatus}
       disabled={isUpdating}
-      className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+      className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400'}`}
     >
       {isUpdating ? '...' : status.toUpperCase()}
+    </button>
+  );
+}
+
+export function AcademicLockToggle({ userId, isLocked }: { userId: string, isLocked: boolean }) {
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const toggleLock = async () => {
+    setIsUpdating(true);
+    const res = await fetch("/api/admin/academic-lock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, lockStatus: !isLocked })
+    });
+    if (!res.ok) {
+      alert("Failed to update lock status");
+    } else {
+      // Typically we'd use a server action that revalidates, let's just reload for now or use the server action directly.
+      window.location.reload();
+    }
+    setIsUpdating(false);
+  };
+
+  return (
+    <button 
+      onClick={toggleLock}
+      disabled={isUpdating}
+      className={`text-xs font-medium px-2 py-1 rounded-md transition-colors border ${isLocked ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'}`}
+    >
+      {isUpdating ? '...' : (isLocked ? '🔒 Locked' : '🔓 Editable')}
     </button>
   );
 }

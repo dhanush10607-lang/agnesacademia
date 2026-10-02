@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, Users } from "lucide-react";
-import { UserRoleSelect, UserStatusToggle } from "@/components/admin/UserControls";
+import { UserRoleSelect, UserStatusToggle, AcademicLockToggle } from "@/components/admin/UserControls";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -115,6 +115,11 @@ export default async function AdminUsersPage({
                     <td className="px-6 py-4">
                       <div className="text-foreground">{user.department?.name || '-'}</div>
                       <div className="text-xs text-muted-foreground mt-1">{user.programme?.code || ''}</div>
+                      {user.role === 'student' && (
+                        <div className="mt-2">
+                          <AcademicLockToggle userId={user.id} isLocked={user.is_academic_locked || false} />
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">
                       {format(new Date(user.created_at), "MMM d, yyyy")}
