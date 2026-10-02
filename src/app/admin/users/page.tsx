@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Filter, Users } from "lucide-react";
 import { UserRoleSelect, UserStatusToggle } from "@/components/admin/UserControls";
 import { format } from "date-fns";
+import Link from "next/link";
 
 export default async function AdminUsersPage({
   searchParams,
@@ -38,11 +39,19 @@ export default async function AdminUsersPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-heading font-extrabold mb-2 flex items-center">
-          <Users className="w-8 h-8 mr-3 text-primary" /> User Management
-        </h1>
-        <p className="text-muted-foreground">Manage students, faculty, and administrative staff accounts.</p>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-heading font-extrabold mb-2 flex items-center">
+            <Users className="w-8 h-8 mr-3 text-primary" /> User Management
+          </h1>
+          <p className="text-muted-foreground">Manage students, faculty, and administrative staff accounts.</p>
+        </div>
+        
+        <div className="flex shrink-0">
+          <Link href="/admin/users/faculty-assignments" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+            Assign Faculty Subjects
+          </Link>
+        </div>
       </div>
 
       <Card className="mb-6 border-border shadow-sm">
