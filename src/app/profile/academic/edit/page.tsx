@@ -24,6 +24,29 @@ export default async function EditAcademicProfilePage() {
 
   // Pre-fetch initial data to hydrate the form faster
   const { data: departments } = await supabase.from("departments").select("id, name").order("name");
+  
+  // Patch missing department_id for legacy or seeded accounts
+  if (!profile.department_id && profile.programme_id) {
+    const { data: prog } = await supabase.from("programmes").select("department_id").eq("id", profile.programme_id).single();
+    if (prog) profile.department_id = prog.department_id;
+  }
+  
+  let initialProgrammes: any[] = [];
+  let initialYears: any[] = [];
+  let initialSemesters: any[] = [];
+
+  if (profile.department_id) {
+    const { data } = await supabase.from("programmes").select("id, name").eq("department_id", profile.department_id).order("name");
+    if (data) initialProgrammes = data;
+  }
+  if (profile.programme_id) {
+    const { data } = await supabase.from("academic_years").select("id, name").eq("programme_id", profile.programme_id).order("year_number");
+    if (data) initialYears = data;
+  }
+  if (profile.academic_year_id) {
+    const { data } = await supabase.from("semesters").select("id, name").eq("academic_year_id", profile.academic_year_id).order("semester_number");
+    if (data) initialSemesters = data;
+  }
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-2xl space-y-6 pb-24 md:pb-8">
@@ -40,6 +63,9 @@ export default async function EditAcademicProfilePage() {
 
       <AcademicEditForm 
         departments={departments || []} 
+        initialProgrammes={initialProgrammes}
+        initialYears={initialYears}
+        initialSemesters={initialSemesters}
         currentProfile={{
           department_id: profile.department_id,
           programme_id: profile.programme_id,

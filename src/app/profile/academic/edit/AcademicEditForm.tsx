@@ -11,9 +11,15 @@ import { AlertTriangle, CheckCircle } from "lucide-react";
 
 export default function AcademicEditForm({
   departments,
+  initialProgrammes = [],
+  initialYears = [],
+  initialSemesters = [],
   currentProfile
 }: {
   departments: any[];
+  initialProgrammes?: any[];
+  initialYears?: any[];
+  initialSemesters?: any[];
   currentProfile: any;
 }) {
   const supabase = createClient();
@@ -24,9 +30,9 @@ export default function AcademicEditForm({
   const [yearId, setYearId] = useState<string>(currentProfile.academic_year_id || "");
   const [semId, setSemId] = useState<string>(currentProfile.semester_id || "");
 
-  const [programmes, setProgrammes] = useState<any[]>([]);
-  const [years, setYears] = useState<any[]>([]);
-  const [semesters, setSemesters] = useState<any[]>([]);
+  const [programmes, setProgrammes] = useState<any[]>(initialProgrammes);
+  const [years, setYears] = useState<any[]>(initialYears);
+  const [semesters, setSemesters] = useState<any[]>(initialSemesters);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
