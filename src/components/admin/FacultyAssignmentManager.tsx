@@ -20,7 +20,6 @@ interface Subject {
 interface Faculty {
   id: string;
   full_name: string;
-  email: string;
   department: { name: string } | null;
 }
 
@@ -116,8 +115,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, initialAss
 
             {currentFaculty && (
               <div className="mt-6 p-4 bg-muted/30 rounded-xl border border-border">
-                <h4 className="font-semibold text-sm mb-1">{currentFaculty.full_name}</h4>
-                <p className="text-xs text-muted-foreground mb-3">{currentFaculty.email}</p>
+                <h4 className="font-semibold text-sm mb-2">{currentFaculty.full_name}</h4>
                 <div className="inline-flex items-center justify-center px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
                   {currentFacultySubjects.length} Subject(s) Assigned
                 </div>

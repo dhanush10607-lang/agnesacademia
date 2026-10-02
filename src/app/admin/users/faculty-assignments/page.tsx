@@ -27,7 +27,7 @@ export default async function FacultyAssignmentsPage() {
   // Fetch all faculty members
   const { data: facultyList } = await supabase
     .from("profiles")
-    .select("id, full_name, email, department:departments(name)")
+    .select("id, full_name, department:departments(name)")
     .eq("role", "faculty")
     .order("full_name");
 
