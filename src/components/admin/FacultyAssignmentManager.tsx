@@ -98,12 +98,19 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, initialAss
                 <SelectValue placeholder="Select a faculty member..." />
               </SelectTrigger>
               <SelectContent>
-                {facultyList.map(faculty => (
-                  <SelectItem key={faculty.id} value={faculty.id}>
-                    {faculty.full_name || "Unnamed Faculty"} 
-                    <span className="text-muted-foreground ml-2 text-xs">({faculty.department?.name || "No Dept"})</span>
-                  </SelectItem>
-                ))}
+                {facultyList.length === 0 ? (
+                  <div className="p-3 text-sm text-muted-foreground text-center">
+                    No faculty members found.<br/>
+                    Please change a user's role to Faculty in the User Management page first.
+                  </div>
+                ) : (
+                  facultyList.map(faculty => (
+                    <SelectItem key={faculty.id} value={faculty.id}>
+                      {faculty.full_name || "Unnamed Faculty"} 
+                      <span className="text-muted-foreground ml-2 text-xs">({faculty.department?.name || "No Dept"})</span>
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
 
