@@ -47,7 +47,7 @@ export default async function PersonalInfoPage() {
           <CardDescription>Update your personal information below.</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <PersonalInfoForm profile={profile} isNameManaged={isNameManaged} />
+          <PersonalInfoForm profile={{...profile, email: profile.email || user.email}} isNameManaged={isNameManaged} />
         </CardContent>
       </Card>
     </div>
