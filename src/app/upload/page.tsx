@@ -19,15 +19,32 @@ export default async function UploadPage() {
     .select("id, name")
     .order("name", { ascending: true });
 
-  // Fetch subjects. If we wanted to restrict to user's semester, we could, but a user
-  // might want to upload something for a previous semester. So we just fetch all subjects.
-  const { data: subjects } = await supabase
+  // Fetch profile to get role and semester
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, semester_id")
+    .eq("id", user.id)
+    .single();
+
+  // Fetch subjects. Filter by semester_id if it's a student.
+  let subjectQuery = supabase
     .from("subjects")
     .select(`
       id, name,
       semester:semesters(name)
     `)
     .order("name", { ascending: true });
+
+  if (profile?.role === "student") {
+    if (profile.semester_id) {
+      subjectQuery = subjectQuery.eq("semester_id", profile.semester_id);
+    } else {
+      // If student hasn't set their semester, they see no subjects.
+      subjectQuery = subjectQuery.eq("semester_id", "00000000-0000-0000-0000-000000000000"); 
+    }
+  }
+
+  const { data: subjects } = await subjectQuery;
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-3xl">
