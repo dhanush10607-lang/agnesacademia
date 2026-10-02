@@ -134,7 +134,10 @@ export default function AcademicEditForm({
 
           <div className="space-y-2">
             <Label>Department</Label>
-            <Select value={deptId} onValueChange={(val) => { setDeptId(val || ""); setProgId(""); setYearId(""); setSemId(""); }}>
+            <Select 
+              value={departments.some(d => d.id === deptId) ? deptId : ""} 
+              onValueChange={(val) => { setDeptId(val || ""); setProgId(""); setYearId(""); setSemId(""); }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Department" />
               </SelectTrigger>
@@ -148,7 +151,11 @@ export default function AcademicEditForm({
 
           <div className="space-y-2">
             <Label>Programme</Label>
-            <Select disabled={!deptId} value={progId} onValueChange={(val) => { setProgId(val || ""); setYearId(""); setSemId(""); }}>
+            <Select 
+              disabled={!deptId} 
+              value={programmes.some(p => p.id === progId) ? progId : ""} 
+              onValueChange={(val) => { setProgId(val || ""); setYearId(""); setSemId(""); }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Programme" />
               </SelectTrigger>
@@ -162,7 +169,11 @@ export default function AcademicEditForm({
 
           <div className="space-y-2">
             <Label>Academic Year</Label>
-            <Select disabled={!progId} value={yearId} onValueChange={(val) => { setYearId(val || ""); setSemId(""); }}>
+            <Select 
+              disabled={!progId} 
+              value={years.some(y => y.id === yearId) ? yearId : ""} 
+              onValueChange={(val) => { setYearId(val || ""); setSemId(""); }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Year" />
               </SelectTrigger>
@@ -176,7 +187,11 @@ export default function AcademicEditForm({
 
           <div className="space-y-2">
             <Label>Semester</Label>
-            <Select disabled={!yearId} value={semId} onValueChange={(val) => setSemId(val || "")}>
+            <Select 
+              disabled={!yearId} 
+              value={semesters.some(s => s.id === semId) ? semId : ""} 
+              onValueChange={(val) => setSemId(val || "")}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Semester" />
               </SelectTrigger>
