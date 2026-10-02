@@ -12,12 +12,14 @@ export async function updatePersonalProfileAction(formData: FormData) {
   }
 
   const fullName = formData.get("full_name") as string;
+  const phone = formData.get("phone") as string;
   const avatarUrl = formData.get("avatar_url") as string;
 
   // Check if profile is academically locked and user is a student
   const { data: profile } = await supabase.from("profiles").select("role, is_academic_locked").eq("id", user.id).single();
   
   const updates: any = {};
+  if (phone !== null) updates.phone = phone;
   if (avatarUrl !== null) updates.avatar_url = avatarUrl;
   
   // Only allow name update if not locked or not student
