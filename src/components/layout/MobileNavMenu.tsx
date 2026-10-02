@@ -13,6 +13,11 @@ interface Props {
 
 export function MobileNavMenu({ role }: Props) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -155,7 +160,7 @@ export function MobileNavMenu({ role }: Props) {
         <Menu className="h-5 w-5" />
       </Button>
 
-      {open && createPortal(
+      {open && mounted && createPortal(
         <div className="fixed inset-0 z-[100] flex lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
           {/* Backdrop */}
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
