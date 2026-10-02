@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { uploadResourceAction } from "@/app/actions/upload";
+import { createResourceRecords } from "@/app/actions/upload";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { UploadCloud, CheckCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 export function UploadForm({
   categories,
@@ -20,7 +21,9 @@ export function UploadForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [uploadProgress, setUploadProgress] = useState("");
   const router = useRouter();
+  const supabase = createClient();
 
   const ALLOWED_TYPES = ["application/pdf", "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -33,31 +36,89 @@ export function UploadForm({
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg("");
+    setUploadProgress("");
 
     const formData = new FormData(e.currentTarget);
-    const file = formData.get("file") as File;
+    const files = formData.getAll("files") as File[];
+    const titleBase = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const subjectId = formData.get("subject_id") as string;
+    const categoryId = formData.get("category_id") as string;
 
-    // Client-side validation with friendly messages
-    if (file && file.size > 0) {
+    if (!files || files.length === 0 || files[0].size === 0) {
+      setErrorMsg("Please select at least one file to upload.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setErrorMsg("You must be logged in to upload files.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const recordsToInsert = [];
+
+    // Client-side batch upload loop
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadProgress(`Uploading file ${i + 1} of ${files.length}: ${file.name}...`);
+
       if (!ALLOWED_TYPES.includes(file.type)) {
-        setErrorMsg("This file type isn't supported. Please upload a PDF, DOCX, PPTX, JPG, PNG, or ZIP file.");
+        setErrorMsg(`File type not supported for ${file.name}. Please upload PDF, DOCX, PPTX, JPG, PNG, or ZIP.`);
         setIsSubmitting(false);
         return;
       }
       if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-        setErrorMsg(`This file is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). The maximum allowed size is ${MAX_SIZE_MB} MB.`);
+        setErrorMsg(`${file.name} is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Max is ${MAX_SIZE_MB} MB.`);
         setIsSubmitting(false);
         return;
       }
+
+      const fileExt = file.name.split('.').pop();
+      const safeFilename = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `uploads/${user.id}/${safeFilename}`;
+
+      // Chunk-wise / Stream upload natively via supabase-js
+      const { error: uploadError } = await supabase.storage
+        .from("resources")
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error("Storage error:", uploadError);
+        setErrorMsg(`Failed to upload ${file.name}`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Generate a distinct title if multiple files
+      const finalTitle = files.length > 1 ? `${titleBase} (Part ${i + 1})` : titleBase;
+
+      recordsToInsert.push({
+        title: finalTitle,
+        description,
+        subject_id: subjectId,
+        category_id: categoryId,
+        file_path: filePath,
+        file_type: file.type,
+        file_size: file.size,
+      });
     }
 
-    const result = await uploadResourceAction(formData);
+    setUploadProgress("Finalizing submission...");
+    const result = await createResourceRecords(recordsToInsert);
+    
     setIsSubmitting(false);
+    setUploadProgress("");
 
     if (result.success) {
       setSuccess(true);
     } else {
-      setErrorMsg(result.error || "We couldn't upload your file. Please try again.");
+      setErrorMsg(result.error || "We couldn't finalize your upload. Please try again.");
     }
   };
 
@@ -69,10 +130,10 @@ export function UploadForm({
         </div>
         <h3 className="text-2xl font-bold">Upload Successful!</h3>
         <p className="text-muted-foreground max-w-md">
-          Your resource has been submitted for review. Once approved by a moderator, it will be published for everyone.
+          Your resources have been submitted for review. Once approved by a moderator, they will be published.
         </p>
         <div className="flex gap-4 mt-6">
-          <Button onClick={() => setSuccess(false)} variant="outline">Upload Another</Button>
+          <Button onClick={() => { setSuccess(false); setUploadProgress(""); }} variant="outline">Upload More</Button>
           <Button onClick={() => router.push("/my-submissions")}>View My Submissions</Button>
         </div>
       </div>
@@ -84,6 +145,12 @@ export function UploadForm({
       {errorMsg && (
         <div className="p-3 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-md text-sm">
           {errorMsg}
+        </div>
+      )}
+      
+      {uploadProgress && (
+        <div className="p-3 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-md text-sm font-medium animate-pulse">
+          {uploadProgress}
         </div>
       )}
 
@@ -109,7 +176,7 @@ export function UploadForm({
           </SelectTrigger>
           <SelectContent>
             {subjects.map((s) => (
-              <SelectItem key={s.id} value={s.id}>{s.name} ({s.semester?.name})</SelectItem>
+              <SelectItem key={s.id} value={s.id}>{s.name} {s.semester?.name ? `(${s.semester.name})` : ''}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -126,10 +193,10 @@ export function UploadForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="file">File <span className="text-red-500">*</span></Label>
-        <Input id="file" name="file" type="file" required className="cursor-pointer" />
+        <Label htmlFor="files">Files (Batch Upload) <span className="text-red-500">*</span></Label>
+        <Input id="files" name="files" type="file" required multiple className="cursor-pointer" />
         <p className="text-xs text-muted-foreground mt-1">
-          Max size: 50MB. Allowed: PDF, DOC, PPT, Images, ZIP.
+          Max size: 50MB per file. Allowed: PDF, DOC, PPT, Images, ZIP. You can select multiple files at once.
         </p>
       </div>
 
