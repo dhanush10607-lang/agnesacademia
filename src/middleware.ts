@@ -31,18 +31,61 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect /dashboard route
-  if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
-  }
+  // Base routes that need protection
+  const path = request.nextUrl.pathname;
+  
+  if (user) {
+    // Fetch user role
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, onboarding_complete')
+      .eq('id', user.id)
+      .single()
+      
+    const role = profile?.role || 'student'
+    
+    // Define portal URLs
+    const adminUrl = new URL('/admin', request.url);
+    const facultyUrl = new URL('/faculty', request.url);
+    const moderatorUrl = new URL('/moderation', request.url);
+    const studentUrl = new URL('/dashboard', request.url);
+    const onboardingUrl = new URL('/onboarding', request.url);
 
-  // Redirect to dashboard if logged in and trying to access login/register
-  if ((request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')) && user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    // 1. Prevent logged-in users from seeing login/register pages
+    if (path.startsWith('/login') || path.startsWith('/register')) {
+      if (role === 'administrator') return NextResponse.redirect(adminUrl);
+      if (role === 'faculty') return NextResponse.redirect(facultyUrl);
+      if (role === 'moderator') return NextResponse.redirect(moderatorUrl);
+      return NextResponse.redirect(studentUrl);
+    }
+
+    // 2. Strict Portal Enforcement
+    // Student trying to access Staff portals
+    if (role === 'student' && (path.startsWith('/admin') || path.startsWith('/faculty') || path.startsWith('/moderation'))) {
+      return NextResponse.redirect(studentUrl);
+    }
+
+    // Faculty trying to access Admin, Moderation or Student portals
+    if (role === 'faculty' && (path.startsWith('/admin') || path.startsWith('/moderation') || path.startsWith('/dashboard') || path.startsWith('/my-semester') || path.startsWith('/my-submissions'))) {
+      return NextResponse.redirect(facultyUrl);
+    }
+
+    // Moderator trying to access Admin, Faculty or Student portals
+    if (role === 'moderator' && (path.startsWith('/admin') || path.startsWith('/faculty') || path.startsWith('/dashboard') || path.startsWith('/my-semester') || path.startsWith('/my-submissions'))) {
+      return NextResponse.redirect(moderatorUrl);
+    }
+
+    // Admin trying to access Faculty, Moderation (optional?), or Student portals
+    // Note: Admins usually have access to moderation, but we'll block student and faculty portals.
+    if (role === 'administrator' && (path.startsWith('/faculty') || path.startsWith('/dashboard') || path.startsWith('/my-semester') || path.startsWith('/my-submissions'))) {
+      return NextResponse.redirect(adminUrl);
+    }
+  } else {
+    // Not logged in: Protect private routes
+    const privateRoutes = ['/dashboard', '/admin', '/faculty', '/moderation', '/my-semester', '/my-submissions', '/profile', '/upload'];
+    if (privateRoutes.some(route => path.startsWith(route))) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   }
 
   return supabaseResponse
