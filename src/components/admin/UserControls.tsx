@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateUserRoleAction, updateUserStatusAction } from "@/app/actions/admin-users";
+import { updateUserRoleAction, updateUserStatusAction, toggleAcademicLockAction } from "@/app/actions/admin-users";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
@@ -63,16 +63,9 @@ export function AcademicLockToggle({ userId, isLocked }: { userId: string, isLoc
 
   const toggleLock = async () => {
     setIsUpdating(true);
-    const res = await fetch("/api/admin/academic-lock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, lockStatus: !isLocked })
-    });
-    if (!res.ok) {
-      alert("Failed to update lock status");
-    } else {
-      // Typically we'd use a server action that revalidates, let's just reload for now or use the server action directly.
-      window.location.reload();
+    const res = await toggleAcademicLockAction(userId, !isLocked);
+    if (!res.success) {
+      alert(res.error || "Failed to update lock status");
     }
     setIsUpdating(false);
   };

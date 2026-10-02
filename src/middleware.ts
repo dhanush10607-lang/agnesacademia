@@ -35,14 +35,25 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   
   if (user) {
-    // Fetch user role
+    // Fetch user role and status
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, onboarding_complete')
+      .select('role, onboarding_complete, account_status')
       .eq('id', user.id)
       .single()
       
     const role = profile?.role || 'student'
+    const accountStatus = profile?.account_status || 'active'
+    
+    // Check if account is suspended
+    if (accountStatus === 'suspended' && !path.startsWith('/suspended') && !path.startsWith('/login') && !path.startsWith('/logout')) {
+      return NextResponse.redirect(new URL('/suspended', request.url));
+    }
+    
+    // Do not enforce portal locks if on /suspended
+    if (path.startsWith('/suspended')) {
+      return supabaseResponse;
+    }
     
     // Define portal URLs
     const adminUrl = new URL('/admin', request.url);

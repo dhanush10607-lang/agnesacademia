@@ -97,3 +97,51 @@ export async function updateUserStatusAction(userId: string, newStatus: string) 
     return { success: false, error: "Failed to update status" };
   }
 }
+
+export async function toggleAcademicLockAction(userId: string, lockStatus: boolean) {
+  const supabase = await createClient();
+  let { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  if (!user || userError) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      user = session.user;
+    }
+  }
+
+  if (!user) {
+    return { success: false, error: "Not authenticated. Please refresh the page and try again." };
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (!profile || (profile.role !== 'administrator' && profile.role !== 'faculty')) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ 
+        is_academic_locked: lockStatus,
+        academic_locked_at: lockStatus ? new Date().toISOString() : null,
+        academic_locked_by: lockStatus ? user.id : null
+      })
+      .eq("id", userId);
+
+    if (error) throw error;
+
+    await supabase.from("admin_audit_logs").insert({
+      actor_id: user.id,
+      action: lockStatus ? 'academic_profile_locked' : 'academic_profile_unlocked',
+      target_type: 'user',
+      target_id: userId,
+      metadata: { lock_status: lockStatus }
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error) {
+    console.error("Update academic lock error:", error);
+    return { success: false, error: "Failed to update lock status" };
+  }
+}
