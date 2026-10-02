@@ -62,7 +62,7 @@ export default function LoginPage() {
           <motion.div 
             variants={staggerContainer}
             initial="hidden"
-            animate="show"
+            animate="visible"
             className="w-full max-w-[400px] mx-auto flex flex-col justify-center space-y-6"
           >
             <motion.div variants={fadeUp} className="flex flex-col space-y-2 text-center lg:text-left">
