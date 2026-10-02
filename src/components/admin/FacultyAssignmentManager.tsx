@@ -93,7 +93,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, initialAss
             <CardDescription>Choose a faculty member to manage their teaching assignments.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Select value={selectedFaculty} onValueChange={(val) => { setSelectedFaculty(val); setMessage(null); }}>
+            <Select value={selectedFaculty} onValueChange={(val) => { setSelectedFaculty(val || ""); setMessage(null); }}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a faculty member..." />
               </SelectTrigger>
