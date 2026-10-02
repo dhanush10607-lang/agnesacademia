@@ -31,7 +31,7 @@ export async function createEventAction(formData: FormData) {
       return { success: false, error: "Title, Category, and Dates are required" };
     }
 
-    const { error: insertError } = await supabase
+    const { data: insertedEvent, error: insertError } = await supabase
       .from("calendar_events")
       .insert({
         title,
@@ -45,9 +45,32 @@ export async function createEventAction(formData: FormData) {
         semester_id,
         status: 'published', // default publish
         created_by: user.id
-      });
+      })
+      .select("id")
+      .single();
 
     if (insertError) throw insertError;
+
+    // Send push notification
+    try {
+      const { getTargetUserIds } = await import("@/lib/notifications/targeting");
+      const { sendNotifications } = await import("@/lib/notifications/delivery");
+      
+      const targetIds = await getTargetUserIds(department_id, programme_id, semester_id);
+      
+      if (targetIds.length > 0) {
+        sendNotifications({
+          userIds: targetIds,
+          title: `New Event: ${title}`,
+          message: description || `Scheduled for ${new Date(start_time).toLocaleDateString()}`,
+          category: 'calendar',
+          actionUrl: `/calendar`,
+          priority: 'normal'
+        }).catch(console.error);
+      }
+    } catch (pushErr) {
+      console.error("Push notification error in calendar:", pushErr);
+    }
 
     revalidatePath("/calendar");
     revalidatePath("/dashboard");

@@ -8,6 +8,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/actions/auth";
 import { MobileNavMenu } from "./MobileNavMenu";
+import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -129,6 +130,11 @@ export async function Navbar() {
                     </Link>
                   </div>
                 )}
+
+                {/* Notifications */}
+                <div className="hidden lg:block">
+                  <NotificationBadge />
+                </div>
 
                 {/* Bookmarks */}
                 <div className="hidden lg:block">

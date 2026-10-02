@@ -29,7 +29,7 @@ export async function createNoticeAction(formData: FormData) {
       return { success: false, error: "Title, Content, and Category are required" };
     }
 
-    const { error: insertError } = await supabase
+    const { data: insertedNotice, error: insertError } = await supabase
       .from("notices")
       .insert({
         title,
@@ -41,9 +41,33 @@ export async function createNoticeAction(formData: FormData) {
         semester_id,
         status: 'published', // default publish for now
         created_by: user.id
-      });
+      })
+      .select("id")
+      .single();
 
     if (insertError) throw insertError;
+
+    // Send push notification
+    try {
+      const { getTargetUserIds } = await import("@/lib/notifications/targeting");
+      const { sendNotifications } = await import("@/lib/notifications/delivery");
+      
+      const targetIds = await getTargetUserIds(department_id, programme_id, semester_id);
+      
+      if (targetIds.length > 0) {
+        // Run asynchronously so it doesn't block the UI response
+        sendNotifications({
+          userIds: targetIds,
+          title: `New Notice: ${title}`,
+          message: content,
+          category: 'notice',
+          actionUrl: `/notices/${insertedNotice.id}`,
+          priority: priority === 'high' ? 'high' : 'normal'
+        }).catch(console.error);
+      }
+    } catch (pushErr) {
+      console.error("Push notification error in notice:", pushErr);
+    }
 
     revalidatePath("/notices");
     revalidatePath("/dashboard");
