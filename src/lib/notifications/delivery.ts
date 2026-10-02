@@ -112,6 +112,15 @@ export async function sendNotifications(payload: NotificationPayload) {
 
     if (!device || !notification) continue;
 
+    if (!admin) {
+      updates.push({
+        id: delivery.id,
+        status: 'failed',
+        error_message: 'Firebase Admin SDK not initialized properly.'
+      });
+      continue;
+    }
+
     try {
       const message = {
         token: device.registration_token,
@@ -129,7 +138,7 @@ export async function sendNotifications(payload: NotificationPayload) {
         }
       };
 
-      const response = await admin.messaging().send(message);
+      const response = await admin.messaging.send(message);
       
       updates.push({
         id: delivery.id,

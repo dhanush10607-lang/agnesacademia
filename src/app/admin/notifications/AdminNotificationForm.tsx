@@ -89,7 +89,7 @@ export default function AdminNotificationForm({ departments, programmes, semeste
             </div>
             <div className="space-y-2">
               <Label>Category</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={category} onValueChange={(val) => setCategory(val as string)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -122,7 +122,7 @@ export default function AdminNotificationForm({ departments, programmes, semeste
             </div>
             <div className="space-y-2">
               <Label>Priority Level</Label>
-              <Select value={priority} onValueChange={setPriority}>
+              <Select value={priority} onValueChange={(val) => setPriority(val as string)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -144,7 +144,7 @@ export default function AdminNotificationForm({ departments, programmes, semeste
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Department</Label>
-              <Select value={targetDept} onValueChange={setTargetDept}>
+              <Select value={targetDept} onValueChange={(val) => setTargetDept(val as string)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Departments</SelectItem>
@@ -156,7 +156,7 @@ export default function AdminNotificationForm({ departments, programmes, semeste
             </div>
             <div className="space-y-2">
               <Label>Programme</Label>
-              <Select value={targetProg} onValueChange={setTargetProg}>
+              <Select value={targetProg} onValueChange={(val) => setTargetProg(val as string)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Programmes</SelectItem>
@@ -168,7 +168,7 @@ export default function AdminNotificationForm({ departments, programmes, semeste
             </div>
             <div className="space-y-2">
               <Label>Semester</Label>
-              <Select value={targetSem} onValueChange={setTargetSem}>
+              <Select value={targetSem} onValueChange={(val) => setTargetSem(val as string)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Semesters</SelectItem>
