@@ -122,13 +122,15 @@ BEGIN
     DECLARE
         prog_bsc_ds UUID;
         year1_ds UUID;
+        year2_ds UUID;
         sem1_ds UUID;
         sem2_ds UUID;
+        sem3_ds UUID;
     BEGIN
         -- Get the programme ID
         SELECT id INTO prog_bsc_ds FROM public.programmes WHERE name = 'B.Sc. Data Science' LIMIT 1;
         
-        -- Insert Year
+        -- Insert Year I
         INSERT INTO public.academic_years (programme_id, name) 
         SELECT prog_bsc_ds, 'I Year' 
         WHERE NOT EXISTS (SELECT 1 FROM public.academic_years WHERE programme_id = prog_bsc_ds AND name = 'I Year')
@@ -182,6 +184,39 @@ BEGIN
         INSERT INTO public.subjects (semester_id, code, name) SELECT sem2_ds, '25DSCC253', 'Exploratory Data analysis using R' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem2_ds AND code = '25DSCC253');
         INSERT INTO public.subjects (semester_id, code, name) SELECT sem2_ds, 'ECA 03(b)', 'Extra Curricular Activities (NCC - Air Wing)' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem2_ds AND code = 'ECA 03(b)');
         INSERT INTO public.subjects (semester_id, code, name) SELECT sem2_ds, 'I M09', 'Religion / Human Value Education & Ethics' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem2_ds AND code = 'I M09');
+
+        -- Insert Year II
+        INSERT INTO public.academic_years (programme_id, name) 
+        SELECT prog_bsc_ds, 'II Year' 
+        WHERE NOT EXISTS (SELECT 1 FROM public.academic_years WHERE programme_id = prog_bsc_ds AND name = 'II Year')
+        RETURNING id INTO year2_ds;
+
+        IF year2_ds IS NULL THEN
+            SELECT id INTO year2_ds FROM public.academic_years WHERE programme_id = prog_bsc_ds AND name = 'II Year' LIMIT 1;
+        END IF;
+
+        -- Insert Semester III
+        INSERT INTO public.semesters (academic_year_id, name) 
+        SELECT year2_ds, 'Semester III' 
+        WHERE NOT EXISTS (SELECT 1 FROM public.semesters WHERE academic_year_id = year2_ds AND name = 'Semester III')
+        RETURNING id INTO sem3_ds;
+
+        IF sem3_ds IS NULL THEN
+            SELECT id INTO sem3_ds FROM public.semesters WHERE academic_year_id = year2_ds AND name = 'Semester III' LIMIT 1;
+        END IF;
+
+        -- Insert Subjects for Semester III
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, '24ENG302', 'English Language' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = '24ENG302');
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, '24HIN302', 'General Hindi - III' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = '24HIN302');
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, '25DSCC301', 'Machine Learning' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = '25DSCC301');
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, '25DSCC302', 'Statistical Inference' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = '25DSCC302');
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, '25DSCC303', 'Linear Algebra' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = '25DSCC303');
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, '25DSCE31', 'Medical Image Processing' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = '25DSCE31');
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, '25DSCC351', 'Machine Learning Lab' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = '25DSCC351');
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, '25DSCC352', 'Statistical Inference Lab using R' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = '25DSCC352');
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, '25DSCC353', 'Data Analysis using SPSS Lab' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = '25DSCC353');
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, 'ECA 03(b)', 'Extra Curricular Activities (NCC - Air Wing)' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = 'ECA 03(b)');
+        INSERT INTO public.subjects (semester_id, code, name) SELECT sem3_ds, 'II M04', 'Religion / Human Value Education & Ethics' WHERE NOT EXISTS (SELECT 1 FROM public.subjects WHERE semester_id = sem3_ds AND code = 'II M04');
 
     END;
 
