@@ -43,7 +43,7 @@ export default async function AcademicInfoPage() {
     .eq("key", "global_academic_profile_lock")
     .single();
 
-  const isGlobalLocked = globalSettings?.value === "true";
+  const isGlobalLocked = globalSettings?.value === "true" || globalSettings?.value === true;
   const isLocked = profile.is_academic_locked || isGlobalLocked;
 
   return (

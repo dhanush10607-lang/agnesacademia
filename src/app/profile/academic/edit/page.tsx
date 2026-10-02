@@ -24,7 +24,7 @@ export default async function EditAcademicProfilePage() {
     .eq("key", "global_academic_profile_lock")
     .single();
 
-  const isGlobalLocked = globalSettings?.value === "true";
+  const isGlobalLocked = globalSettings?.value === "true" || globalSettings?.value === true;
 
   if (profile.is_academic_locked || isGlobalLocked) {
     redirect("/profile/academic"); // Block access if locked

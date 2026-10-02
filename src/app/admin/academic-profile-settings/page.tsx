@@ -24,7 +24,7 @@ export default async function GlobalAcademicSettingsPage() {
     .eq("key", "global_academic_profile_lock")
     .single();
 
-  const isGloballyLocked = globalLockSetting?.value === "true";
+  const isGloballyLocked = globalLockSetting?.value === "true" || globalLockSetting?.value === true;
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-4xl space-y-6">
@@ -74,6 +74,11 @@ export default async function GlobalAcademicSettingsPage() {
                 updated_by: user?.id,
                 updated_at: new Date().toISOString()
               });
+              
+              const { revalidatePath } = require("next/cache");
+              revalidatePath("/profile/academic");
+              revalidatePath("/profile/academic/edit");
+              revalidatePath("/admin/academic-profile-settings");
             }}>
               <Button 
                 type="submit" 
