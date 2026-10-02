@@ -50,6 +50,14 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/suspended', request.url));
     }
     
+    // Redirect active users away from suspended page
+    if (accountStatus === 'active' && path.startsWith('/suspended')) {
+      if (role === 'administrator') return NextResponse.redirect(new URL('/admin', request.url));
+      if (role === 'faculty') return NextResponse.redirect(new URL('/faculty', request.url));
+      if (role === 'moderator') return NextResponse.redirect(new URL('/moderation', request.url));
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    
     // Do not enforce portal locks if on /suspended
     if (path.startsWith('/suspended')) {
       return supabaseResponse;
