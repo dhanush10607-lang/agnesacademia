@@ -18,7 +18,15 @@ export default async function EditAcademicProfilePage() {
 
   if (!profile) redirect("/onboarding");
 
-  if (profile.is_academic_locked) {
+  const { data: globalSettings } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "global_academic_profile_lock")
+    .single();
+
+  const isGlobalLocked = globalSettings?.value === "true";
+
+  if (profile.is_academic_locked || isGlobalLocked) {
     redirect("/profile/academic"); // Block access if locked
   }
 

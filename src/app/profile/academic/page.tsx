@@ -36,7 +36,15 @@ export default async function AcademicInfoPage() {
     .eq("semester_id", profile.semester_id || '00000000-0000-0000-0000-000000000000')
     .order("name", { ascending: true });
 
-  const isLocked = profile.is_academic_locked;
+  // Fetch global settings
+  const { data: globalSettings } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "global_academic_profile_lock")
+    .single();
+
+  const isGlobalLocked = globalSettings?.value === "true";
+  const isLocked = profile.is_academic_locked || isGlobalLocked;
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-3xl space-y-6 pb-24 md:pb-8">
