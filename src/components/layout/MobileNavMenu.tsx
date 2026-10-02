@@ -108,6 +108,14 @@ export function MobileNavMenu({ role }: Props) {
       ],
     },
     {
+      title: "Users & Security",
+      links: [
+        { href: "/admin/users?role=student", label: "Students", icon: Users },
+        { href: "/admin/users?role=faculty", label: "Faculty", icon: Users },
+        { href: "/admin/academic-profile-settings", label: "Profile Settings", icon: Settings },
+      ],
+    },
+    {
       title: "Academic",
       links: [
         { href: "/admin/resources?type=question_paper", label: "Question Papers", icon: FileText },

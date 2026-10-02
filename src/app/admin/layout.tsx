@@ -60,6 +60,7 @@ export default async function AdminLayout({
         { name: "Faculty", href: "/admin/users?role=faculty", icon: Users },
         { name: "Moderators", href: "/admin/users?role=moderator", icon: Users },
         { name: "Administrators", href: "/admin/users?role=administrator", icon: Users },
+        { name: "Profile Settings", href: "/admin/academic-profile-settings", icon: Settings },
       ]
     },
     {
