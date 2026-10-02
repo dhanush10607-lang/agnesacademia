@@ -19,8 +19,8 @@ export async function updatePersonalProfileAction(formData: FormData) {
   const { data: profile } = await supabase.from("profiles").select("role, is_academic_locked").eq("id", user.id).single();
   
   const updates: any = {};
-  if (phone !== null) updates.phone = phone;
-  if (avatarUrl !== null) updates.avatar_url = avatarUrl;
+  updates.phone = phone ? phone : null;
+  updates.avatar_url = avatarUrl ? avatarUrl : null;
   
   // Only allow name update if not locked or not student
   if (profile && (profile.role !== 'student' || !profile.is_academic_locked)) {
