@@ -48,6 +48,16 @@ export async function deleteAccountAction(
   }
 
   const admin = createAdminClient();
+  const { error: archiveError } = await admin.rpc("archive_deleted_account", {
+    p_user_id: user.id,
+  });
+
+  if (archiveError) {
+    console.error("Could not archive account data before deletion:", archiveError);
+    return {
+      error: "Your account data could not be safely archived, so your account was not deleted. Please try again later.",
+    };
+  }
 
   for (const { table, column } of contributionAuthors) {
     const { error } = await admin

@@ -85,7 +85,7 @@ export default async function AccountPage() {
               <h4 className="font-medium text-foreground">Delete Account</h4>
               <p className="text-sm text-muted-foreground">Permanently delete your account and data.</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your private account data will be deleted. Shared contributions will remain without your author attribution.
+                Before deletion, your account information is archived for administrators. Shared contributions remain without your author attribution.
               </p>
             </div>
             <DeleteAccountForm />
