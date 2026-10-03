@@ -22,7 +22,6 @@ export default async function SubjectsPage() {
   let availableSubjects: any[] = [];
   
   if (profile.curriculum_id) {
-    // New Multi-subject model
     const { data: curriculumData, error } = await supabase
       .from("curriculum_subjects")
       .select(`
@@ -43,20 +42,6 @@ export default async function SubjectsPage() {
       maximum_selection: cs.maximum_selection,
       subject_type: cs.subject_type?.name || 'Other',
       type_order: cs.subject_type?.display_order || 99
-    })) || [];
-  } else {
-    // Fallback to legacy single-major model
-    const { data: legacySubjects } = await supabase
-      .from("subjects")
-      .select("id, name, code")
-      .eq("semester_id", profile.semester_id || '00000000-0000-0000-0000-000000000000')
-      .order("name", { ascending: true });
-      
-    availableSubjects = legacySubjects?.map(s => ({
-      ...s,
-      is_compulsory: true,
-      subject_type: 'Legacy',
-      type_order: 0
     })) || [];
   }
 
@@ -80,7 +65,7 @@ export default async function SubjectsPage() {
           <BookOpen className="w-8 h-8 mr-3 text-green-500" /> My Subjects
         </h1>
         <p className="text-muted-foreground mt-2">
-          Select your enrolled subjects for {profile.curriculum ? (profile.curriculum as any)?.name : (profile.programme as any)?.name} - {(profile.semester as any)?.name}.
+          Select your enrolled subjects for {(profile.curriculum as any)?.name} - {(profile.semester as any)?.name}.
         </p>
       </div>
 
