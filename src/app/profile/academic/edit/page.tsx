@@ -12,7 +12,7 @@ export default async function EditAcademicProfilePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_academic_locked, department_id, programme_id, academic_year_id, semester_id")
+    .select("is_academic_locked, department_id, programme_id, curriculum_id, academic_year_id, semester_id")
     .eq("id", user.id)
     .single();
 
@@ -40,6 +40,7 @@ export default async function EditAcademicProfilePage() {
   }
   
   let initialProgrammes: any[] = [];
+  let initialCurricula: any[] = [];
   let initialYears: any[] = [];
   let initialSemesters: any[] = [];
 
@@ -48,8 +49,11 @@ export default async function EditAcademicProfilePage() {
     if (data) initialProgrammes = data;
   }
   if (profile.programme_id) {
-    const { data } = await supabase.from("academic_years").select("id, name").eq("programme_id", profile.programme_id).order("name");
-    if (data) initialYears = data;
+    const { data: currData } = await supabase.from("curricula").select("id, name").eq("programme_id", profile.programme_id).eq("is_active", true).order("name");
+    if (currData) initialCurricula = currData;
+
+    const { data: yearData } = await supabase.from("academic_years").select("id, name").eq("programme_id", profile.programme_id).order("name");
+    if (yearData) initialYears = yearData;
   }
   if (profile.academic_year_id) {
     const { data } = await supabase.from("semesters").select("id, name").eq("academic_year_id", profile.academic_year_id).order("name");
@@ -72,11 +76,13 @@ export default async function EditAcademicProfilePage() {
       <AcademicEditForm 
         departments={departments || []} 
         initialProgrammes={initialProgrammes}
+        initialCurricula={initialCurricula}
         initialYears={initialYears}
         initialSemesters={initialSemesters}
         currentProfile={{
           department_id: profile.department_id,
           programme_id: profile.programme_id,
+          curriculum_id: profile.curriculum_id,
           academic_year_id: profile.academic_year_id,
           semester_id: profile.semester_id,
         }}

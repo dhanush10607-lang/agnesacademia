@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 export interface OnboardingData {
   department_id?: string;
   programme_id?: string;
+  curriculum_id?: string;
   academic_year_id?: string;
   semester_id?: string;
   learning_interests?: string[];
@@ -35,6 +36,7 @@ export async function saveOnboardingProfile(data: OnboardingData) {
 
   if (data.department_id)       update.department_id       = data.department_id;
   if (data.programme_id)        update.programme_id        = data.programme_id;
+  if (data.curriculum_id)       update.curriculum_id       = data.curriculum_id;
   if (data.academic_year_id)    update.academic_year_id    = data.academic_year_id;
   if (data.semester_id)         update.semester_id         = data.semester_id;
   if (data.learning_interests)  update.learning_interests  = data.learning_interests;

@@ -23,13 +23,14 @@ interface Props {
   departments: Dept[];
   programmes:  Prog[];
   years:       Year[];
+  curricula:   { id: string; name: string; programme_id: string; code?: string }[];
   semesters:   Semester[];
   subjects:    Subject[];
   studentName: string;
 }
 
 // ─── Step IDs ────────────────────────────────────────────────────────────────
-const STEPS = ["welcome", "department", "programme", "year", "semester", "interests", "appearance", "finish"] as const;
+const STEPS = ["welcome", "department", "programme", "curriculum", "year", "semester", "interests", "appearance", "finish"] as const;
 type StepId = typeof STEPS[number];
 
 // ─── Slide variants ───────────────────────────────────────────────────────────
@@ -68,7 +69,7 @@ const THEMES = [
 ];
 
 // ─── Progress bar ─────────────────────────────────────────────────────────────
-const PROGRESS_STEPS: StepId[] = ["department", "programme", "year", "semester", "interests", "appearance"];
+const PROGRESS_STEPS: StepId[] = ["department", "programme", "curriculum", "year", "semester", "interests", "appearance"];
 
 function ProgressBar({ current }: { current: StepId }) {
   const idx   = PROGRESS_STEPS.indexOf(current);
@@ -154,11 +155,13 @@ function SearchableList({
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export function OnboardingWizard({ departments, programmes, years, semesters, subjects, studentName }: Props) {
+export function OnboardingWizard(props: Props) {
+  const { departments, programmes, years, semesters, subjects, studentName } = props;
   const [step,          setStep]     = useState<StepId>("welcome");
   const [dir,           setDir]      = useState(1);
   const [departmentId,  setDepId]    = useState("");
   const [programmeId,   setProgId]   = useState("");
+  const [curriculumId,  setCurriculumId] = useState("");
   const [yearId,        setYearId]   = useState("");
   const [semesterId,    setSemId]    = useState("");
   const [interests,     setInterests]= useState<string[]>([]);
@@ -170,11 +173,13 @@ export function OnboardingWizard({ departments, programmes, years, semesters, su
   const [isPending,     startTransition] = useTransition();
 
   const filteredProgs  = programmes.filter(p => !departmentId || p.department_id === departmentId);
+  const filteredCurricula = props.curricula.filter(c => !programmeId || c.programme_id === programmeId);
   const filteredYears  = years.filter(y => !programmeId || y.programme_id === programmeId);
   const filteredSems   = semesters.filter(s => !yearId || s.academic_year_id === yearId);
 
   const selectedDept     = departments.find(d => d.id === departmentId);
   const selectedProg     = programmes.find(p => p.id === programmeId);
+  const selectedCurriculum = props.curricula.find(c => c.id === curriculumId);
   const selectedYear     = years.find(y => y.id === yearId);
   const selectedSemester = semesters.find(s => s.id === semesterId);
 
@@ -192,6 +197,7 @@ export function OnboardingWizard({ departments, programmes, years, semesters, su
     const data: OnboardingData = {
       department_id:    departmentId  || undefined,
       programme_id:     programmeId   || undefined,
+      curriculum_id:    curriculumId  || undefined,
       academic_year_id: yearId        || undefined,
       semester_id:      semesterId    || undefined,
       learning_interests: interests.length ? interests : undefined,
@@ -312,7 +318,39 @@ export function OnboardingWizard({ departments, programmes, years, semesters, su
           <Button variant="outline" onClick={() => go("department", -1)} className="gap-1">
             <ChevronLeft className="w-4 h-4" /> Back
           </Button>
-          <Button onClick={() => go("year")} disabled={!programmeId} className="flex-1 gap-1">
+          <Button onClick={() => go("curriculum")} disabled={!programmeId} className="flex-1 gap-1">
+            Next <ChevronRight className="w-4 h-4" />
+          </Button>
+          <button onClick={() => go("curriculum")} className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">Skip</button>
+        </div>
+      </div>
+    ),
+
+    // ── CURRICULUM ────────────────────────────────────────────────────────────
+    curriculum: (
+      <div className="space-y-4">
+        <ProgressBar current="curriculum" />
+        <div className="mb-2">
+          <div className="flex items-center gap-2 mb-1">
+            <BookOpen className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-heading font-bold">What is your curriculum combination?</h2>
+          </div>
+          {selectedProg && <p className="text-sm text-muted-foreground">Programme: <strong>{selectedProg.name}</strong></p>}
+        </div>
+        <SearchableList
+          items={filteredCurricula}
+          value={curriculumId}
+          onChange={setCurriculumId}
+          placeholder="Search curriculum..."
+        />
+        {filteredCurricula.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">No curriculum found. Try a different programme or skip.</p>
+        )}
+        <div className="flex gap-3 pt-2">
+          <Button variant="outline" onClick={() => go("programme", -1)} className="gap-1">
+            <ChevronLeft className="w-4 h-4" /> Back
+          </Button>
+          <Button onClick={() => go("year")} disabled={!curriculumId} className="flex-1 gap-1">
             Next <ChevronRight className="w-4 h-4" />
           </Button>
           <button onClick={() => go("year")} className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">Skip</button>
@@ -351,7 +389,7 @@ export function OnboardingWizard({ departments, programmes, years, semesters, su
           ))}
         </div>
         <div className="flex gap-3 pt-2">
-          <Button variant="outline" onClick={() => go("programme", -1)} className="gap-1">
+          <Button variant="outline" onClick={() => go("curriculum", -1)} className="gap-1">
             <ChevronLeft className="w-4 h-4" /> Back
           </Button>
           <Button onClick={() => go("semester")} disabled={!yearId} className="flex-1 gap-1">
@@ -545,6 +583,7 @@ export function OnboardingWizard({ departments, programmes, years, semesters, su
           <div className="bg-muted/40 rounded-2xl p-4 text-sm text-left space-y-1.5">
             {selectedDept     && <div className="flex justify-between"><span className="text-muted-foreground">Department</span><strong>{selectedDept.name}</strong></div>}
             {selectedProg     && <div className="flex justify-between"><span className="text-muted-foreground">Programme</span><strong>{selectedProg.name}</strong></div>}
+            {selectedCurriculum && <div className="flex justify-between"><span className="text-muted-foreground">Curriculum</span><strong>{selectedCurriculum.name}</strong></div>}
             {selectedYear     && <div className="flex justify-between"><span className="text-muted-foreground">Year</span><strong>{selectedYear.name}</strong></div>}
             {selectedSemester && <div className="flex justify-between"><span className="text-muted-foreground">Semester</span><strong>{selectedSemester.name}</strong></div>}
           </div>

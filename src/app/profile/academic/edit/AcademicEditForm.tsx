@@ -12,12 +12,14 @@ import { AlertTriangle, CheckCircle } from "lucide-react";
 export default function AcademicEditForm({
   departments,
   initialProgrammes = [],
+  initialCurricula = [],
   initialYears = [],
   initialSemesters = [],
   currentProfile
 }: {
   departments: any[];
   initialProgrammes?: any[];
+  initialCurricula?: any[];
   initialYears?: any[];
   initialSemesters?: any[];
   currentProfile: any;
@@ -27,10 +29,12 @@ export default function AcademicEditForm({
 
   const [deptId, setDeptId] = useState<string>(currentProfile.department_id || "");
   const [progId, setProgId] = useState<string>(currentProfile.programme_id || "");
+  const [currId, setCurrId] = useState<string>(currentProfile.curriculum_id || "");
   const [yearId, setYearId] = useState<string>(currentProfile.academic_year_id || "");
   const [semId, setSemId] = useState<string>(currentProfile.semester_id || "");
 
   const [programmes, setProgrammes] = useState<any[]>(initialProgrammes);
+  const [curricula, setCurricula] = useState<any[]>(initialCurricula);
   const [years, setYears] = useState<any[]>(initialYears);
   const [semesters, setSemesters] = useState<any[]>(initialSemesters);
 
@@ -45,11 +49,13 @@ export default function AcademicEditForm({
       .then(({ data }) => setProgrammes(data || []));
   }, [deptId, supabase]);
 
-  // Load Years when Prog changes
+  // Load Years & Curricula when Prog changes
   useEffect(() => {
     if (!progId) return;
     supabase.from("academic_years").select("id, name").eq("programme_id", progId).order("name")
       .then(({ data }) => setYears(data || []));
+    supabase.from("curricula").select("id, name").eq("programme_id", progId).eq("is_active", true).order("name")
+      .then(({ data }) => setCurricula(data || []));
   }, [progId, supabase]);
 
   // Load Semesters when Year changes
@@ -83,6 +89,7 @@ export default function AcademicEditForm({
       .update({
         department_id: deptId,
         programme_id: progId,
+        curriculum_id: currId || null,
         academic_year_id: yearId,
         semester_id: semId
       })
@@ -136,7 +143,7 @@ export default function AcademicEditForm({
             <Label>Department</Label>
             <Select 
               value={departments.some(d => d.id === deptId) ? deptId : ""} 
-              onValueChange={(val) => { setDeptId(val || ""); setProgId(""); setYearId(""); setSemId(""); }}
+              onValueChange={(val) => { setDeptId(val || ""); setProgId(""); setCurrId(""); setYearId(""); setSemId(""); }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Department" />
@@ -154,7 +161,7 @@ export default function AcademicEditForm({
             <Select 
               disabled={!deptId} 
               value={programmes.some(p => p.id === progId) ? progId : ""} 
-              onValueChange={(val) => { setProgId(val || ""); setYearId(""); setSemId(""); }}
+              onValueChange={(val) => { setProgId(val || ""); setCurrId(""); setYearId(""); setSemId(""); }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Programme" />
@@ -162,6 +169,24 @@ export default function AcademicEditForm({
               <SelectContent>
                 {programmes.map(p => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Curriculum</Label>
+            <Select 
+              disabled={!progId} 
+              value={curricula.some(c => c.id === currId) ? currId : ""} 
+              onValueChange={(val) => { setCurrId(val || ""); }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Curriculum" />
+              </SelectTrigger>
+              <SelectContent>
+                {curricula.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

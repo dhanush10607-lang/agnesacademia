@@ -29,12 +29,14 @@ export default async function OnboardingPage() {
   const [
     { data: departments },
     { data: programmes },
+    { data: curricula },
     { data: years },
     { data: semesters },
     { data: subjects },
   ] = await Promise.all([
     supabase.from("departments").select("id, name").eq("status", "active").order("name"),
     supabase.from("programmes").select("id, name, department_id, code").eq("status", "active").order("name"),
+    supabase.from("curricula").select("id, name, programme_id, code").eq("is_active", true).order("name"),
     supabase.from("academic_years").select("id, name, programme_id").order("name"),
     supabase.from("semesters").select("id, name, academic_year_id").order("name"),
     supabase.from("subjects").select("id, name, code").eq("status", "active").order("name"),
@@ -48,6 +50,7 @@ export default async function OnboardingPage() {
     <OnboardingWizard
       departments={departments || []}
       programmes={programmes   || []}
+      curricula={curricula     || []}
       years={years             || []}
       semesters={semesters     || []}
       subjects={subjects       || []}
