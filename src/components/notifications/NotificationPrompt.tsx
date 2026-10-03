@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { app, requestForToken } from "@/lib/firebase/client";
+import { app, refreshForToken } from "@/lib/firebase/client";
 import { registerDeviceAction } from "@/app/actions/notifications";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ export function NotificationPrompt() {
       setIsRegistering(false);
       return;
     }
-    const token = await requestForToken();
+    const token = await refreshForToken();
       if (token) {
         const ua = navigator.userAgent;
         let os = "Unknown";

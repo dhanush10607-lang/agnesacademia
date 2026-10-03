@@ -8,7 +8,7 @@ import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import { updateUserSettingsAction } from "@/app/actions/settings";
-import { requestForToken } from "@/lib/firebase/client";
+import { refreshForToken } from "@/lib/firebase/client";
 import { registerDeviceAction } from "@/app/actions/notifications";
 
 export default function NotificationsClient({ initialSettings }: { initialSettings: any }) {
@@ -28,7 +28,7 @@ export default function NotificationsClient({ initialSettings }: { initialSettin
 
   const handleEnablePush = async () => {
     try {
-      const token = await requestForToken();
+      const token = await refreshForToken();
       if (token) {
         const ua = navigator.userAgent;
         let os = "Unknown";

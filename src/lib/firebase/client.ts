@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
+import { getMessaging, getToken, onMessage, isSupported, deleteToken } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -41,6 +41,27 @@ export const requestForToken = async () => {
     }
   } catch (err) {
     console.error("An error occurred while retrieving token. ", err);
+    return null;
+  }
+};
+
+// Forces deletion of the locally cached token and grabs a completely fresh one from Google
+export const refreshForToken = async () => {
+  try {
+    const messagingSupported = await isSupported();
+    if (!messagingSupported) return null;
+
+    const messaging = getMessaging(app);
+    try {
+      await deleteToken(messaging);
+      console.log("Deleted old cached FCM token.");
+    } catch (e) {
+      console.warn("Could not delete old token (maybe it didn't exist)", e);
+    }
+
+    return await requestForToken();
+  } catch (err) {
+    console.error("An error occurred while refreshing token. ", err);
     return null;
   }
 };
