@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
 import SubjectSelector from "./SubjectSelector";
+import { getCurriculumSemesterSubjects } from "@/lib/curriculumSubjects";
 
 export default async function SubjectsPage() {
   const supabase = await createClient();
@@ -22,17 +23,12 @@ export default async function SubjectsPage() {
   let availableSubjects: any[] = [];
   
   if (profile.curriculum_id) {
-    const { data: curriculumData, error } = await supabase
-      .from("curriculum_subjects")
-      .select(`
-        id, is_compulsory, is_selectable, minimum_selection, maximum_selection,
-        subject:subjects!inner (id, name, code, subject_type_id, semester_id),
-        subject_type:subject_types (name, display_order)
-      `)
-      .eq("curriculum_id", profile.curriculum_id)
-      .eq("subject.semester_id", profile.semester_id);
-      
-    if (error) console.error("Error fetching curriculum subjects:", error);
+    const curriculumData = await getCurriculumSemesterSubjects(
+      supabase,
+      profile.curriculum_id,
+      profile.semester_id,
+      (profile.semester as any)?.name
+    );
       
     availableSubjects = curriculumData?.map((cs: any) => ({
       ...cs.subject,

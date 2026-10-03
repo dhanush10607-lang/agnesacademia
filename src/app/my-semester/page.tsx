@@ -5,6 +5,7 @@ import { BookOpen, ChevronRight, Library } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { getCurriculumSemesterSubjects } from "@/lib/curriculumSubjects";
 
 export default async function MySemesterPage() {
   const supabase = await createClient();
@@ -60,16 +61,14 @@ export default async function MySemesterPage() {
     subjects.sort((a, b) => a.name.localeCompare(b.name));
   } else if (profile.curriculum_id) {
     // Fetch from curriculum if no explicit enrollments exist
-    const { data: currSubjects } = await supabase
-      .from("curriculum_subjects")
-      .select("subject:subjects!inner(*)")
-      .eq("curriculum_id", profile.curriculum_id)
-      .eq("subject.semester_id", profile.semester_id);
-      
-    if (currSubjects) {
-      subjects = currSubjects.map((cs: any) => cs.subject);
-      subjects.sort((a: any, b: any) => a.name.localeCompare(b.name));
-    }
+    const currSubjects = await getCurriculumSemesterSubjects(
+      supabase,
+      profile.curriculum_id,
+      profile.semester_id,
+      profile.semester?.name
+    );
+    subjects = currSubjects.map((cs: any) => cs.subject);
+    subjects.sort((a: any, b: any) => a.name.localeCompare(b.name));
   }
 
   return (

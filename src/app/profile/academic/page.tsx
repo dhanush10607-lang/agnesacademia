@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { GraduationCap, ArrowLeft, Lock, Unlock, BookOpen, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getCurriculumSemesterSubjects } from "@/lib/curriculumSubjects";
 
 export default async function AcademicInfoPage() {
   const supabase = await createClient();
@@ -33,16 +34,14 @@ export default async function AcademicInfoPage() {
   let subjects: any[] = [];
   
   if (profile.curriculum_id) {
-    const { data: currSubjects } = await supabase
-      .from("curriculum_subjects")
-      .select("subject:subjects!inner(*)")
-      .eq("curriculum_id", profile.curriculum_id)
-      .eq("subject.semester_id", profile.semester_id);
-      
-    if (currSubjects) {
-      subjects = currSubjects.map((cs: any) => cs.subject);
-      subjects.sort((a: any, b: any) => a.name.localeCompare(b.name));
-    }
+    const currSubjects = await getCurriculumSemesterSubjects(
+      supabase,
+      profile.curriculum_id,
+      profile.semester_id,
+      profile.semester?.name
+    );
+    subjects = currSubjects.map((cs: any) => cs.subject);
+    subjects.sort((a: any, b: any) => a.name.localeCompare(b.name));
   }
 
   // Fetch global settings

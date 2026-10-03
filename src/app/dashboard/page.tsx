@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { PasskeySettings } from "@/components/auth/PasskeySettings";
 import Link from "next/link";
 import { format } from "date-fns";
+import { getCurriculumSemesterSubjects } from "@/lib/curriculumSubjects";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -56,11 +57,12 @@ export default async function DashboardPage() {
     }
   } else if (profile?.curriculum_id) {
     // Fetch from curriculum if no explicit enrollments exist
-    const { data: currData } = await supabase
-      .from("curriculum_subjects")
-      .select("subject:subjects!inner(id, name, code, description)")
-      .eq("curriculum_id", profile.curriculum_id)
-      .eq("subject.semester_id", profile.semester_id);
+    const currData = await getCurriculumSemesterSubjects(
+      supabase,
+      profile.curriculum_id,
+      profile.semester_id,
+      profile.semester?.name
+    );
     
     if (currData) {
       for (const cs of currData) {
