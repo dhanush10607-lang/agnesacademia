@@ -181,12 +181,17 @@ export async function createSubjectAction(formData: FormData) {
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;
   const semester_id = formData.get("semester_id") as string;
-  let department_id = formData.get("department_id") as string;
-  if (department_id === 'none') department_id = '';
+  const department_ids = formData.getAll("department_ids") as string[];
 
   try {
-    const { data: s, error } = await supabase.from("subjects").insert({ name, code, semester_id, department_id: department_id || null }).select().single();
+    const { data: s, error } = await supabase.from("subjects").insert({ name, code, semester_id }).select().single();
     if (error) throw error;
+
+    if (department_ids.length > 0) {
+      const deptInserts = department_ids.map(id => ({ subject_id: s.id, department_id: id }));
+      await supabase.from("subject_departments").insert(deptInserts);
+    }
+
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'create', target_type: 'subject', target_id: s.id, metadata: { name, code } });
     revalidatePath("/admin/academic/subjects");
     return { success: true };

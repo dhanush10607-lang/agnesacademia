@@ -192,15 +192,16 @@ export function CreateSubjectForm({ semesters, departments }: { semesters: any[]
           </SelectContent>
         </Select>
       </div>
-      <div className="flex-grow space-y-2">
-        <Label htmlFor="department_id">Department (Optional)</Label>
-        <Select name="department_id">
-          <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">None</SelectItem>
-            {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      <div className="w-full space-y-2">
+        <Label>Departments (Optional)</Label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded-md p-3 max-h-48 overflow-y-auto bg-background">
+          {departments.map(d => (
+            <div key={d.id} className="flex items-center space-x-2">
+              <input type="checkbox" id={`dept-${d.id}`} name="department_ids" value={d.id} className="rounded border-border text-primary focus:ring-primary h-4 w-4" />
+              <label htmlFor={`dept-${d.id}`} className="text-sm font-medium leading-none cursor-pointer">{d.name}</label>
+            </div>
+          ))}
+        </div>
       </div>
       <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "..." : "Add"}</Button>
     </form>
