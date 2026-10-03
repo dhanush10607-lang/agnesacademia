@@ -14,7 +14,15 @@ interface Subject {
   id: string;
   name: string;
   code: string;
-  semester: { name: string; academic_year: { name: string; programme: { name: string } } };
+  department_id: string | null;
+  subject_departments: { department_id: string }[];
+  semester: {
+    name: string;
+    academic_year: {
+      name: string;
+      programme: { name: string; department_id: string | null };
+    };
+  };
 }
 
 interface Faculty {
@@ -43,6 +51,12 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
   const currentFaculty = facultyList.find(f => f.id === selectedFaculty);
   const currentFacultySubjects = subjectAssignments[selectedFaculty] || [];
   const currentFacultyDepts = deptAssignments[selectedFaculty] || [];
+  const subjectsInSelectedDepartments = subjectsList.filter(subject => {
+    const departmentIds = subject.subject_departments?.length
+      ? subject.subject_departments.map(department => department.department_id)
+      : [subject.department_id || subject.semester?.academic_year?.programme?.department_id];
+    return departmentIds.some(departmentId => departmentId && currentFacultyDepts.includes(departmentId));
+  });
 
   const handleToggleSubject = (subjectId: string) => {
     if (!selectedFaculty) return;
@@ -70,10 +84,13 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
     setIsSaving(true);
     setMessage(null);
     
-    const { success, error } = await updateFacultyAssignments(selectedFaculty, currentFacultySubjects, currentFacultyDepts);
-    
+    const eligibleSubjectIds = new Set(subjectsInSelectedDepartments.map(subject => subject.id));
+    const subjectsToSave = currentFacultySubjects.filter(subjectId => eligibleSubjectIds.has(subjectId));
+    const { success, error } = await updateFacultyAssignments(selectedFaculty, subjectsToSave, currentFacultyDepts);
+
     setIsSaving(false);
     if (success) {
+      setSubjectAssignments(prev => ({ ...prev, [selectedFaculty]: subjectsToSave }));
       setMessage({ type: "success", text: "Faculty subjects updated successfully!" });
       setTimeout(() => setMessage(null), 3000);
     } else {
@@ -82,7 +99,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
   };
 
   // Group subjects by Programme -> Semester for better UI organization
-  const groupedSubjects = subjectsList.reduce((acc, subject) => {
+  const groupedSubjects = subjectsInSelectedDepartments.reduce((acc, subject) => {
     const progName = subject.semester?.academic_year?.programme?.name || "Unassigned Programme";
     const semName = subject.semester?.name || "Unassigned Semester";
     const groupName = `${progName} - ${semName}`;
@@ -227,8 +244,10 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
                   </div>
                 </div>
 
-              {Object.keys(groupedSubjects).length === 0 ? (
-                <p className="text-muted-foreground text-center py-10">No subjects found in the database.</p>
+              {currentFacultyDepts.length === 0 ? (
+                <p className="text-muted-foreground text-center py-10">Select a department above to view its subjects.</p>
+              ) : Object.keys(groupedSubjects).length === 0 ? (
+                <p className="text-muted-foreground text-center py-10">No subjects are assigned to the selected departments.</p>
               ) : (
                 Object.entries(groupedSubjects).sort().map(([groupName, subjects]) => {
                   const filteredSubjects = subjects.filter(s => 

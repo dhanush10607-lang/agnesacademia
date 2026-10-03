@@ -44,11 +44,13 @@ export default async function FacultyAssignmentsPage() {
       id, 
       name, 
       code, 
+      department_id,
+      subject_departments(department_id),
       semester:semesters(
         name, 
         academic_year:academic_years(
           name, 
-          programme:programmes(name)
+          programme:programmes(name, department_id)
         )
       )
     `)
