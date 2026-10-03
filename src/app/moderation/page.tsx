@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Clock, AlertTriangle, ShieldCheck, ExternalLink, Filter } from "lucide-react";
+import { FileText, Clock, AlertTriangle, ShieldCheck, ExternalLink, Filter, Flag } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -66,6 +66,13 @@ export default async function ModerationDashboardPage({
         <p className="text-lg text-muted-foreground">
           Review and moderate student-contributed academic resources.
         </p>
+        <Link
+          href="/moderation/reports"
+          className={buttonVariants({ variant: "outline", className: "mt-4" })}
+        >
+          <Flag className="mr-2 h-4 w-4" />
+          Review user reports
+        </Link>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-8">

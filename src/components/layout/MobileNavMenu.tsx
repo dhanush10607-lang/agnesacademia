@@ -62,6 +62,7 @@ export function MobileNavMenu({ role }: Props) {
     { href: "/dashboard",   label: "Dashboard",         icon: LayoutDashboard },
     { href: "/profile",     label: "Profile & Settings", icon: Settings },
     { href: "/moderation",  label: "Moderation",        icon: Shield },
+    { href: "/moderation/reports", label: "Reported Content", icon: Bell },
     { href: "/admin",       label: "Admin Console",     icon: Settings },
     { href: "/help",        label: "Help & Guide",      icon: HelpCircle },
   ];
