@@ -119,13 +119,22 @@ export function NotificationPrompt() {
         }
       }
 
-      const token = await requestForToken();
+      const previousRegistration = readReg();
+      const switchedAccounts =
+        previousRegistration !== null && previousRegistration.userId !== userId;
+      const token = switchedAccounts
+        ? await refreshForToken()
+        : await requestForToken();
       if (cancelled || !token) return;
 
-      const prev = readReg();
+      if (switchedAccounts && token === previousRegistration.token) {
+        console.warn("Could not generate a new push token for the signed-in user.");
+        return;
+      }
+
+      const prev = previousRegistration;
       const needsRegister =
         !prev ||
-        prev.userId !== userId ||          // another user logged in on this device
         prev.token !== token ||            // FCM rotated the token
         !deviceCookieMatches(token) ||     // logged out since (device was deactivated)
         Date.now() - prev.at > RE_REGISTER_MS;
