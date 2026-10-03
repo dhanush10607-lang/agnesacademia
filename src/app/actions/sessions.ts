@@ -1,7 +1,11 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthSessionId } from "@/lib/auth/session-id";
+
+const DEVICE_COOKIE = "agnes_device_id";
 
 export async function recordCurrentSessionAction(
   browser: string,
@@ -26,9 +30,24 @@ export async function recordCurrentSessionAction(
     return { success: false, error: "Your session could not be identified." };
   }
 
+  const cookieStore = await cookies();
+  let deviceId = cookieStore.get(DEVICE_COOKIE)?.value;
+
+  if (!deviceId || !/^[0-9a-f-]{36}$/i.test(deviceId)) {
+    deviceId = randomUUID();
+    cookieStore.set(DEVICE_COOKIE, deviceId, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  }
+
   const { error } = await supabase.from("user_sessions").upsert(
     {
       session_id: sessionId,
+      device_id: deviceId,
       user_id: user.id,
       browser: browser.slice(0, 80),
       operating_system: operatingSystem.slice(0, 80),
@@ -36,7 +55,7 @@ export async function recordCurrentSessionAction(
       last_seen_at: new Date().toISOString(),
       revoked_at: null,
     },
-    { onConflict: "session_id" }
+    { onConflict: "user_id,device_id" }
   );
 
   if (error) {

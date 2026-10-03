@@ -22,6 +22,9 @@ export default async function SecurityPage() {
     operating_system: string;
     device_type: string;
     last_seen_at: string;
+    revoked_at: string | null;
+    is_active: boolean;
+    is_signed_out: boolean;
   }[] = [];
   let activeSessionsError = false;
 
@@ -31,18 +34,22 @@ export default async function SecurityPage() {
       const activeSince = new Date(Date.now() - 3 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from("user_sessions")
-        .select("session_id, browser, operating_system, device_type, last_seen_at")
+        .select("session_id, browser, operating_system, device_type, last_seen_at, revoked_at")
         .eq("user_id", user.id)
         .neq("session_id", currentSessionId)
-        .is("revoked_at", null)
-        .gte("last_seen_at", activeSince)
         .order("last_seen_at", { ascending: false });
 
       if (error) {
         console.error("Could not load active sessions:", error);
         activeSessionsError = true;
       } else {
-        activeSessions = data ?? [];
+        activeSessions = (data ?? []).map((trackedSession) => ({
+          ...trackedSession,
+          is_active:
+            trackedSession.revoked_at === null &&
+            trackedSession.last_seen_at >= activeSince,
+          is_signed_out: trackedSession.revoked_at !== null,
+        }));
       }
     } catch (error) {
       console.error("Could not identify the current auth session:", error);

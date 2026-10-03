@@ -89,9 +89,10 @@ export async function signOutOtherSessionsAction() {
     return { success: false, error: "Could not sign out other devices. Please try again." };
   }
 
+  const signedOutAt = new Date().toISOString();
   const { error: updateError } = await supabase
     .from("user_sessions")
-    .update({ revoked_at: new Date().toISOString() })
+    .update({ revoked_at: signedOutAt, last_seen_at: signedOutAt })
     .eq("user_id", user.id)
     .neq("session_id", currentSessionId)
     .is("revoked_at", null);

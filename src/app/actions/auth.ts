@@ -92,9 +92,10 @@ export async function logout() {
   if (user && session?.user.id === user.id) {
     try {
       const sessionId = getAuthSessionId(session.access_token)
+      const signedOutAt = new Date().toISOString()
       const { error } = await supabase
         .from("user_sessions")
-        .update({ revoked_at: new Date().toISOString() })
+        .update({ revoked_at: signedOutAt, last_seen_at: signedOutAt })
         .eq("user_id", user.id)
         .eq("session_id", sessionId)
       if (error) console.warn("Could not update active session status during logout:", error)

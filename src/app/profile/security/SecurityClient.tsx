@@ -16,6 +16,8 @@ type ActiveSession = {
   operating_system: string;
   device_type: string;
   last_seen_at: string;
+  is_active: boolean;
+  is_signed_out: boolean;
 };
 
 export function SecurityClient({
@@ -74,7 +76,13 @@ export function SecurityClient({
         setSessionError(result.error || "Could not sign out other devices. Please try again.");
         return;
       }
-      setActiveSessions([]);
+      setActiveSessions((sessions) =>
+        sessions.map((session) =>
+          session.is_active
+            ? { ...session, is_active: false, is_signed_out: true }
+            : session
+        )
+      );
       setSessionMessage("Other sessions have been signed out. This device remains signed in.");
     } catch (error) {
       console.error("Other session sign-out request failed:", error);
@@ -83,6 +91,8 @@ export function SecurityClient({
       setIsSigningOutOtherSessions(false);
     }
   }
+
+  const activeOtherSessionCount = activeSessions.filter((session) => session.is_active).length;
 
   return (
     <div className="container mx-auto max-w-2xl space-y-6 px-4 py-8 pb-24 md:pb-8">
@@ -142,7 +152,7 @@ export function SecurityClient({
           <CardDescription>
             {activeSessionsError
               ? "The session list could not be loaded."
-              : `${activeSessions.length + 1} active ${activeSessions.length + 1 === 1 ? "session" : "sessions"} detected.`}
+              : `${activeOtherSessionCount + 1} active ${activeOtherSessionCount + 1 === 1 ? "session" : "sessions"} detected.`}
             {" "}Sign out sessions on other devices without ending this session.
           </CardDescription>
         </CardHeader>
@@ -159,7 +169,9 @@ export function SecurityClient({
           {activeSessions.map((session) => (
             <div
               key={session.session_id}
-              className="flex items-center justify-between gap-4 rounded-lg border p-4"
+              className={`flex items-center justify-between gap-4 rounded-lg border p-4 ${
+                session.is_active ? "border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-950/20" : ""
+              }`}
             >
               <div className="min-w-0">
                 <p className="text-sm font-semibold">
@@ -169,11 +181,17 @@ export function SecurityClient({
                   </span>
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Last active {formatDistanceToNow(new Date(session.last_seen_at), { addSuffix: true })}
+                  {session.is_active
+                    ? "Active now"
+                    : `Last active ${formatDistanceToNow(new Date(session.last_seen_at), { addSuffix: true })}`}
                 </p>
               </div>
-              <span className="shrink-0 rounded bg-green-100 px-2 py-1 text-xs font-bold uppercase text-green-700 dark:bg-green-900/50 dark:text-green-400">
-                Active
+              <span className={`shrink-0 rounded px-2 py-1 text-xs font-bold uppercase ${
+                session.is_active
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400"
+                  : "bg-muted text-muted-foreground"
+              }`}>
+                {session.is_active ? "Active" : session.is_signed_out ? "Signed out" : "Inactive"}
               </span>
             </div>
           ))}
@@ -183,11 +201,11 @@ export function SecurityClient({
             </p>
           )}
           {!activeSessionsError && activeSessions.length === 0 && (
-            <p className="text-sm text-muted-foreground">No other active devices were detected.</p>
+            <p className="text-sm text-muted-foreground">No other devices have been recorded for this account.</p>
           )}
           {!activeSessionsError && (
             <p className="text-xs text-muted-foreground">
-              Sessions are considered active if they have checked in within the last 3 minutes.
+              A device is active while it checks in within the last 3 minutes. Signed-out devices remain listed with their last active time.
             </p>
           )}
           {sessionError && <p role="alert" className="text-sm text-destructive">{sessionError}</p>}
