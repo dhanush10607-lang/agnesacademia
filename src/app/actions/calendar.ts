@@ -25,7 +25,9 @@ export async function createEventAction(formData: FormData) {
     // Targeting
     const department_id = formData.get("department_id") as string || null;
     const programme_id = formData.get("programme_id") as string || null;
+    const curriculum_id = formData.get("curriculum_id") as string || null;
     const semester_id = formData.get("semester_id") as string || null;
+    const subject_id = formData.get("subject_id") as string || null;
 
     if (!title || !category || !start_time || !end_time) {
       return { success: false, error: "Title, Category, and Dates are required" };
@@ -42,7 +44,9 @@ export async function createEventAction(formData: FormData) {
         end_time: new Date(end_time).toISOString(),
         department_id,
         programme_id,
+        curriculum_id,
         semester_id,
+        subject_id,
         status: 'published', // default publish
         created_by: user.id
       })
@@ -56,7 +60,7 @@ export async function createEventAction(formData: FormData) {
       const { getTargetUserIds } = await import("@/lib/notifications/targeting");
       const { sendNotifications } = await import("@/lib/notifications/delivery");
       
-      const targetIds = await getTargetUserIds(department_id, programme_id, semester_id);
+      const targetIds = await getTargetUserIds(department_id, programme_id, semester_id, subject_id, curriculum_id);
       
       if (targetIds.length > 0) {
         sendNotifications({

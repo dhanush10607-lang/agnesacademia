@@ -23,6 +23,7 @@ export default async function ProfilePage() {
       *,
       department:departments(name),
       programme:programmes(name),
+      curriculum:curricula(name),
       semester:semesters(name),
       academic_year:academic_years(name)
     `)
@@ -125,11 +126,17 @@ export default async function ProfilePage() {
             <p className="text-muted-foreground">{profile.email}</p>
           </div>
           
-          <div className="flex flex-col md:flex-row gap-2 md:gap-4 text-sm font-medium">
+          <div className="flex flex-col md:flex-row gap-2 md:gap-4 text-sm font-medium flex-wrap">
             {profile.programme && (
               <div className="flex items-center justify-center md:justify-start gap-2 text-foreground/80 bg-secondary/50 px-3 py-1.5 rounded-full">
                 <GraduationCap className="w-4 h-4" />
                 {profile.programme.name}
+              </div>
+            )}
+            {profile.curriculum && (
+              <div className="flex items-center justify-center md:justify-start gap-2 text-foreground/80 bg-secondary/50 px-3 py-1.5 rounded-full">
+                <BookOpen className="w-4 h-4" />
+                {profile.curriculum.name}
               </div>
             )}
             {profile.semester && profile.academic_year && (

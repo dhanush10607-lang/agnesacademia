@@ -7,13 +7,46 @@ import Link from "next/link";
 export default async function ExamPrepPage() {
   const supabase = await createClient();
 
-  // For a full implementation, we'd add filters for Programme -> Semester -> Subject here.
-  // We'll show a simplified overview dashboard that leads into subjects for the MVP.
-  
-  const { data: subjects } = await supabase
-    .from("subjects")
-    .select("id, name, code, semester:semesters(name), programme:programmes(name)")
-    .limit(10); // Limit for demo purposes
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let subjects: any[] = [];
+
+  if (user) {
+    // Try to get enrolled subjects
+    const { data: enrolledData } = await supabase
+      .from("student_subjects")
+      .select("subject:subjects(id, name, code, semester:semesters(name), programme:programmes(name))")
+      .eq("student_id", user.id)
+      .eq("enrollment_status", "ENROLLED");
+
+    if (enrolledData && enrolledData.length > 0) {
+      subjects = enrolledData.map(e => e.subject).filter(Boolean);
+    } else {
+      // Fallback
+      const { data: profile } = await supabase.from("profiles").select("semester_id").eq("id", user.id).single();
+      if (profile?.semester_id) {
+        const { data: fallbackSubjects } = await supabase
+          .from("subjects")
+          .select("id, name, code, semester:semesters(name), programme:programmes(name)")
+          .eq("semester_id", profile.semester_id)
+          .limit(10);
+        subjects = fallbackSubjects || [];
+      } else {
+         const { data: generalSubjects } = await supabase
+          .from("subjects")
+          .select("id, name, code, semester:semesters(name), programme:programmes(name)")
+          .limit(10);
+         subjects = generalSubjects || [];
+      }
+    }
+  } else {
+    // Global fallback
+    const { data: generalSubjects } = await supabase
+      .from("subjects")
+      .select("id, name, code, semester:semesters(name), programme:programmes(name)")
+      .limit(10);
+    subjects = generalSubjects || [];
+  }
 
   return (
     <div className="min-h-screen bg-background">

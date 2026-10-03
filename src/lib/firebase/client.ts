@@ -21,8 +21,16 @@ export const requestForToken = async () => {
     }
 
     const messaging = getMessaging(app);
+
+    let swRegistration = null;
+    if ("serviceWorker" in navigator) {
+      const swUrl = `/firebase-messaging-sw.js?apiKey=${firebaseConfig.apiKey}&authDomain=${firebaseConfig.authDomain}&projectId=${firebaseConfig.projectId}&messagingSenderId=${firebaseConfig.messagingSenderId}&appId=${firebaseConfig.appId}`;
+      swRegistration = await navigator.serviceWorker.register(swUrl);
+    }
+
     const currentToken = await getToken(messaging, {
       vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+      serviceWorkerRegistration: swRegistration || undefined,
     });
 
     if (currentToken) {

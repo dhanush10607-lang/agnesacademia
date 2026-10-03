@@ -32,16 +32,36 @@ export default async function DashboardPage() {
   const role = profile?.role || "student";
   const fullName = profile?.full_name || user.email?.split('@')[0] || "User";
 
-  // Fetch student subjects if enrolled
+  // Fetch student subjects
   let subjects: any[] = [];
-  if (profile?.semester_id) {
+  
+  // Try to fetch enrolled subjects first (New Multi-Major Model)
+  const { data: enrolledData, error: enrolledError } = await supabase
+    .from("student_subjects")
+    .select("subject:subjects(id, name, code, description)")
+    .eq("student_id", user.id)
+    .eq("enrollment_status", "ENROLLED");
+    
+  if (enrolledData && enrolledData.length > 0) {
+    const subjData = enrolledData.map(e => e.subject).filter(Boolean);
+    for (const subj of subjData) {
+      if (!subj) continue;
+      const { count } = await supabase
+        .from("resources")
+        .select("*", { count: 'exact', head: true })
+        .eq("subject_id", subj.id)
+        .eq("status", "published");
+        
+      subjects.push({ ...subj, resourceCount: count || 0 });
+    }
+  } else if (profile?.semester_id) {
+    // Fallback to old behavior if no explicit enrollments exist
     const { data: subjData } = await supabase
       .from("subjects")
       .select("id, name, code, description")
       .eq("semester_id", profile.semester_id);
     
     if (subjData) {
-      // For each subject, fetch resource count (we'll just do a count for notes here as an example)
       for (const subj of subjData) {
         const { count } = await supabase
           .from("resources")
@@ -107,8 +127,7 @@ export default async function DashboardPage() {
           <h1 className="text-3xl font-heading font-extrabold text-foreground">Good morning, {fullName} 👋</h1>
           {role === 'student' && profile?.programme && profile?.semester ? (
             <p className="text-muted-foreground mt-2 font-medium">
-              {profile.programme.name} <br/> 
-              {profile.academic_year?.name} • {profile.semester.name}
+              {subjects.length > 0 ? `Your ${profile.semester.name} • ${subjects.length} Subjects` : `${profile.programme.name} • ${profile.academic_year?.name} • ${profile.semester.name}`}
             </p>
           ) : (
             <p className="text-muted-foreground mt-1">Here is your academic overview.</p>

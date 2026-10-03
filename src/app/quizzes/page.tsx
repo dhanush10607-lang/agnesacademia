@@ -9,8 +9,22 @@ export default async function QuizzesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  let subjectIds: string[] = [];
+
+  if (user) {
+    const { data: enrolledData } = await supabase
+      .from("student_subjects")
+      .select("subject_id")
+      .eq("student_id", user.id)
+      .eq("enrollment_status", "ENROLLED");
+    
+    if (enrolledData && enrolledData.length > 0) {
+      subjectIds = enrolledData.map(e => e.subject_id);
+    }
+  }
+
   // Fetch published quizzes
-  const { data: quizzes } = await supabase
+  let query = supabase
     .from("quizzes")
     .select(`
       *,
@@ -19,6 +33,12 @@ export default async function QuizzesPage() {
     `)
     .eq("status", 'published')
     .order("created_at", { ascending: false });
+
+  if (subjectIds.length > 0) {
+    query = query.in("subject_id", subjectIds);
+  }
+
+  const { data: quizzes } = await query;
 
   return (
     <div className="min-h-screen bg-background">

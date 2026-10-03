@@ -47,7 +47,14 @@ export function NotificationPrompt() {
   const handleEnable = async () => {
     setIsRegistering(true);
     try {
-      const token = await requestForToken();
+      const perm = await Notification.requestPermission();
+    if (perm !== "granted") {
+      // Permission not granted – keep prompt visible for retry
+      setShowPrompt(true);
+      setIsRegistering(false);
+      return;
+    }
+    const token = await requestForToken();
       if (token) {
         const ua = navigator.userAgent;
         let os = "Unknown";
@@ -69,9 +76,9 @@ export function NotificationPrompt() {
         localStorage.setItem("agnes_push_prompted", "true");
         setShowPrompt(false);
       } else {
-        // User denied permission during the prompt
-        localStorage.setItem("agnes_push_prompted", "denied");
-        setShowPrompt(false);
+        // Permission was denied – keep the prompt visible so the user can retry after changing browser settings
+        // Do NOT store "denied" in localStorage; allow future attempts
+        setShowPrompt(true);
       }
     } catch (e) {
       console.error(e);

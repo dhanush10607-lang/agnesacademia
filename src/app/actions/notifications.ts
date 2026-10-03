@@ -96,6 +96,8 @@ export async function sendAdminNotificationAction(data: {
     departmentId: string | null;
     programmeId: string | null;
     semesterId: string | null;
+    subjectId?: string | null;
+    curriculumId?: string | null;
   }
 }) {
   const supabase = await createClient();
@@ -113,7 +115,9 @@ export async function sendAdminNotificationAction(data: {
     const targetIds = await getTargetUserIds(
       data.targeting.departmentId,
       data.targeting.programmeId,
-      data.targeting.semesterId
+      data.targeting.semesterId,
+      data.targeting.subjectId,
+      data.targeting.curriculumId
     );
 
     if (targetIds.length === 0) {

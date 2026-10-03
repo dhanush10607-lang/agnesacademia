@@ -46,11 +46,27 @@ export default async function MySemesterPage() {
   }
 
   // Fetch subjects for this semester
-  const { data: subjects } = await supabase
-    .from("subjects")
-    .select("*")
-    .eq("semester_id", profile.semester_id)
-    .order("name", { ascending: true });
+  let subjects: any[] = [];
+  
+  // Try to fetch enrolled subjects first
+  const { data: enrolledData } = await supabase
+    .from("student_subjects")
+    .select("subject:subjects(*)")
+    .eq("student_id", user.id)
+    .eq("enrollment_status", "ENROLLED");
+    
+  if (enrolledData && enrolledData.length > 0) {
+    subjects = enrolledData.map(e => e.subject).filter(Boolean);
+    subjects.sort((a, b) => a.name.localeCompare(b.name));
+  } else {
+    // Fallback to legacy semester query
+    const { data: fallbackSubjects } = await supabase
+      .from("subjects")
+      .select("*")
+      .eq("semester_id", profile.semester_id)
+      .order("name", { ascending: true });
+    subjects = fallbackSubjects || [];
+  }
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-5xl">

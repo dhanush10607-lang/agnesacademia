@@ -48,8 +48,10 @@ export default async function AdminLayout({
       items: [
         { name: "Departments", href: "/admin/academic/departments", icon: Database },
         { name: "Programmes", href: "/admin/academic/programmes", icon: Database },
+        { name: "Curricula", href: "/admin/academic/curricula", icon: Database },
         { name: "Academic Years", href: "/admin/academic/years", icon: Database },
         { name: "Semesters", href: "/admin/academic/semesters", icon: Database },
+        { name: "Subject Types", href: "/admin/academic/subject-types", icon: Database },
         { name: "Subjects", href: "/admin/academic/subjects", icon: BookOpen },
       ]
     },
