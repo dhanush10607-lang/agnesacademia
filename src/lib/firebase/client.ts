@@ -25,7 +25,9 @@ export const requestForToken = async () => {
     let swRegistration = null;
     if ("serviceWorker" in navigator) {
       const swUrl = `/firebase-messaging-sw.js?apiKey=${firebaseConfig.apiKey}&authDomain=${firebaseConfig.authDomain}&projectId=${firebaseConfig.projectId}&messagingSenderId=${firebaseConfig.messagingSenderId}&appId=${firebaseConfig.appId}`;
-      swRegistration = await navigator.serviceWorker.register(swUrl);
+      await navigator.serviceWorker.register(swUrl);
+      // Wait for the service worker to be fully ready before asking for a token
+      swRegistration = await navigator.serviceWorker.ready;
     }
 
     const currentToken = await getToken(messaging, {
