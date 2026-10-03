@@ -30,7 +30,7 @@ interface Props {
 }
 
 // ─── Step IDs ────────────────────────────────────────────────────────────────
-const STEPS = ["welcome", "department", "programme", "curriculum", "year", "semester", "interests", "appearance", "finish"] as const;
+const STEPS = ["welcome", "programme", "curriculum", "year", "semester", "interests", "appearance", "finish"] as const;
 type StepId = typeof STEPS[number];
 
 // ─── Slide variants ───────────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ const THEMES = [
 ];
 
 // ─── Progress bar ─────────────────────────────────────────────────────────────
-const PROGRESS_STEPS: StepId[] = ["department", "programme", "curriculum", "year", "semester", "interests", "appearance"];
+const PROGRESS_STEPS: StepId[] = ["programme", "curriculum", "year", "semester", "interests", "appearance"];
 
 function ProgressBar({ current }: { current: StepId }) {
   const idx   = PROGRESS_STEPS.indexOf(current);
@@ -159,7 +159,6 @@ export function OnboardingWizard(props: Props) {
   const { departments, programmes, years, semesters, subjects, studentName } = props;
   const [step,          setStep]     = useState<StepId>("welcome");
   const [dir,           setDir]      = useState(1);
-  const [departmentId,  setDepId]    = useState("");
   const [programmeId,   setProgId]   = useState("");
   const [curriculumId,  setCurriculumId] = useState("");
   const [yearId,        setYearId]   = useState("");
@@ -172,12 +171,11 @@ export function OnboardingWizard(props: Props) {
   const [error,         setError]    = useState<string | null>(null);
   const [isPending,     startTransition] = useTransition();
 
-  const filteredProgs  = programmes.filter(p => !departmentId || p.department_id === departmentId);
+  const filteredProgs  = programmes; // Show all active programmes since we skip department
   const filteredCurricula = props.curricula.filter(c => !programmeId || c.programme_id === programmeId);
   const filteredYears  = years.filter(y => !programmeId || y.programme_id === programmeId);
   const filteredSems   = semesters.filter(s => !yearId || s.academic_year_id === yearId);
 
-  const selectedDept     = departments.find(d => d.id === departmentId);
   const selectedProg     = programmes.find(p => p.id === programmeId);
   const selectedCurriculum = props.curricula.find(c => c.id === curriculumId);
   const selectedYear     = years.find(y => y.id === yearId);
@@ -195,7 +193,7 @@ export function OnboardingWizard(props: Props) {
 
   function handleFinish() {
     const data: OnboardingData = {
-      department_id:    departmentId  || undefined,
+      department_id:    selectedProg?.department_id || undefined, // infer from programme
       programme_id:     programmeId   || undefined,
       curriculum_id:    curriculumId  || undefined,
       academic_year_id: yearId        || undefined,
@@ -235,7 +233,7 @@ export function OnboardingWizard(props: Props) {
         </p>
         <div className="space-y-3 pt-2">
           <Button
-            onClick={() => go("department")}
+            onClick={() => go("programme")}
             className="w-full h-12 text-base font-semibold rounded-2xl gap-2"
           >
             Get Started <ChevronRight className="w-4 h-4" />
@@ -253,47 +251,6 @@ export function OnboardingWizard(props: Props) {
       </div>
     ),
 
-    // ── DEPARTMENT ────────────────────────────────────────────────────────────
-    department: (
-      <div className="space-y-4">
-        <ProgressBar current="department" />
-        <div className="mb-2">
-          <div className="flex items-center gap-2 mb-1">
-            <Building2 className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-heading font-bold">Which department are you from?</h2>
-          </div>
-          <p className="text-sm text-muted-foreground">We'll use this to show you relevant resources.</p>
-        </div>
-        <SearchableList
-          items={departments}
-          value={departmentId}
-          onChange={setDepId}
-          placeholder="Search departments..."
-        />
-        {departments.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">No departments added yet. Contact your administrator.</p>
-        )}
-        <div className="flex gap-3 pt-2">
-          <Button variant="outline" onClick={() => go("welcome", -1)} className="gap-1">
-            <ChevronLeft className="w-4 h-4" /> Back
-          </Button>
-          <Button
-            onClick={() => go("programme")}
-            disabled={!departmentId}
-            className="flex-1 gap-1"
-          >
-            Next <ChevronRight className="w-4 h-4" />
-          </Button>
-          <button
-            onClick={() => go("programme")}
-            className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap"
-          >
-            Skip
-          </button>
-        </div>
-      </div>
-    ),
-
     // ── PROGRAMME ─────────────────────────────────────────────────────────────
     programme: (
       <div className="space-y-4">
@@ -303,7 +260,6 @@ export function OnboardingWizard(props: Props) {
             <GraduationCap className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-heading font-bold">What programme are you studying?</h2>
           </div>
-          {selectedDept && <p className="text-sm text-muted-foreground">Department: <strong>{selectedDept.name}</strong></p>}
         </div>
         <SearchableList
           items={filteredProgs}
@@ -312,10 +268,10 @@ export function OnboardingWizard(props: Props) {
           placeholder="Search programmes..."
         />
         {filteredProgs.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">No programmes found. Try a different department or skip.</p>
+          <p className="text-sm text-muted-foreground text-center py-4">No programmes found.</p>
         )}
         <div className="flex gap-3 pt-2">
-          <Button variant="outline" onClick={() => go("department", -1)} className="gap-1">
+          <Button variant="outline" onClick={() => go("welcome", -1)} className="gap-1">
             <ChevronLeft className="w-4 h-4" /> Back
           </Button>
           <Button onClick={() => go("curriculum")} disabled={!programmeId} className="flex-1 gap-1">
@@ -581,7 +537,6 @@ export function OnboardingWizard(props: Props) {
         {/* Summary */}
         {(selectedProg || selectedSemester) && (
           <div className="bg-muted/40 rounded-2xl p-4 text-sm text-left space-y-1.5">
-            {selectedDept     && <div className="flex justify-between"><span className="text-muted-foreground">Department</span><strong>{selectedDept.name}</strong></div>}
             {selectedProg     && <div className="flex justify-between"><span className="text-muted-foreground">Programme</span><strong>{selectedProg.name}</strong></div>}
             {selectedCurriculum && <div className="flex justify-between"><span className="text-muted-foreground">Curriculum</span><strong>{selectedCurriculum.name}</strong></div>}
             {selectedYear     && <div className="flex justify-between"><span className="text-muted-foreground">Year</span><strong>{selectedYear.name}</strong></div>}
