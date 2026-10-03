@@ -44,8 +44,8 @@ export default async function DashboardPage() {
     
   if (enrolledData && enrolledData.length > 0) {
     const subjData = enrolledData.map(e => e.subject).filter(Boolean);
-    for (const subj of subjData) {
-      if (!subj) continue;
+    for (const subj of subjData as any[]) {
+      if (!subj || Array.isArray(subj)) continue; // handle potential array from supabase types
       const { count } = await supabase
         .from("resources")
         .select("*", { count: 'exact', head: true })

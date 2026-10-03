@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Search, Filter, Eye, FolderOpen, BookOpen } from "lucide-react";
+import { FileText, Search, Eye, FolderOpen, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { format } from "date-fns";
+import { ResourceFilterSidebar } from "./ResourceFilterSidebar";
 
 export default async function ResourcesSearchPage({
   searchParams,
@@ -15,53 +16,86 @@ export default async function ResourcesSearchPage({
   const resolvedParams = await searchParams;
   const query = typeof resolvedParams.q === 'string' ? resolvedParams.q : '';
   const page = typeof resolvedParams.page === 'string' ? parseInt(resolvedParams.page) : 1;
-  const limit = 20; // Increased limit for combined results
+  const categoryFilter = typeof resolvedParams.category === 'string' ? resolvedParams.category : '';
+  const subjectFilter = typeof resolvedParams.subject === 'string' ? resolvedParams.subject : '';
+  const limit = 20;
 
   const supabase = await createClient();
   let results: any[] = [];
   let totalCount = 0;
 
-  if (query) {
-    const formattedQuery = query.split(' ').join(' | ');
+  // Fetch filter options
+  const [{ data: categories }, { data: subjects }] = await Promise.all([
+    supabase.from("resource_categories").select("id, name").order("name"),
+    supabase.from("subjects").select("id, name").eq("is_active", true).order("name")
+  ]);
+
+  if (query || categoryFilter || subjectFilter) {
+    const formattedQuery = query ? query.split(' ').join(' | ') : '';
 
     // 1. Search Notes (Resources)
-    const { data: resData } = await supabase
+    let resQuery = supabase
       .from("resources")
-      .select("id, title, description, created_at, category:resource_categories(name), subject:subjects(name)")
-      .eq("status", "published")
-      .textSearch('search_vector', formattedQuery)
-      .limit(limit);
+      .select("id, title, description, created_at, category_id, subject_id, category:resource_categories(name), subject:subjects(name)")
+      .eq("status", "published");
+    if (formattedQuery) resQuery = resQuery.textSearch('search_vector', formattedQuery);
+    if (categoryFilter) resQuery = resQuery.eq("category_id", categoryFilter);
+    if (subjectFilter) resQuery = resQuery.eq("subject_id", subjectFilter);
+    const { data: resData } = await resQuery.limit(limit);
 
-    // 2. Search Question Papers
-    const { data: qpData } = await supabase
-      .from("question_papers")
-      .select("id, title, description, created_at, exam_type, subject:subjects(name)")
-      .eq("status", "published")
-      .textSearch('search_vector', formattedQuery)
-      .limit(limit);
+    // 2. Search Question Papers (only if category not set or set to something matching QPs)
+    let qpData: any[] | null = null;
+    if (!categoryFilter) {
+      let qpQuery = supabase
+        .from("question_papers")
+        .select("id, title, description, created_at, exam_type, subject_id, subject:subjects(name)")
+        .eq("status", "published");
+      if (formattedQuery) qpQuery = qpQuery.textSearch('search_vector', formattedQuery);
+      if (subjectFilter) qpQuery = qpQuery.eq("subject_id", subjectFilter);
+      const { data } = await qpQuery.limit(limit);
+      qpData = data;
+    }
 
-    // 3. Search Question Banks (by title/desc)
-    const { data: qbData } = await supabase
-      .from("question_banks")
-      .select("id, title, description, created_at, subject:subjects(name)")
-      .eq("status", "published")
-      .ilike('title', `%${query}%`)
-      .limit(limit);
+    // 3. Search Question Banks
+    let qbData: any[] | null = null;
+    if (!categoryFilter) {
+      let qbQuery = supabase
+        .from("question_banks")
+        .select("id, title, description, created_at, subject_id, subject:subjects(name)")
+        .eq("status", "published");
+      if (query) qbQuery = qbQuery.ilike('title', `%${query}%`);
+      if (subjectFilter) qbQuery = qbQuery.eq("subject_id", subjectFilter);
+      const { data } = await qbQuery.limit(limit);
+      qbData = data;
+    }
 
-    // 4. Search Questions directly (to find which bank they belong to)
-    const { data: qData } = await supabase
-      .from("questions")
-      .select("id, question_text, created_at, unit:question_units(question_bank_id, question_banks(status))")
-      .textSearch('search_vector', formattedQuery)
-      .limit(limit);
+    // 4. Search Questions directly
+    let qData: any[] | null = null;
+    if (!categoryFilter && formattedQuery) {
+      let qQuery = supabase
+        .from("questions")
+        .select("id, question_text, created_at, unit:question_units(question_bank_id, question_banks(status, subject_id))")
+        .textSearch('search_vector', formattedQuery);
+      const { data } = await qQuery.limit(limit);
+      if (subjectFilter && data) {
+         qData = data.filter(q => (q.unit as any)?.question_banks?.subject_id === subjectFilter);
+      } else {
+         qData = data;
+      }
+    }
 
     // 5. Search Syllabi
-    const { data: sylData } = await supabase
-      .from("syllabi")
-      .select("id, course_objectives, created_at, subject:subjects(name)")
-      .eq("status", "published")
-      .textSearch('search_vector', formattedQuery)
-      .limit(limit);
+    let sylData: any[] | null = null;
+    if (!categoryFilter) {
+      let sylQuery = supabase
+        .from("syllabi")
+        .select("id, course_objectives, created_at, subject_id, subject:subjects(name)")
+        .eq("status", "published");
+      if (formattedQuery) sylQuery = sylQuery.textSearch('search_vector', formattedQuery);
+      if (subjectFilter) sylQuery = sylQuery.eq("subject_id", subjectFilter);
+      const { data } = await sylQuery.limit(limit);
+      sylData = data;
+    }
 
     // Normalize results
     if (resData) {
@@ -95,7 +129,6 @@ export default async function ResourcesSearchPage({
     }
 
     if (qData) {
-      // Filter only published ones and map
       const validQs = qData.filter(q => (q.unit as any)?.question_banks?.status === 'published');
       results.push(...validQs.map(r => ({
         id: r.id,
@@ -121,19 +154,19 @@ export default async function ResourcesSearchPage({
       })));
     }
 
-    // Sort combined by created_at desc
     results.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     totalCount = results.length;
-    // Manual pagination for combined results
     results = results.slice((page - 1) * limit, page * limit);
   } else {
-    // Default empty search state (fetch recent notes only)
-    const { data, count } = await supabase
+    // Default empty search state
+    let baseQuery = supabase
       .from("resources")
       .select("id, title, description, created_at, category:resource_categories(name), subject:subjects(name)", { count: 'exact' })
       .eq("status", "published")
       .order("created_at", { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
+      
+    const { data, count } = await baseQuery;
       
     if (data) {
       results = data.map(r => ({
@@ -166,27 +199,24 @@ export default async function ResourcesSearchPage({
               placeholder="Search across all academic materials..." 
               className="pl-10 h-12 text-base"
             />
+            {categoryFilter && <input type="hidden" name="category" value={categoryFilter} />}
+            {subjectFilter && <input type="hidden" name="subject" value={subjectFilter} />}
           </div>
           <Button type="submit" size="lg" className="h-12 px-8">Search</Button>
         </form>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Filters Sidebar */}
-        <div className="w-full lg:w-64 shrink-0 space-y-6">
-          <div>
-            <h3 className="font-semibold text-lg mb-3 flex items-center">
-              <Filter className="w-4 h-4 mr-2" /> Filters
-            </h3>
-            <p className="text-sm text-muted-foreground italic">Advanced filtering by Subject and Category coming soon.</p>
-          </div>
-        </div>
+        <ResourceFilterSidebar 
+          categories={categories || []} 
+          subjects={subjects || []} 
+        />
 
         {/* Results */}
         <div className="flex-grow space-y-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-xl">
-              {query ? `Search Results for "${query}"` : "Latest Resources"}
+              {query || categoryFilter || subjectFilter ? `Search Results` : "Latest Resources"}
             </h2>
             <span className="text-sm text-muted-foreground">{totalCount} items found</span>
           </div>
@@ -235,10 +265,10 @@ export default async function ResourcesSearchPage({
               <CardContent className="flex flex-col items-center justify-center py-24 text-center">
                 <Search className="h-16 w-16 text-muted-foreground mb-6 opacity-40" />
                 <h3 className="text-xl font-semibold mb-2">No results found</h3>
-                <p className="text-muted-foreground max-w-md">We couldn't find any content matching your search. Try adjusting your keywords.</p>
-                {query && (
+                <p className="text-muted-foreground max-w-md">We couldn't find any content matching your filters. Try adjusting them.</p>
+                {(query || categoryFilter || subjectFilter) && (
                   <Link href="/resources" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
-                    Clear Search
+                    Clear Search & Filters
                   </Link>
                 )}
               </CardContent>
@@ -249,7 +279,7 @@ export default async function ResourcesSearchPage({
           {totalPages > 1 && (
             <div className="flex justify-center mt-8 gap-2">
               {page > 1 && (
-                <Link href={`/resources?q=${query}&page=${page - 1}`} className={buttonVariants({ variant: "outline" })}>
+                <Link href={`/resources?${new URLSearchParams({ ...resolvedParams as Record<string, string>, page: (page - 1).toString() }).toString()}`} className={buttonVariants({ variant: "outline" })}>
                   Previous
                 </Link>
               )}
@@ -257,7 +287,7 @@ export default async function ResourcesSearchPage({
                 Page {page} of {totalPages}
               </span>
               {page < totalPages && (
-                <Link href={`/resources?q=${query}&page=${page + 1}`} className={buttonVariants({ variant: "outline" })}>
+                <Link href={`/resources?${new URLSearchParams({ ...resolvedParams as Record<string, string>, page: (page + 1).toString() }).toString()}`} className={buttonVariants({ variant: "outline" })}>
                   Next
                 </Link>
               )}
