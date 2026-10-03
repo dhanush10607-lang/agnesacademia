@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Search, Eye, FolderOpen, BookOpen } from "lucide-react";
+import { FileText, Search, Eye, FolderOpen, BookOpen, Download } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,7 @@ export default async function ResourcesSearchPage({
     // 1. Search Notes (Resources)
     let resQuery = supabase
       .from("resources")
-      .select("id, title, description, created_at, category_id, subject_id, category:resource_categories(name), subject:subjects(name)")
+      .select("id, title, description, created_at, category_id, subject_id, file_path, category:resource_categories(name), subject:subjects(name)")
       .eq("status", "published");
     if (formattedQuery) resQuery = resQuery.textSearch('search_vector', formattedQuery);
     if (categoryFilter) resQuery = resQuery.eq("category_id", categoryFilter);
@@ -48,7 +48,7 @@ export default async function ResourcesSearchPage({
     if (!categoryFilter) {
       let qpQuery = supabase
         .from("question_papers")
-        .select("id, title, description, created_at, exam_type, subject_id, subject:subjects(name)")
+        .select("id, title, description, created_at, exam_type, subject_id, file_path, subject:subjects(name)")
         .eq("status", "published");
       if (formattedQuery) qpQuery = qpQuery.textSearch('search_vector', formattedQuery);
       if (subjectFilter) qpQuery = qpQuery.eq("subject_id", subjectFilter);
@@ -89,7 +89,7 @@ export default async function ResourcesSearchPage({
     if (!categoryFilter) {
       let sylQuery = supabase
         .from("syllabi")
-        .select("id, course_objectives, created_at, subject_id, subject:subjects(name)")
+        .select("id, course_objectives, created_at, subject_id, file_path, subject:subjects(name)")
         .eq("status", "published");
       if (formattedQuery) sylQuery = sylQuery.textSearch('search_vector', formattedQuery);
       if (subjectFilter) sylQuery = sylQuery.eq("subject_id", subjectFilter);
@@ -104,6 +104,7 @@ export default async function ResourcesSearchPage({
         type: 'Note', 
         icon: FileText, 
         link: `/resources/${r.id}`,
+        file_path: r.file_path,
         tags: [(r.category as any)?.name, (r.subject as any)?.name]
       })));
     }
@@ -114,6 +115,7 @@ export default async function ResourcesSearchPage({
         type: 'Question Paper', 
         icon: FileText, 
         link: `/question-papers/${r.id}`,
+        file_path: r.file_path,
         tags: [r.exam_type?.replace('_', ' '), (r.subject as any)?.name]
       })));
     }
@@ -150,6 +152,7 @@ export default async function ResourcesSearchPage({
         type: 'Syllabus', 
         icon: BookOpen, 
         link: `/syllabi/${r.id}`,
+        file_path: r.file_path,
         tags: [(r.subject as any)?.name]
       })));
     }
@@ -161,7 +164,7 @@ export default async function ResourcesSearchPage({
     // Default empty search state
     let baseQuery = supabase
       .from("resources")
-      .select("id, title, description, created_at, category:resource_categories(name), subject:subjects(name)", { count: 'exact' })
+      .select("id, title, description, created_at, file_path, category:resource_categories(name), subject:subjects(name)", { count: 'exact' })
       .eq("status", "published")
       .order("created_at", { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
@@ -174,6 +177,7 @@ export default async function ResourcesSearchPage({
         type: 'Note', 
         icon: FileText, 
         link: `/resources/${r.id}`,
+        file_path: r.file_path,
         tags: [(r.category as any)?.name, (r.subject as any)?.name]
       }));
     }
@@ -249,13 +253,26 @@ export default async function ResourcesSearchPage({
                         </div>
                       </div>
                     </div>
-                    <Link 
-                      href={res.link} 
-                      className={buttonVariants({ variant: "secondary" })}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View
-                    </Link>
+                    <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                      {res.file_path && (
+                        <a 
+                          href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/resources/${res.file_path}`} 
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={buttonVariants({ variant: "outline" })}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </a>
+                      )}
+                      <Link 
+                        href={res.link} 
+                        className={buttonVariants({ variant: "secondary" })}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        View
+                      </Link>
+                    </div>
                   </div>
                 );
               })}
