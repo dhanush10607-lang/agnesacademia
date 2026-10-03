@@ -78,7 +78,12 @@ export function QuizForm({
           <Label htmlFor="subject_id">Subject <span className="text-red-500">*</span></Label>
           <Select name="subject_id" required>
             <SelectTrigger>
-              <SelectValue placeholder="Select subject" />
+              <SelectValue placeholder="Select subject">
+                {(value) => {
+                  const subject = subjects.find(item => item.id === value);
+                  return subject ? `${subject.name} (${subject.code})` : "Select subject";
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {subjects.map((s) => (
@@ -102,7 +107,11 @@ export function QuizForm({
         <div className="space-y-2">
           <Label htmlFor="difficulty">Difficulty</Label>
           <Select name="difficulty" defaultValue="medium">
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue>
+                {(value) => ({ easy: "Easy", medium: "Medium", hard: "Hard" }[String(value ?? "")] || "")}
+              </SelectValue>
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="easy">Easy</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
@@ -124,7 +133,11 @@ export function QuizForm({
         <div className="space-y-2">
           <Label htmlFor="status">Initial Status</Label>
           <Select name="status" defaultValue="draft">
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue>
+                {(value) => value === "draft" ? "Draft (Hidden)" : value === "published" ? "Published" : ""}
+              </SelectValue>
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="draft">Draft (Hidden)</SelectItem>
               <SelectItem value="published">Published</SelectItem>

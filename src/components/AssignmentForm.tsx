@@ -67,7 +67,12 @@ export function AssignmentForm({
         <Label htmlFor="subject_id">Subject <span className="text-red-500">*</span></Label>
         <Select name="subject_id" required>
           <SelectTrigger>
-            <SelectValue placeholder="Select one of your assigned subjects" />
+            <SelectValue placeholder="Select one of your assigned subjects">
+              {(value) => {
+                const subject = subjects.find(item => item.id === value);
+                return subject ? `${subject.name} (${subject.code})` : "Select one of your assigned subjects";
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {subjects.map((s) => (
@@ -101,7 +106,9 @@ export function AssignmentForm({
           <Label htmlFor="status">Status</Label>
           <Select name="status" defaultValue="published">
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue>
+                {(value) => value === "draft" ? "Draft" : value === "published" ? "Published" : ""}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="draft">Draft</SelectItem>

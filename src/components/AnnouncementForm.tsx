@@ -67,7 +67,12 @@ export function AnnouncementForm({
         <Label htmlFor="subject_id">Target Subject <span className="text-red-500">*</span></Label>
         <Select name="subject_id" required>
           <SelectTrigger>
-            <SelectValue placeholder="Select one of your assigned subjects" />
+            <SelectValue placeholder="Select one of your assigned subjects">
+              {(value) => {
+                const subject = subjects.find(item => item.id === value);
+                return subject ? `${subject.name} (${subject.code})` : "Select one of your assigned subjects";
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {subjects.map((s) => (

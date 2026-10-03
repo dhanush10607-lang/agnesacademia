@@ -73,7 +73,9 @@ export function FacultyUploadForm({
         <Label htmlFor="category_id">Resource Type <span className="text-red-500">*</span></Label>
         <Select name="category_id" required>
           <SelectTrigger>
-            <SelectValue placeholder="Select resource type" />
+            <SelectValue placeholder="Select resource type">
+              {(value) => categories.find(category => category.id === value)?.name || "Select resource type"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {categories.map((c) => (
@@ -87,7 +89,12 @@ export function FacultyUploadForm({
         <Label htmlFor="subject_id">Subject <span className="text-red-500">*</span></Label>
         <Select name="subject_id" required>
           <SelectTrigger>
-            <SelectValue placeholder="Select one of your assigned subjects" />
+            <SelectValue placeholder="Select one of your assigned subjects">
+              {(value) => {
+                const subject = subjects.find(item => item.id === value);
+                return subject ? `${subject.name} (${subject.code})` : "Select one of your assigned subjects";
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {subjects.map((s) => (

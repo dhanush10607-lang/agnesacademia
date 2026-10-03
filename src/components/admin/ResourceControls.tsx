@@ -30,7 +30,15 @@ export function ResourceStatusSelect({ resourceId, currentStatus }: { resourceId
   return (
     <Select defaultValue={currentStatus} onValueChange={handleStatusChange} disabled={isUpdating}>
       <SelectTrigger className={`w-[140px] h-8 text-xs border ${getStatusColor(currentStatus)}`}>
-        <SelectValue />
+        <SelectValue>
+          {(value) => ({
+            draft: "Draft",
+            pending_review: "Pending Review",
+            published: "Published",
+            rejected: "Rejected",
+            archived: "Archived",
+          }[String(value ?? "")] || "")}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="draft">Draft</SelectItem>

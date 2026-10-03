@@ -151,7 +151,9 @@ export default function CurriculumSubjectManager({
                       onValueChange={(val) => handleChange(sub.id, "subject_type_id", val)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select group..." />
+                        <SelectValue placeholder="Select group...">
+                          {(value) => subjectTypes.find(subjectType => subjectType.id === value)?.name || "Select group..."}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {subjectTypes.map(st => (

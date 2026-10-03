@@ -142,7 +142,9 @@ export default function AcademicEditForm({
               onValueChange={(val) => { setProgId(val || ""); setCurrId(""); setYearId(""); setSemId(""); }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select Programme" />
+                <SelectValue placeholder="Select Programme">
+                  {(value) => programmes.find(programme => programme.id === value)?.name || "Select Programme"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {programmes.map(p => (
@@ -160,7 +162,9 @@ export default function AcademicEditForm({
               onValueChange={(val) => { setCurrId(val || ""); }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select Curriculum" />
+                <SelectValue placeholder="Select Curriculum">
+                  {(value) => curricula.find(curriculum => curriculum.id === value)?.name || "Select Curriculum"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {curricula.map(c => (
@@ -178,7 +182,9 @@ export default function AcademicEditForm({
               onValueChange={(val) => { setYearId(val || ""); setSemId(""); }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select Year" />
+                <SelectValue placeholder="Select Year">
+                  {(value) => years.find(year => year.id === value)?.name || "Select Year"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {years.map(y => (
@@ -196,7 +202,9 @@ export default function AcademicEditForm({
               onValueChange={(val) => setSemId(val || "")}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select Semester" />
+                <SelectValue placeholder="Select Semester">
+                  {(value) => semesters.find(semester => semester.id === value)?.name || "Select Semester"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {semesters.map(s => (

@@ -76,7 +76,11 @@ export function NoticeForm({
         <div className="space-y-2">
           <Label htmlFor="category_id">Category <span className="text-red-500">*</span></Label>
           <Select name="category_id" required>
-            <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Category">
+                {(value) => categories.find(category => category.id === value)?.name || "Select Category"}
+              </SelectValue>
+            </SelectTrigger>
             <SelectContent>
               {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -88,7 +92,15 @@ export function NoticeForm({
         <div className="space-y-2">
           <Label htmlFor="priority">Priority</Label>
           <Select name="priority" defaultValue="normal">
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue>
+                {(value) => ({
+                  normal: "Normal",
+                  important: "Important",
+                  urgent: "Urgent",
+                }[String(value ?? "")] || "")}
+              </SelectValue>
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="normal">Normal</SelectItem>
               <SelectItem value="important">Important</SelectItem>
@@ -106,7 +118,11 @@ export function NoticeForm({
           <div className="space-y-2">
             <Label>Department</Label>
             <Select name="department_id">
-              <SelectTrigger><SelectValue placeholder="Any Department" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Any Department">
+                  {(value) => value === "" ? "Any Department" : departments.find(department => department.id === value)?.name || "Any Department"}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Any Department</SelectItem>
                 {departments.map((d) => (
@@ -119,7 +135,11 @@ export function NoticeForm({
           <div className="space-y-2">
             <Label>Programme</Label>
             <Select name="programme_id">
-              <SelectTrigger><SelectValue placeholder="Any Programme" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Any Programme">
+                  {(value) => value === "" ? "Any Programme" : programmes.find(programme => programme.id === value)?.name || "Any Programme"}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Any Programme</SelectItem>
                 {programmes.map((p) => (
@@ -132,7 +152,11 @@ export function NoticeForm({
           <div className="space-y-2">
             <Label>Semester</Label>
             <Select name="semester_id">
-              <SelectTrigger><SelectValue placeholder="Any Semester" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Any Semester">
+                  {(value) => value === "" ? "Any Semester" : semesters.find(semester => semester.id === value)?.name || "Any Semester"}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Any Semester</SelectItem>
                 {semesters.map((s) => (

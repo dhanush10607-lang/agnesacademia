@@ -95,7 +95,14 @@ export function EditResourceForm({
         <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
         <Select name="status" defaultValue={resource.status} required>
           <SelectTrigger>
-            <SelectValue placeholder="Select status" />
+            <SelectValue placeholder="Select status">
+              {(value) => ({
+                draft: "Draft (Hidden)",
+                pending_review: "Pending Review",
+                published: "Published (Visible to all)",
+                archived: "Archived (Hidden)",
+              }[String(value ?? "")] || "Select status")}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="draft">Draft (Hidden)</SelectItem>

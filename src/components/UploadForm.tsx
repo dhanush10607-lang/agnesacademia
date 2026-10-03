@@ -181,7 +181,9 @@ export function UploadForm({
         <Label htmlFor="category_id">Resource Type <span className="text-red-500">*</span></Label>
         <Select name="category_id" required disabled={isSubmitting}>
           <SelectTrigger>
-            <SelectValue placeholder="Select resource type" />
+            <SelectValue placeholder="Select resource type">
+              {(value) => categories.find(category => category.id === value)?.name || "Select resource type"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {categories.map((c) => (
@@ -195,7 +197,14 @@ export function UploadForm({
         <Label htmlFor="subject_id">Subject <span className="text-red-500">*</span></Label>
         <Select name="subject_id" required disabled={isSubmitting}>
           <SelectTrigger>
-            <SelectValue placeholder="Select subject" />
+            <SelectValue placeholder="Select subject">
+              {(value) => {
+                const subject = subjects.find(item => item.id === value);
+                return subject
+                  ? `${subject.name}${subject.semester?.name ? ` (${subject.semester.name})` : ""}`
+                  : "Select subject";
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {subjects.map((s) => (

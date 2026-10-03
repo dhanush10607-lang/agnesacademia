@@ -39,7 +39,11 @@ export function CreateProgrammeForm({ departments }: { departments: any[] }) {
       <div className="flex-grow space-y-2">
         <Label htmlFor="department_id">Department</Label>
         <Select name="department_id" required>
-          <SelectTrigger><SelectValue placeholder="Select Dept" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Dept">
+              {(value) => departments.find(department => department.id === value)?.name || "Select Dept"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
           </SelectContent>
@@ -81,7 +85,11 @@ export function CreateYearForm({ programmes }: { programmes: any[] }) {
       <div className="flex-grow space-y-2">
         <Label htmlFor="programme_id">Programme</Label>
         <Select name="programme_id" required>
-          <SelectTrigger><SelectValue placeholder="Select Programme" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Programme">
+              {(value) => programmes.find((programme: any) => programme.id === value)?.name || "Select Programme"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             {programmes.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
           </SelectContent>
@@ -131,7 +139,11 @@ export function CreateSemesterForm({ programmes, years }: { programmes: any[], y
       <div className="flex-grow space-y-2">
         <Label htmlFor="programme_id">Programme</Label>
         <Select name="programme_id" required>
-          <SelectTrigger><SelectValue placeholder="Select Programme" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Programme">
+              {(value) => programmes.find(programme => programme.id === value)?.name || "Select Programme"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             {programmes.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
           </SelectContent>
@@ -140,7 +152,11 @@ export function CreateSemesterForm({ programmes, years }: { programmes: any[], y
       <div className="flex-grow space-y-2">
         <Label htmlFor="academic_year_id">Academic Year</Label>
         <Select name="academic_year_id" required>
-          <SelectTrigger><SelectValue placeholder="Select Year" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Year">
+              {(value) => years.find(year => year.id === value)?.name || "Select Year"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             {years.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
           </SelectContent>
@@ -186,7 +202,11 @@ export function CreateSubjectForm({ semesters, departments }: { semesters: any[]
       <div className="flex-grow space-y-2">
         <Label htmlFor="semester_id">Semester</Label>
         <Select name="semester_id" required>
-          <SelectTrigger><SelectValue placeholder="Select Semester" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Semester">
+              {(value) => semesters.find(semester => semester.id === value)?.name || "Select Semester"}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             {semesters.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
           </SelectContent>

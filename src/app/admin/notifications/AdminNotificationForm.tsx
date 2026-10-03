@@ -91,7 +91,14 @@ export default function AdminNotificationForm({ departments, programmes, semeste
               <Label>Category</Label>
               <Select value={category} onValueChange={(val) => setCategory(val as string)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>
+                    {(value) => ({
+                      system: "System Update",
+                      academic: "Academic Update",
+                      event: "Event",
+                      urgent: "Urgent Alert",
+                    }[String(value ?? "")] || "")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="system">System Update</SelectItem>
@@ -124,7 +131,14 @@ export default function AdminNotificationForm({ departments, programmes, semeste
               <Label>Priority Level</Label>
               <Select value={priority} onValueChange={(val) => setPriority(val as string)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>
+                    {(value) => ({
+                      low: "Low Priority",
+                      normal: "Normal Priority",
+                      high: "High",
+                      critical: "Critical (Emergency)",
+                    }[String(value ?? "")] || "")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Low Priority</SelectItem>
@@ -145,7 +159,11 @@ export default function AdminNotificationForm({ departments, programmes, semeste
             <div className="space-y-2">
               <Label>Department</Label>
               <Select value={targetDept} onValueChange={(val) => setTargetDept(val as string)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue>
+                    {(value) => value === "all" ? "All Departments" : departments.find((department: any) => department.id === value)?.name || "All Departments"}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Departments</SelectItem>
                   {departments.map((d: any) => (
@@ -157,7 +175,11 @@ export default function AdminNotificationForm({ departments, programmes, semeste
             <div className="space-y-2">
               <Label>Programme</Label>
               <Select value={targetProg} onValueChange={(val) => setTargetProg(val as string)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue>
+                    {(value) => value === "all" ? "All Programmes" : programmes.find((programme: any) => programme.id === value)?.code || "All Programmes"}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Programmes</SelectItem>
                   {programmes.map((p: any) => (
@@ -169,7 +191,15 @@ export default function AdminNotificationForm({ departments, programmes, semeste
             <div className="space-y-2">
               <Label>Semester</Label>
               <Select value={targetSem} onValueChange={(val) => setTargetSem(val as string)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue>
+                    {(value) => {
+                      if (value === "all") return "All Semesters";
+                      const semester = semesters.find((item: any) => item.id === value);
+                      return semester ? `Sem ${semester.number}` : "All Semesters";
+                    }}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Semesters</SelectItem>
                   {semesters.map((s: any) => (

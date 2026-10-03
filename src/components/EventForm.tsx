@@ -115,7 +115,11 @@ export function EventForm({
           <div className="space-y-2">
             <Label>Department</Label>
             <Select name="department_id">
-              <SelectTrigger><SelectValue placeholder="Any Department" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Any Department">
+                  {(value) => value === "" ? "Any Department" : departments.find(department => department.id === value)?.name || "Any Department"}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Any Department</SelectItem>
                 {departments.map((d) => (
@@ -128,7 +132,11 @@ export function EventForm({
           <div className="space-y-2">
             <Label>Programme</Label>
             <Select name="programme_id">
-              <SelectTrigger><SelectValue placeholder="Any Programme" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Any Programme">
+                  {(value) => value === "" ? "Any Programme" : programmes.find(programme => programme.id === value)?.name || "Any Programme"}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Any Programme</SelectItem>
                 {programmes.map((p) => (
@@ -141,7 +149,11 @@ export function EventForm({
           <div className="space-y-2">
             <Label>Semester</Label>
             <Select name="semester_id">
-              <SelectTrigger><SelectValue placeholder="Any Semester" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Any Semester">
+                  {(value) => value === "" ? "Any Semester" : semesters.find(semester => semester.id === value)?.name || "Any Semester"}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Any Semester</SelectItem>
                 {semesters.map((s) => (

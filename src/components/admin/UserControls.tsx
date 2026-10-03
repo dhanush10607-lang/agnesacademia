@@ -21,7 +21,14 @@ export function UserRoleSelect({ userId, currentRole }: { userId: string, curren
   return (
     <Select defaultValue={currentRole} onValueChange={handleRoleChange} disabled={isUpdating}>
       <SelectTrigger className="w-[140px] h-8 text-xs">
-        <SelectValue />
+        <SelectValue>
+          {(value) => ({
+            student: "Student",
+            faculty: "Faculty",
+            moderator: "Moderator",
+            administrator: "Administrator",
+          }[String(value ?? "")] || "")}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="student">Student</SelectItem>
