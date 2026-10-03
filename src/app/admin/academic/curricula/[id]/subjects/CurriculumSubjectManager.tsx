@@ -126,19 +126,11 @@ export default function CurriculumSubjectManager({
                   {/* Subject Dropdown */}
                   <div className="md:col-span-5 space-y-1">
                     <Label className="text-xs text-muted-foreground">Subject</Label>
-                    <Select 
-                      value={sub.subject_id} 
-                      onValueChange={(val) => handleChange(sub.id, "subject_id", val)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a subject..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {allSubjects.map(s => (
-                          <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <SearchableSubjectSelect 
+                      subjects={allSubjects}
+                      value={sub.subject_id}
+                      onChange={(val) => handleChange(sub.id, "subject_id", val)}
+                    />
                   </div>
                   
                   {/* Subject Type */}
@@ -198,5 +190,62 @@ export default function CurriculumSubjectManager({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function SearchableSubjectSelect({ 
+  subjects, value, onChange 
+}: { 
+  subjects: any[], value: string, onChange: (val: string) => void 
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const selected = subjects.find(s => s.id === value);
+  const filtered = subjects.filter(s => 
+    s.name.toLowerCase().includes(query.toLowerCase()) || 
+    (s.code && s.code.toLowerCase().includes(query.toLowerCase()))
+  );
+
+  return (
+    <div className="relative">
+      <div 
+        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background cursor-pointer hover:bg-accent/50 transition-colors"
+        onClick={() => setOpen(!open)}
+      >
+        <span className="truncate">{selected ? `${selected.name} (${selected.code})` : "Select a subject..."}</span>
+        <span className="opacity-50 text-xs">▼</span>
+      </div>
+      
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md p-1">
+            <input 
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary mb-1" 
+              placeholder="Search subject..." 
+              value={query} 
+              onChange={e => setQuery(e.target.value)}
+              onClick={e => e.stopPropagation()}
+              autoFocus
+            />
+            <div className="max-h-40 overflow-y-auto pr-1">
+              {filtered.length === 0 ? (
+                <div className="py-2 text-center text-sm text-muted-foreground">No subjects found.</div>
+              ) : (
+                filtered.map(s => (
+                  <div 
+                    key={s.id} 
+                    className={`relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground ${value === s.id ? "bg-accent text-accent-foreground font-medium" : ""}`}
+                    onClick={() => { onChange(s.id); setOpen(false); setQuery(""); }}
+                  >
+                    <span className="truncate">{s.name} ({s.code})</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
