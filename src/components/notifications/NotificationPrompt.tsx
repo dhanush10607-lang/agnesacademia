@@ -38,6 +38,35 @@ export function NotificationPrompt() {
             icon: <Bell className="w-4 h-4" />
           });
         });
+
+        // Silently ensure the token is registered with the backend for this session
+        if (!sessionStorage.getItem("agnes_push_registered_session")) {
+          // Note: we use requestForToken here instead of refreshForToken so we don't invalidate it unnecessarily
+          import("@/lib/firebase/client").then(({ requestForToken }) => {
+            requestForToken().then(async (token) => {
+              if (token) {
+                const ua = navigator.userAgent;
+                let os = "Unknown", browser = "Unknown";
+                if (ua.indexOf("Win") !== -1) os = "Windows";
+                else if (ua.indexOf("Mac") !== -1) os = "MacOS";
+                else if (ua.indexOf("Linux") !== -1) os = "Linux";
+                else if (ua.indexOf("Android") !== -1) os = "Android";
+                else if (ua.indexOf("like Mac") !== -1) os = "iOS";
+
+                if (ua.indexOf("Chrome") !== -1) browser = "Chrome";
+                else if (ua.indexOf("Safari") !== -1) browser = "Safari";
+                else if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
+                else if (ua.indexOf("Edge") !== -1) browser = "Edge";
+
+                const deviceType = /Mobile|Android|iP(ad|hone)/.test(ua) ? "mobile" : "desktop";
+                
+                await registerDeviceAction(token, browser, os, deviceType);
+                sessionStorage.setItem("agnes_push_registered_session", "true");
+                console.log("Silently registered active push token for session.");
+              }
+            }).catch(console.warn);
+          });
+        }
       } catch (e) {
         console.warn("Foreground listener setup failed:", e);
       }
