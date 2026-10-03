@@ -123,7 +123,9 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
           <CardContent>
             <Select value={selectedFaculty} onValueChange={(val) => { setSelectedFaculty(val || ""); setMessage(null); }}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a faculty member..." />
+                <SelectValue placeholder="Select a faculty member...">
+                  {(value) => facultyList.find(faculty => faculty.id === value)?.full_name || "Select a faculty member..."}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {facultyList.length === 0 ? (
