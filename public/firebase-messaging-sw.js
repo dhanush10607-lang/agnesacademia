@@ -21,10 +21,16 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
   messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Received background message ', payload);
     
-    const notificationTitle = payload.notification?.title || payload.data?.title || 'New Notification';
+    // If the payload contains a 'notification' object, the Firebase SDK automatically 
+    // displays a system notification. We only need to manually show one if it's a data-only payload.
+    if (payload.notification) {
+      return;
+    }
+
+    const notificationTitle = payload.data?.title || 'New Notification';
     const notificationOptions = {
-      body: payload.notification?.body || payload.data?.body,
-      icon: '/icon.png', // Replace with a generic app icon path
+      body: payload.data?.body,
+      icon: '/icon.png',
       data: payload.data
     };
 
