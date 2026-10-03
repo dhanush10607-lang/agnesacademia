@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { updateFacultyAssignments } from "@/app/actions/admin-faculty";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export function FacultyAssignmentManager({ facultyList, subjectsList, departmentsList, initialSubjectAssignments, initialDeptAssignments }: Props) {
+  const router = useRouter();
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
   const [subjectAssignments, setSubjectAssignments] = useState<Record<string, string[]>>(initialSubjectAssignments);
   const [deptAssignments, setDeptAssignments] = useState<Record<string, string[]>>(initialDeptAssignments);
@@ -94,6 +96,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
     if (success) {
       setSubjectAssignments(prev => ({ ...prev, [selectedFaculty]: subjectsToSave }));
       setMessage({ type: "success", text: "Faculty subjects updated successfully!" });
+      router.refresh();
       setTimeout(() => setMessage(null), 3000);
     } else {
       setMessage({ type: "error", text: error || "Failed to update assignments." });
