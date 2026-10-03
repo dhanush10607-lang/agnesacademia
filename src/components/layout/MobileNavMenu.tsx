@@ -84,8 +84,10 @@ export function MobileNavMenu({ role }: Props) {
       links: [
         { href: "/admin/academic/departments", label: "Departments", icon: Library },
         { href: "/admin/academic/programmes", label: "Programmes", icon: GraduationCap },
+        { href: "/admin/academic/curricula", label: "Curricula", icon: BookOpen },
         { href: "/admin/academic/years", label: "Academic Years", icon: CalendarDays },
         { href: "/admin/academic/semesters", label: "Semesters", icon: CalendarDays },
+        { href: "/admin/academic/subject-types", label: "Subject Types", icon: Library },
         { href: "/admin/academic/subjects", label: "Subjects", icon: BookOpen },
       ],
     },
