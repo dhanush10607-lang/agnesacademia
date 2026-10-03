@@ -1,29 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, FileText, CheckCircle2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 export function AIGeneratorForm({ type }: { type: 'quiz' | 'flashcards' }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (loading) return;
+
+    const formData = new FormData(e.currentTarget);
+    const subject = String(formData.get('subject') ?? '').trim();
+    const topic = String(formData.get('topic') ?? '').trim();
+    const difficulty = String(formData.get('difficulty') ?? 'Medium');
+    const count = Number(formData.get('count') ?? 10);
+
     setLoading(true);
-    // Simulate generation for now
-    setTimeout(() => {
-      if (type === 'quiz') {
-        setResult("Here are your AI-generated practice questions based on the selected criteria...");
-      } else {
-        setResult("Here are your AI-generated flashcards...");
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, subject, topic, difficulty, count }),
+      });
+      const data: { result?: string; error?: string } = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Could not generate study material. Please try again.');
       }
+      if (!data.result) {
+        throw new Error('The generator returned an empty response. Please try again.');
+      }
+
+      setResult(data.result);
+    } catch (generationError) {
+      setError(generationError instanceof Error ? generationError.message : 'Could not generate study material. Please try again.');
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   return (
-    <div className="p-6 md:p-8 flex flex-col md:flex-row gap-8 h-[600px] overflow-y-auto">
+    <div className="p-6 md:p-8 flex flex-col md:flex-row gap-8 h-[min(600px,55dvh)] sm:h-[600px] overflow-y-auto">
       <div className="w-full md:w-1/3 flex-shrink-0">
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
@@ -31,34 +56,35 @@ export function AIGeneratorForm({ type }: { type: 'quiz' | 'flashcards' }) {
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Subject / Topic</label>
-            <input type="text" placeholder="e.g., Database Management" required className="w-full p-2 border rounded-md bg-background" />
+            <label htmlFor="ai-subject" className="block text-sm font-medium mb-1">Subject</label>
+            <input id="ai-subject" name="subject" type="text" placeholder="e.g., Database Management" required maxLength={120} className="w-full p-2 border rounded-md bg-background" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Unit / Chapter</label>
-            <input type="text" placeholder="e.g., Unit 3: Normalization" className="w-full p-2 border rounded-md bg-background" />
+            <label htmlFor="ai-topic" className="block text-sm font-medium mb-1">Unit / Chapter / Topic</label>
+            <input id="ai-topic" name="topic" type="text" placeholder="e.g., Unit 3: Normalization" maxLength={200} className="w-full p-2 border rounded-md bg-background" />
           </div>
           
           {type === 'quiz' && (
-            <>
-              <div>
-                <label className="block text-sm font-medium mb-1">Difficulty</label>
-                <select className="w-full p-2 border rounded-md bg-background">
-                  <option>Easy</option>
-                  <option>Medium</option>
-                  <option>Hard</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Number of Questions</label>
-                <input type="number" min="1" max="20" defaultValue="10" className="w-full p-2 border rounded-md bg-background" />
-              </div>
-            </>
+            <div>
+              <label htmlFor="ai-difficulty" className="block text-sm font-medium mb-1">Difficulty</label>
+              <select id="ai-difficulty" name="difficulty" className="w-full p-2 border rounded-md bg-background" defaultValue="Medium">
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
           )}
+          <div>
+            <label htmlFor="ai-count" className="block text-sm font-medium mb-1">
+              Number of {type === 'quiz' ? 'Questions' : 'Flashcards'}
+            </label>
+            <input id="ai-count" name="count" type="number" min="1" max="20" defaultValue="10" required className="w-full p-2 border rounded-md bg-background" />
+          </div>
 
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? 'Generating...' : `Generate ${type === 'quiz' ? 'Questions' : 'Flashcards'}`}
           </Button>
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         </form>
       </div>
 
@@ -68,28 +94,8 @@ export function AIGeneratorForm({ type }: { type: 'quiz' | 'flashcards' }) {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-semibold">
               <CheckCircle2 className="w-4 h-4 text-green-500" /> AI-Generated Material
             </div>
-            <div className="prose prose-sm dark:prose-invert">
-              <p>{result}</p>
-              {/* Dummy content */}
-              {type === 'quiz' ? (
-                <div className="space-y-4 mt-4">
-                  <div className="p-4 bg-muted/30 rounded-lg border">
-                    <p className="font-semibold">Q1: Explain what is meant by a Transitive Dependency?</p>
-                  </div>
-                  <div className="p-4 bg-muted/30 rounded-lg border">
-                    <p className="font-semibold">Q2: Why is BCNF considered stronger than 3NF?</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                  <div className="aspect-[3/2] bg-primary/5 border border-primary/20 rounded-xl p-6 flex items-center justify-center text-center font-medium cursor-pointer hover:bg-primary/10 transition-colors shadow-sm">
-                    What is 3NF?
-                  </div>
-                  <div className="aspect-[3/2] bg-primary/5 border border-primary/20 rounded-xl p-6 flex items-center justify-center text-center font-medium cursor-pointer hover:bg-primary/10 transition-colors shadow-sm">
-                    Boyce-Codd Normal Form
-                  </div>
-                </div>
-              )}
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <ReactMarkdown>{result}</ReactMarkdown>
             </div>
           </div>
         ) : (

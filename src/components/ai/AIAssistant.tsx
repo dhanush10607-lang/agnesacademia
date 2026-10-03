@@ -68,7 +68,7 @@ export function AIAssistant() {
   ];
 
   return (
-    <div className="flex flex-col h-[600px]">
+    <div className="flex flex-col h-[min(600px,55dvh)] sm:h-[600px]">
       <div className="flex-grow overflow-y-auto p-4 md:p-6 space-y-6">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
