@@ -45,6 +45,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
   const [deptAssignments, setDeptAssignments] = useState<Record<string, string[]>>(initialDeptAssignments);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
+  const [activeStep, setActiveStep] = useState<"departments" | "subjects">("departments");
 
   const [subjectSearch, setSubjectSearch] = useState("");
 
@@ -70,11 +71,12 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
 
   const handleToggleDept = (deptId: string) => {
     if (!selectedFaculty) return;
+    const current = deptAssignments[selectedFaculty] || [];
+    const updated = current.includes(deptId) ? current.filter(id => id !== deptId) : [...current, deptId];
     setDeptAssignments(prev => {
-      const current = prev[selectedFaculty] || [];
-      const updated = current.includes(deptId) ? current.filter(id => id !== deptId) : [...current, deptId];
       return { ...prev, [selectedFaculty]: updated };
     });
+    setActiveStep(updated.length > 0 ? "subjects" : "departments");
     setMessage(null);
   };
 
@@ -121,7 +123,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
             <CardDescription>Choose a faculty member to manage their teaching assignments.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Select value={selectedFaculty} onValueChange={(val) => { setSelectedFaculty(val || ""); setMessage(null); }}>
+            <Select value={selectedFaculty} onValueChange={(val) => { setSelectedFaculty(val || ""); setActiveStep("departments"); setMessage(null); }}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a faculty member...">
                   {(value) => facultyList.find(faculty => faculty.id === value)?.full_name || "Select a faculty member..."}
@@ -131,7 +133,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
                 {facultyList.length === 0 ? (
                   <div className="p-3 text-sm text-muted-foreground text-center">
                     No faculty members found.<br/>
-                    Please change a user's role to Faculty in the User Management page first.
+                    Please change a user&apos;s role to Faculty in the User Management page first.
                   </div>
                 ) : (
                   facultyList.map(faculty => (
@@ -169,10 +171,10 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
             <CardHeader className="flex flex-row items-start justify-between border-b pb-4 mb-4">
               <div>
                 <CardTitle className="text-xl flex items-center">
-                  <BookOpen className="w-5 h-5 mr-2 text-primary" /> Assign Departments & Subjects
+                  <BookOpen className="w-5 h-5 mr-2 text-primary" /> Faculty Assignments
                 </CardTitle>
                 <CardDescription className="mt-1.5">
-                  Select the departments and subjects that {currentFaculty?.full_name} will be responsible for.
+                  Assign departments first, then choose subjects for {currentFaculty?.full_name}.
                 </CardDescription>
               </div>
               <Button onClick={handleSave} disabled={isSaving} className="shrink-0 gap-2 shadow-md">
@@ -180,7 +182,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
                 Save Changes
               </Button>
             </CardHeader>
-            <CardContent className="space-y-8 h-[700px] overflow-y-auto pr-4 custom-scrollbar">
+            <CardContent className="space-y-4 max-h-[700px] overflow-y-auto pr-4 custom-scrollbar">
               
               {message && (
                 <motion.div 
@@ -193,44 +195,89 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
                 </motion.div>
               )}
 
-              {/* Departments Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground border-b pb-2">
-                  Departments
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {departmentsList.map(dept => {
-                    const isAssigned = currentFacultyDepts.includes(dept.id);
-                    return (
-                      <div 
-                        key={dept.id}
-                        onClick={() => handleToggleDept(dept.id)}
-                        className={`flex items-start space-x-3 p-3 rounded-xl border transition-all cursor-pointer ${
-                          isAssigned 
-                            ? 'border-primary bg-primary/5 shadow-sm' 
-                            : 'border-border hover:border-primary/40 hover:bg-muted/50'
-                        }`}
-                      >
-                        <Checkbox 
-                          id={`dept-${dept.id}`} 
-                          checked={isAssigned}
-                          onCheckedChange={() => handleToggleDept(dept.id)}
-                          className="mt-0.5"
-                        />
-                        <Label 
-                          htmlFor={`dept-${dept.id}`} 
-                          className="font-semibold cursor-pointer text-sm leading-tight"
-                        >
-                          {dept.name}
-                        </Label>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <Card className="overflow-hidden border-border">
+                <CardHeader className="flex flex-row items-center justify-between gap-4 py-4">
+                  <div>
+                    <CardTitle className="text-lg flex items-center">
+                      <GraduationCap className="w-5 h-5 mr-2 text-primary" /> Assign Departments
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      {activeStep === "subjects"
+                        ? currentFacultyDepts.map(id => departmentsList.find(dept => dept.id === id)?.name).filter(Boolean).join(", ")
+                        : "Select one or more departments to continue."}
+                    </CardDescription>
+                  </div>
+                  {activeStep === "subjects" && (
+                    <Button type="button" variant="outline" size="sm" onClick={() => setActiveStep("departments")}>
+                      Change
+                    </Button>
+                  )}
+                </CardHeader>
+                <motion.div
+                  initial={false}
+                  animate={{ height: activeStep === "departments" ? "auto" : 0, opacity: activeStep === "departments" ? 1 : 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <CardContent className="pt-0 pb-5">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {departmentsList.map(dept => {
+                        const isAssigned = currentFacultyDepts.includes(dept.id);
+                        return (
+                          <div
+                            key={dept.id}
+                            className={`flex items-start space-x-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                              isAssigned
+                                ? "border-primary bg-primary/5 shadow-sm"
+                                : "border-border hover:border-primary/40 hover:bg-muted/50"
+                            }`}
+                          >
+                            <Checkbox
+                              id={`dept-${dept.id}`}
+                              checked={isAssigned}
+                              onCheckedChange={() => handleToggleDept(dept.id)}
+                              className="mt-0.5"
+                            />
+                            <Label
+                              htmlFor={`dept-${dept.id}`}
+                              className="font-semibold cursor-pointer text-sm leading-tight"
+                            >
+                              {dept.name}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </motion.div>
+              </Card>
 
-              {/* Subjects Search */}
-              <div className="space-y-4">
+              <Card className={`overflow-hidden border-border ${currentFacultyDepts.length === 0 ? "opacity-70" : ""}`}>
+                <CardHeader className="flex flex-row items-center justify-between gap-4 py-4">
+                  <div>
+                    <CardTitle className="text-lg flex items-center">
+                      <BookOpen className="w-5 h-5 mr-2 text-primary" /> Assign Subjects
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      {currentFacultyDepts.length === 0
+                        ? "Select a department first."
+                        : `${currentFacultySubjects.length} subject(s) selected from the chosen departments.`}
+                    </CardDescription>
+                  </div>
+                  {activeStep === "departments" && currentFacultyDepts.length > 0 && (
+                    <Button type="button" variant="outline" size="sm" onClick={() => setActiveStep("subjects")}>
+                      Choose subjects
+                    </Button>
+                  )}
+                </CardHeader>
+                <motion.div
+                  initial={false}
+                  animate={{ height: activeStep === "subjects" && currentFacultyDepts.length > 0 ? "auto" : 0, opacity: activeStep === "subjects" && currentFacultyDepts.length > 0 ? 1 : 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <CardContent className="pt-0 pb-5 max-h-[600px] overflow-y-auto custom-scrollbar">
+                    <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-2">
                   <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
                     Subjects
@@ -268,9 +315,8 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
                       {filteredSubjects.sort((a,b) => a.name.localeCompare(b.name)).map(subject => {
                         const isAssigned = currentFacultySubjects.includes(subject.id);
                         return (
-                          <div 
+                          <div
                             key={subject.id}
-                            onClick={() => handleToggleSubject(subject.id)}
                             className={`flex items-start space-x-3 p-3 rounded-xl border transition-all cursor-pointer ${
                               isAssigned 
                                 ? 'border-primary bg-primary/5 shadow-sm' 
@@ -300,7 +346,10 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
                   );
                 })
               )}
-              </div>
+                    </div>
+                  </CardContent>
+                </motion.div>
+              </Card>
             </CardContent>
           </Card>
         )}
