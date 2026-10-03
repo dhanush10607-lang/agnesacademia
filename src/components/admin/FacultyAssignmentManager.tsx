@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateFacultySubjects } from "@/app/actions/admin-faculty";
+import { updateFacultyAssignments } from "@/app/actions/admin-faculty";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,27 +26,39 @@ interface Faculty {
 interface Props {
   facultyList: Faculty[];
   subjectsList: Subject[];
-  initialAssignments: Record<string, string[]>; // Map of faculty_id -> [subject_ids]
+  departmentsList: { id: string; name: string }[];
+  initialSubjectAssignments: Record<string, string[]>;
+  initialDeptAssignments: Record<string, string[]>;
 }
 
-export function FacultyAssignmentManager({ facultyList, subjectsList, initialAssignments }: Props) {
+export function FacultyAssignmentManager({ facultyList, subjectsList, departmentsList, initialSubjectAssignments, initialDeptAssignments }: Props) {
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
-  const [assignments, setAssignments] = useState<Record<string, string[]>>(initialAssignments);
+  const [subjectAssignments, setSubjectAssignments] = useState<Record<string, string[]>>(initialSubjectAssignments);
+  const [deptAssignments, setDeptAssignments] = useState<Record<string, string[]>>(initialDeptAssignments);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
 
+  const [subjectSearch, setSubjectSearch] = useState("");
+
   const currentFaculty = facultyList.find(f => f.id === selectedFaculty);
-  const currentFacultySubjects = assignments[selectedFaculty] || [];
+  const currentFacultySubjects = subjectAssignments[selectedFaculty] || [];
+  const currentFacultyDepts = deptAssignments[selectedFaculty] || [];
 
   const handleToggleSubject = (subjectId: string) => {
     if (!selectedFaculty) return;
-    
-    setAssignments(prev => {
+    setSubjectAssignments(prev => {
       const current = prev[selectedFaculty] || [];
-      const updated = current.includes(subjectId)
-        ? current.filter(id => id !== subjectId)
-        : [...current, subjectId];
-        
+      const updated = current.includes(subjectId) ? current.filter(id => id !== subjectId) : [...current, subjectId];
+      return { ...prev, [selectedFaculty]: updated };
+    });
+    setMessage(null);
+  };
+
+  const handleToggleDept = (deptId: string) => {
+    if (!selectedFaculty) return;
+    setDeptAssignments(prev => {
+      const current = prev[selectedFaculty] || [];
+      const updated = current.includes(deptId) ? current.filter(id => id !== deptId) : [...current, deptId];
       return { ...prev, [selectedFaculty]: updated };
     });
     setMessage(null);
@@ -58,7 +70,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, initialAss
     setIsSaving(true);
     setMessage(null);
     
-    const { success, error } = await updateFacultySubjects(selectedFaculty, currentFacultySubjects);
+    const { success, error } = await updateFacultyAssignments(selectedFaculty, currentFacultySubjects, currentFacultyDepts);
     
     setIsSaving(false);
     if (success) {
@@ -138,10 +150,10 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, initialAss
             <CardHeader className="flex flex-row items-start justify-between border-b pb-4 mb-4">
               <div>
                 <CardTitle className="text-xl flex items-center">
-                  <BookOpen className="w-5 h-5 mr-2 text-primary" /> Assign Subjects
+                  <BookOpen className="w-5 h-5 mr-2 text-primary" /> Assign Departments & Subjects
                 </CardTitle>
                 <CardDescription className="mt-1.5">
-                  Select the subjects that {currentFaculty?.full_name} will be teaching.
+                  Select the departments and subjects that {currentFaculty?.full_name} will be responsible for.
                 </CardDescription>
               </div>
               <Button onClick={handleSave} disabled={isSaving} className="shrink-0 gap-2 shadow-md">
@@ -149,7 +161,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, initialAss
                 Save Changes
               </Button>
             </CardHeader>
-            <CardContent className="space-y-8 h-[600px] overflow-y-auto pr-4 custom-scrollbar">
+            <CardContent className="space-y-8 h-[700px] overflow-y-auto pr-4 custom-scrollbar">
               
               {message && (
                 <motion.div 
@@ -162,16 +174,77 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, initialAss
                 </motion.div>
               )}
 
+              {/* Departments Section */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground border-b pb-2">
+                  Departments
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {departmentsList.map(dept => {
+                    const isAssigned = currentFacultyDepts.includes(dept.id);
+                    return (
+                      <div 
+                        key={dept.id}
+                        onClick={() => handleToggleDept(dept.id)}
+                        className={`flex items-start space-x-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                          isAssigned 
+                            ? 'border-primary bg-primary/5 shadow-sm' 
+                            : 'border-border hover:border-primary/40 hover:bg-muted/50'
+                        }`}
+                      >
+                        <Checkbox 
+                          id={`dept-${dept.id}`} 
+                          checked={isAssigned}
+                          onCheckedChange={() => handleToggleDept(dept.id)}
+                          className="mt-0.5"
+                        />
+                        <Label 
+                          htmlFor={`dept-${dept.id}`} 
+                          className="font-semibold cursor-pointer text-sm leading-tight"
+                        >
+                          {dept.name}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Subjects Search */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-2">
+                  <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
+                    Subjects
+                  </h3>
+                  <div className="mt-2 sm:mt-0 w-full sm:w-64">
+                    <input 
+                      type="text" 
+                      placeholder="Search subjects..." 
+                      value={subjectSearch}
+                      onChange={e => setSubjectSearch(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                    />
+                  </div>
+                </div>
+
               {Object.keys(groupedSubjects).length === 0 ? (
                 <p className="text-muted-foreground text-center py-10">No subjects found in the database.</p>
               ) : (
-                Object.entries(groupedSubjects).sort().map(([groupName, subjects]) => (
+                Object.entries(groupedSubjects).sort().map(([groupName, subjects]) => {
+                  const filteredSubjects = subjects.filter(s => 
+                    s.name.toLowerCase().includes(subjectSearch.toLowerCase()) || 
+                    s.code.toLowerCase().includes(subjectSearch.toLowerCase())
+                  );
+
+                  if (filteredSubjects.length === 0) return null;
+
+                  return (
                   <div key={groupName} className="space-y-4">
-                    <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground border-b pb-2">
+                    <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground/70">
                       {groupName}
-                    </h3>
+                    </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {subjects.sort((a,b) => a.name.localeCompare(b.name)).map(subject => {
+                      {filteredSubjects.sort((a,b) => a.name.localeCompare(b.name)).map(subject => {
                         const isAssigned = currentFacultySubjects.includes(subject.id);
                         return (
                           <div 
@@ -203,8 +276,10 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, initialAss
                       })}
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
+              </div>
             </CardContent>
           </Card>
         )}

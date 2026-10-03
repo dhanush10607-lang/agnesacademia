@@ -31,6 +31,12 @@ export default async function FacultyAssignmentsPage() {
     .eq("role", "faculty")
     .order("full_name");
 
+  // Fetch all departments
+  const { data: departments } = await supabase
+    .from("departments")
+    .select("id, name")
+    .order("name");
+
   // Fetch all active subjects with hierarchy
   const { data: subjectsList } = await supabase
     .from("subjects")
@@ -49,19 +55,35 @@ export default async function FacultyAssignmentsPage() {
     .eq("status", "active")
     .order("name");
 
-  // Fetch existing assignments to pre-populate
+  // Fetch existing subject assignments
   const { data: assignmentsData } = await supabase
     .from("faculty_subjects")
     .select("faculty_id, subject_id");
 
-  // Group assignments by faculty_id
-  const initialAssignments: Record<string, string[]> = {};
+  // Group subject assignments by faculty_id
+  const initialSubjectAssignments: Record<string, string[]> = {};
   if (assignmentsData) {
     assignmentsData.forEach(row => {
-      if (!initialAssignments[row.faculty_id]) {
-        initialAssignments[row.faculty_id] = [];
+      if (!initialSubjectAssignments[row.faculty_id]) {
+        initialSubjectAssignments[row.faculty_id] = [];
       }
-      initialAssignments[row.faculty_id].push(row.subject_id);
+      initialSubjectAssignments[row.faculty_id].push(row.subject_id);
+    });
+  }
+
+  // Fetch existing department assignments
+  const { data: deptAssignmentsData } = await supabase
+    .from("faculty_departments")
+    .select("faculty_id, department_id");
+
+  // Group department assignments by faculty_id
+  const initialDeptAssignments: Record<string, string[]> = {};
+  if (deptAssignmentsData) {
+    deptAssignmentsData.forEach(row => {
+      if (!initialDeptAssignments[row.faculty_id]) {
+        initialDeptAssignments[row.faculty_id] = [];
+      }
+      initialDeptAssignments[row.faculty_id].push(row.department_id);
     });
   }
 
@@ -82,7 +104,9 @@ export default async function FacultyAssignmentsPage() {
       <FacultyAssignmentManager 
         facultyList={(facultyList as any) || []}
         subjectsList={(subjectsList as any) || []}
-        initialAssignments={initialAssignments}
+        departmentsList={(departments as any) || []}
+        initialSubjectAssignments={initialSubjectAssignments}
+        initialDeptAssignments={initialDeptAssignments}
       />
     </div>
   );
