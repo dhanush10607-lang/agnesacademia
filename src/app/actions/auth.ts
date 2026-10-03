@@ -103,7 +103,11 @@ export async function logout() {
       console.warn("Could not identify active session during logout:", e)
     }
   }
-  await supabase.auth.signOut()
+  const { error: signOutError } = await supabase.auth.signOut({ scope: "local" })
+  if (signOutError) {
+    console.error("Could not sign out the current session:", signOutError)
+    throw new Error("Could not sign out. Please try again.")
+  }
   revalidatePath("/", "layout")
   redirect("/login")
 }
