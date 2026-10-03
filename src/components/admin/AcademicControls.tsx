@@ -209,15 +209,36 @@ export function ArchiveSemesterButton({ id }: { id: string }) {
 }
 
 // Subjects
-export function CreateSubjectForm({ semesters, departments }: { semesters: any[], departments: any[] }) {
+export function CreateSubjectForm({
+  semesters,
+  departments,
+}: {
+  semesters: { id: string; name: string; department_id: string | null }[];
+  departments: { id: string; name: string }[];
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
+  const [selectedSemesterId, setSelectedSemesterId] = useState("");
+  const availableSemesters = semesters.filter(
+    (semester) => semester.department_id === selectedDepartmentId
+  );
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!selectedDepartmentId || !selectedSemesterId) {
+      alert("Select a department and one of its semesters.");
+      return;
+    }
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
+    formData.set("semester_id", selectedSemesterId);
+    formData.set("department_id", selectedDepartmentId);
     const res = await createSubjectAction(formData);
-    if (res.success) (e.target as HTMLFormElement).reset();
+    if (res.success) {
+      (e.target as HTMLFormElement).reset();
+      setSelectedDepartmentId("");
+      setSelectedSemesterId("");
+    }
     else alert(res.error);
     setIsSubmitting(false);
   };
@@ -233,28 +254,48 @@ export function CreateSubjectForm({ semesters, departments }: { semesters: any[]
         <Input id="code" name="code" placeholder="CS201" required />
       </div>
       <div className="flex-grow space-y-2">
-        <Label htmlFor="semester_id">Semester</Label>
-        <Select name="semester_id" required>
-          <SelectTrigger>
-            <SelectValue placeholder="Select Semester">
-              {(value) => semesters.find(semester => semester.id === value)?.name || "Select Semester"}
+        <Label htmlFor="subject_department_id">Department</Label>
+        <Select
+          name="department_id"
+          value={selectedDepartmentId}
+          onValueChange={(value) => {
+            setSelectedDepartmentId(value || "");
+            setSelectedSemesterId("");
+          }}
+          required
+        >
+          <SelectTrigger id="subject_department_id">
+            <SelectValue placeholder="Select Department">
+              {(value) => departments.find((department) => department.id === value)?.name || "Select Department"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {semesters.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+            {departments.map((department) => (
+              <SelectItem key={department.id} value={department.id}>{department.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
-      <div className="w-full space-y-2">
-        <Label>Departments (Optional)</Label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded-md p-3 max-h-48 overflow-y-auto bg-background">
-          {departments.map(d => (
-            <div key={d.id} className="flex items-center space-x-2">
-              <input type="checkbox" id={`dept-${d.id}`} name="department_ids" value={d.id} className="rounded border-border text-primary focus:ring-primary h-4 w-4" />
-              <label htmlFor={`dept-${d.id}`} className="text-sm font-medium leading-none cursor-pointer">{d.name}</label>
-            </div>
-          ))}
-        </div>
+      <div className="flex-grow space-y-2">
+        <Label htmlFor="semester_id">Semester</Label>
+        <Select
+          name="semester_id"
+          value={selectedSemesterId}
+          onValueChange={(value) => setSelectedSemesterId(value || "")}
+          disabled={!selectedDepartmentId}
+          required
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={selectedDepartmentId ? "Select Semester" : "Select Department First"}>
+              {(value) => availableSemesters.find((semester) => semester.id === value)?.name || "Select Semester"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {availableSemesters.map((semester) => (
+              <SelectItem key={semester.id} value={semester.id}>{semester.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "..." : "Add"}</Button>
     </form>

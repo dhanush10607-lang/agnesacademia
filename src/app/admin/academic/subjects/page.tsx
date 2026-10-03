@@ -12,8 +12,40 @@ export default async function AdminSubjectsPage() {
     .eq("status", "active")
     .order("name", { ascending: true });
 
-  const { data: semesters } = await supabase.from("semesters").select("id, name").eq("status", "active");
-  const { data: departments } = await supabase.from("departments").select("id, name").eq("status", "active");
+  const { data: semesterRows } = await supabase
+    .from("semesters")
+    .select("id, name, programme_id, academic_year_id")
+    .eq("status", "active");
+  const yearIds = [...new Set((semesterRows ?? []).map((semester) => semester.academic_year_id))];
+  const { data: years } = yearIds.length
+    ? await supabase.from("academic_years").select("id, name, programme_id").in("id", yearIds)
+    : { data: [] };
+  const programmeIds = [...new Set([
+    ...(semesterRows ?? []).map((semester) => semester.programme_id).filter((id): id is string => Boolean(id)),
+    ...(years ?? []).map((year) => year.programme_id),
+  ])];
+  const { data: programmes } = programmeIds.length
+    ? await supabase.from("programmes").select("id, department_id").in("id", programmeIds)
+    : { data: [] };
+  const programmeDepartments = new Map((programmes ?? []).map((programme) => [programme.id, programme.department_id]));
+  const academicYears = new Map((years ?? []).map((year) => [year.id, year]));
+  const semesters = (semesterRows ?? []).flatMap((semester) => {
+    const year = academicYears.get(semester.academic_year_id);
+    const programmeId = semester.programme_id ?? year?.programme_id;
+    const departmentId = programmeId ? programmeDepartments.get(programmeId) : null;
+
+    return departmentId
+      ? [{
+          id: semester.id,
+          name: year ? `${semester.name} · ${year.name}` : semester.name,
+          department_id: departmentId,
+        }]
+      : [];
+  });
+  const { data: departments } = await supabase
+    .from("departments")
+    .select("id, name")
+    .eq("status", "active");
 
   return (
     <div>

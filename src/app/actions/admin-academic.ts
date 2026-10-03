@@ -195,19 +195,64 @@ export async function createSubjectAction(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Not authenticated" };
 
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (profileError || profile?.role !== "administrator") {
+    return { success: false, error: "Unauthorized" };
+  }
+
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;
   const semester_id = formData.get("semester_id") as string;
-  const department_ids = formData.getAll("department_ids") as string[];
+  const department_id = formData.get("department_id") as string;
+
+  if (!name || !semester_id || !department_id) {
+    return { success: false, error: "Subject name, department, and semester are required." };
+  }
 
   try {
-    const { data: s, error } = await supabase.from("subjects").insert({ name, code, semester_id }).select().single();
+    const { data: semester, error: semesterError } = await supabase
+      .from("semesters")
+      .select("id, programme_id, academic_year:academic_years(programme_id)")
+      .eq("id", semester_id)
+      .eq("status", "active")
+      .single();
+
+    if (semesterError || !semester) {
+      return { success: false, error: "The selected semester is not available." };
+    }
+
+    const academicYear = Array.isArray(semester.academic_year)
+      ? semester.academic_year[0]
+      : semester.academic_year;
+    const semesterProgrammeId = semester.programme_id ?? academicYear?.programme_id;
+    if (!semesterProgrammeId) {
+      return { success: false, error: "The selected semester is not linked to a programme." };
+    }
+    const { data: semesterProgramme, error: programmeError } = await supabase
+      .from("programmes")
+      .select("department_id")
+      .eq("id", semesterProgrammeId)
+      .single();
+
+    if (programmeError || semesterProgramme?.department_id !== department_id) {
+      return { success: false, error: "Select a semester that belongs to the selected department." };
+    }
+
+    const { data: s, error } = await supabase
+      .from("subjects")
+      .insert({ name, code, semester_id, department_id })
+      .select()
+      .single();
     if (error) throw error;
 
-    if (department_ids.length > 0) {
-      const deptInserts = department_ids.map(id => ({ subject_id: s.id, department_id: id }));
-      await supabase.from("subject_departments").insert(deptInserts);
-    }
+    const { error: subjectDepartmentError } = await supabase
+      .from("subject_departments")
+      .insert({ subject_id: s.id, department_id });
+    if (subjectDepartmentError) throw subjectDepartmentError;
 
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'create', target_type: 'subject', target_id: s.id, metadata: { name, code } });
     revalidatePath("/admin/academic/subjects");
