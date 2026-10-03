@@ -13,11 +13,6 @@ interface Props {
 
 export function MobileNavMenu({ role }: Props) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -157,7 +152,7 @@ export function MobileNavMenu({ role }: Props) {
         type="button"
         variant="ghost"
         size="icon"
-        className="lg:hidden"
+        className="h-10 w-10 lg:hidden"
         onClick={() => setOpen(true)}
         aria-label="Open menu"
         aria-expanded={open}
@@ -166,13 +161,13 @@ export function MobileNavMenu({ role }: Props) {
         <Menu className="h-5 w-5" />
       </Button>
 
-      {open && mounted && createPortal(
+      {open && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[100] flex lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
           {/* Backdrop */}
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
           {/* Drawer */}
-          <div id="mobile-navigation-drawer" className="relative ml-auto w-72 max-w-[85vw] h-full bg-background shadow-2xl flex flex-col pt-safe">
+          <div id="mobile-navigation-drawer" className="relative ml-auto flex h-full w-[min(22rem,90vw)] flex-col bg-background pt-safe shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between p-4 border-b">
               <span className="font-heading font-bold text-foreground">Menu</span>
               <Button type="button" variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Close menu">
@@ -180,7 +175,7 @@ export function MobileNavMenu({ role }: Props) {
               </Button>
             </div>
 
-            <nav className="flex-1 overflow-y-auto p-4" aria-label="Drawer navigation">
+            <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4" aria-label="Drawer navigation">
               {role === "administrator" ? (
                 <div className="space-y-5">
                   {adminSections.map(section => (
@@ -228,7 +223,7 @@ export function MobileNavMenu({ role }: Props) {
             </nav>
 
             {role !== "guest" && (
-              <div className="p-4 border-t space-y-2">
+              <div className="shrink-0 space-y-2 border-t p-4 pb-safe">
                 <Link href="/profile" className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border rounded-xl text-sm font-semibold hover:bg-muted transition-colors" onClick={() => setOpen(false)}>
                   <Settings className="w-4 h-4" /> Profile & Settings
                 </Link>
@@ -241,7 +236,7 @@ export function MobileNavMenu({ role }: Props) {
             )}
 
             {role === "guest" && (
-              <div className="p-4 border-t space-y-2">
+              <div className="shrink-0 space-y-2 border-t p-4 pb-safe">
                 <Link href="/login" className="block w-full text-center px-4 py-2.5 border rounded-xl text-sm font-semibold hover:bg-muted transition-colors" onClick={() => setOpen(false)}>
                   Sign In
                 </Link>

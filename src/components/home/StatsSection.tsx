@@ -25,23 +25,23 @@ export async function StatsSection() {
   ];
 
   return (
-    <section className="relative py-12 md:py-20 bg-background border-b border-border/50">
+    <section className="relative border-b border-border/50 bg-background py-8 sm:py-12 md:py-20">
       <div className="absolute inset-0 bg-muted/20 pointer-events-none" />
       <div className="container px-4 md:px-8 mx-auto relative z-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-4 md:gap-8">
           {stats.map((stat, i) => (
             <div 
               key={i} 
-              className="flex flex-col items-center p-6 bg-card border border-border/60 rounded-3xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+              className="flex flex-col items-center rounded-2xl border border-border/60 bg-card p-4 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md sm:rounded-3xl sm:p-6"
             >
-              <div className={`p-4 rounded-2xl ${stat.bg} mb-4`}>
-                <stat.icon className={`w-8 h-8 ${stat.color}`} />
+              <div className={`mb-3 rounded-xl p-3 sm:mb-4 sm:rounded-2xl sm:p-4 ${stat.bg}`}>
+                <stat.icon className={`h-6 w-6 sm:h-8 sm:w-8 ${stat.color}`} />
               </div>
               <span className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-1 tracking-tight">
                 {stat.value}
                 <span className="text-primary/70 ml-1">+</span>
               </span>
-              <span className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-widest">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs md:text-sm md:tracking-widest">
                 {stat.label}
               </span>
             </div>

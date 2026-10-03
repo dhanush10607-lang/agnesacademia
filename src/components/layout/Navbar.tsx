@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
-  BookOpen, Search, Bookmark, LayoutDashboard, Home,
+  BookOpen, Search, Bookmark, LayoutDashboard,
   Sparkles, GraduationCap, HelpCircle, Upload, Bell,
-  Calendar, Library, Settings
+  Library, Settings
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/actions/auth";
 import { MobileNavMenu } from "./MobileNavMenu";
+import { MobileBottomNav } from "./MobileBottomNav";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -79,7 +80,7 @@ export async function Navbar() {
             <div className="bg-primary/10 p-1.5 rounded-lg">
               <BookOpen className="h-5 w-5 text-primary" />
             </div>
-            <span className="font-heading font-bold hidden sm:inline-block">AGNES ACADEMIA</span>
+            <span className="font-heading text-sm font-bold tracking-tight sm:text-base">AGNES ACADEMIA</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -91,7 +92,7 @@ export async function Navbar() {
                   key={link.href}
                   href={link.href}
                   className={`flex items-center gap-1.5 px-2 xl:px-3 py-2 rounded-lg whitespace-nowrap transition-colors hover:bg-muted/70 ${
-                    (link as any).highlight
+                    ("highlight" in link && link.highlight)
                       ? "text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-500/10"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
@@ -229,7 +230,7 @@ export async function Navbar() {
                 <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm", className: "hidden sm:inline-flex" })}>
                   Sign In
                 </Link>
-                <Link href="/register" className={buttonVariants({ size: "sm" })}>
+                <Link href="/register" className={buttonVariants({ size: "sm", className: "hidden sm:inline-flex" })}>
                   Get Started
                 </Link>
                 <MobileNavMenu role="guest" />
@@ -239,56 +240,14 @@ export async function Navbar() {
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation — Students only */}
+      {/* Mobile Bottom Navigation */}
       {user && role === "student" && (
-        <div className="mobile-bottom-nav lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-t border-border pb-safe">
-          <nav className="flex items-center justify-around h-16" aria-label="Mobile navigation">
-            <Link href="/" className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
-              <Home className="h-5 w-5 mb-0.5" />
-              <span className="text-[10px] font-semibold">Home</span>
-            </Link>
-            <Link href="/my-semester" className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
-              <Library className="h-5 w-5 mb-0.5" />
-              <span className="text-[10px] font-semibold">Subjects</span>
-            </Link>
-            <Link href="/search" className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
-              <Search className="h-5 w-5 mb-0.5" />
-              <span className="text-[10px] font-semibold">Search</span>
-            </Link>
-            <Link href="/ai" className="flex flex-col items-center justify-center flex-1 h-full text-blue-600 dark:text-blue-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
-              <Sparkles className="h-5 w-5 mb-0.5" />
-              <span className="text-[10px] font-semibold">Exam Prep</span>
-            </Link>
-            <Link href="/dashboard" className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md">
-              <LayoutDashboard className="h-5 w-5 mb-0.5" />
-              <span className="text-[10px] font-semibold">Dashboard</span>
-            </Link>
-          </nav>
-        </div>
+        <MobileBottomNav role="student" />
       )}
 
       {/* Faculty bottom nav */}
       {user && role === "faculty" && (
-        <div className="mobile-bottom-nav lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-t border-border pb-safe">
-          <nav className="flex items-center justify-around h-16" aria-label="Faculty mobile navigation">
-            <Link href="/" className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary transition-colors">
-              <Home className="h-5 w-5 mb-0.5" />
-              <span className="text-[10px] font-semibold">Home</span>
-            </Link>
-            <Link href="/faculty" className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary transition-colors">
-              <GraduationCap className="h-5 w-5 mb-0.5" />
-              <span className="text-[10px] font-semibold">Portal</span>
-            </Link>
-            <Link href="/upload" className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary transition-colors">
-              <Upload className="h-5 w-5 mb-0.5" />
-              <span className="text-[10px] font-semibold">Upload</span>
-            </Link>
-            <Link href="/dashboard" className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary transition-colors">
-              <LayoutDashboard className="h-5 w-5 mb-0.5" />
-              <span className="text-[10px] font-semibold">Dashboard</span>
-            </Link>
-          </nav>
-        </div>
+        <MobileBottomNav role="faculty" />
       )}
     </>
   );

@@ -17,31 +17,31 @@ const features = [
 
 export function FeatureSection() {
   return (
-    <section className="py-16 md:py-24 bg-background">
+    <section className="bg-background py-12 sm:py-16 md:py-24">
       <div className="container px-4 md:px-8 mx-auto">
-        <ScrollReveal className="text-center mb-12">
-          <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">What's Available</p>
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground">Everything You Need</h2>
+        <ScrollReveal className="mb-8 text-center sm:mb-12">
+          <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">What&apos;s Available</p>
+          <h2 className="text-2xl font-heading font-bold text-foreground sm:text-3xl md:text-4xl">Everything You Need</h2>
           <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
             Every type of academic resource — organized by department, programme, and semester — available in one place.
           </p>
         </ScrollReveal>
 
-        <AnimateList className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <AnimateList className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-4">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
               <AnimateItem key={feature.title}>
                 <Link href={feature.href} className="group block h-full">
-                  <div className="h-full bg-card border border-border rounded-2xl p-5 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300 flex flex-col gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${feature.color} group-hover:scale-110 transition-transform duration-200`}>
+                  <div className="flex h-full flex-col gap-2.5 rounded-2xl border border-border bg-card p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg sm:gap-3 sm:p-5">
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${feature.color} transition-transform duration-200 group-hover:scale-110 sm:h-10 sm:w-10`}>
                       <Icon className="w-5 h-5" />
                     </div>
                     <div>
                       <h3 className="font-heading font-bold text-sm md:text-base text-foreground group-hover:text-primary transition-colors">
                         {feature.title}
                       </h3>
-                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed hidden sm:block">
+                      <p className="mt-1 hidden text-xs leading-relaxed text-muted-foreground min-[400px]:block sm:text-sm">
                         {feature.desc}
                       </p>
                     </div>
