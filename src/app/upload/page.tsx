@@ -60,6 +60,10 @@ export default async function UploadPage() {
     .eq("id", user.id)
     .single();
 
+  if (!profile) {
+    console.error("Failed to fetch the student's academic profile for upload.");
+  }
+
   let subjects: UploadSubject[] = [];
   if (profile?.role === "student") {
     const { data: enrolledSubjects, error: enrollmentError } = await supabase
@@ -74,7 +78,7 @@ export default async function UploadPage() {
       subjects = toUploadSubjects(enrolledSubjects || []);
     }
 
-    if (subjects.length === 0 && !enrollmentError && profile?.curriculum_id) {
+    if (subjects.length === 0 && profile?.curriculum_id) {
       const curriculumSubjects = await getCurriculumSemesterSubjects(
         supabase,
         profile.curriculum_id,

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { UploadCloud, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 export function UploadForm({
   categories,
@@ -195,6 +196,15 @@ export function UploadForm({
 
       <div className="space-y-2">
         <Label htmlFor="subject_id">Subject <span className="text-red-500">*</span></Label>
+        {subjects.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            No subjects are available for your account. Select your current subjects in{" "}
+            <Link href="/profile/subjects" className="font-medium text-primary underline underline-offset-4">
+              My Subjects
+            </Link>
+            {" "}and try again.
+          </p>
+        )}
         <Select name="subject_id" required disabled={isSubmitting}>
           <SelectTrigger>
             <SelectValue placeholder="Select subject">
