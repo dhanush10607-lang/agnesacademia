@@ -15,9 +15,24 @@ export default async function AdminNotificationsPage() {
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "administrator") redirect("/dashboard");
 
-  // Fetch some stats
-  const { count: usersCount } = await supabase.from("profiles").select("*", { count: 'exact', head: true });
-  const { count: devicesCount } = await supabase.from("push_devices").select("*", { count: 'exact', head: true }).eq("is_active", true);
+  // Fetch real platform-wide stats. RLS restricts push_devices to the
+  // current user's own rows, so use the service role for admin counts.
+  const { getServiceRoleSupabase } = await import("@/lib/notifications/delivery");
+  const db: any = getServiceRoleSupabase() || supabase;
+
+  const [{ count: usersCount }, { data: activeDevices }, { count: sent24h }] = await Promise.all([
+    db.from("profiles").select("*", { count: "exact", head: true }),
+    db.from("push_devices").select("user_id, device_type").eq("is_active", true),
+    db.from("notification_deliveries").select("*", { count: "exact", head: true })
+      .eq("status", "sent")
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+  ]);
+
+  const devicesCount = activeDevices?.length || 0;
+  const reachableUsers = new Set((activeDevices || []).map((d: any) => d.user_id)).size;
+  const mobileCount = (activeDevices || []).filter((d: any) => d.device_type === "mobile").length;
+  const desktopCount = devicesCount - mobileCount;
+  const reachPct = usersCount ? Math.round((reachableUsers / usersCount) * 100) : 0;
 
   // Fetch departments/programmes/semesters for targeting
   const { data: departments } = await supabase.from("departments").select("id, name").eq("status", "active");
@@ -72,9 +87,23 @@ export default async function AdminNotificationsPage() {
               <div className="flex items-center gap-4 p-4 rounded-lg bg-green-500/5 border border-green-500/10 dark:bg-green-500/10">
                 <Send className="w-8 h-8 text-green-600 dark:text-green-500 opacity-80" />
                 <div>
-                  <div className="text-2xl font-bold">{devicesCount || 0}</div>
+                  <div className="text-2xl font-bold">{devicesCount}</div>
                   <div className="text-sm text-muted-foreground">Active Push Devices</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{mobileCount} mobile · {desktopCount} desktop</div>
                 </div>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/40 border">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Users reachable by push</span>
+                  <span className="font-semibold">{reachableUsers} / {usersCount || 0} ({reachPct}%)</span>
+                </div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full bg-primary transition-all" style={{ width: `${reachPct}%` }} />
+                </div>
+              </div>
+              <div className="flex justify-between text-sm px-1">
+                <span className="text-muted-foreground">Pushes delivered (24h)</span>
+                <span className="font-semibold">{sent24h || 0}</span>
               </div>
             </CardContent>
           </Card>
