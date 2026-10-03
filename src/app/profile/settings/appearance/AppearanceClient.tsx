@@ -9,40 +9,57 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { updateUserSettingsAction } from "@/app/actions/settings";
+import type { AppearanceSettings } from "@/app/Providers";
 
-export default function AppearanceClient({ initialSettings }: { initialSettings: any }) {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+export default function AppearanceClient({ initialSettings }: { initialSettings: AppearanceSettings }) {
+  const { setTheme } = useTheme();
+  const [selectedTheme, setSelectedTheme] = useState<"light" | "dark" | "system">(
+    initialSettings.theme === "light" || initialSettings.theme === "dark" || initialSettings.theme === "system"
+      ? initialSettings.theme
+      : "system"
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
-  const [textSize, setTextSize] = useState(initialSettings?.text_size || "standard");
-  const [reducedMotion, setReducedMotion] = useState(initialSettings?.reduced_motion ? "true" : "false");
-  const [highContrast, setHighContrast] = useState(initialSettings?.high_contrast ? "true" : "false");
+  const [textSize, setTextSize] = useState(initialSettings.text_size || "standard");
+  const [reducedMotion, setReducedMotion] = useState(initialSettings.reduced_motion ? "true" : "false");
+  const [highContrast, setHighContrast] = useState(initialSettings.high_contrast ? "true" : "false");
 
   useEffect(() => {
-    setMounted(true);
-    if (initialSettings?.theme && initialSettings.theme !== theme) {
-      setTheme(initialSettings.theme);
-    }
-  }, []);
+    const root = document.documentElement;
+    root.dataset.textSize = textSize;
+    root.dataset.reducedMotion = reducedMotion;
+    root.dataset.highContrast = highContrast;
+  }, [textSize, reducedMotion, highContrast]);
 
   const handleSave = async () => {
     setIsSaving(true);
-    
-    await updateUserSettingsAction({
-      theme: theme,
-      text_size: textSize,
-      reduced_motion: reducedMotion === "true",
-      high_contrast: highContrast === "true",
-    });
+    setError("");
+    setSaved(false);
 
-    setIsSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      const result = await updateUserSettingsAction({
+        theme: selectedTheme,
+        text_size: textSize as "standard" | "large",
+        reduced_motion: reducedMotion === "true",
+        high_contrast: highContrast === "true",
+      });
+
+      if (!result.success) {
+        setError(result.error || "Could not save appearance preferences. Please try again.");
+        return;
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (saveError) {
+      console.error("Appearance preferences save failed:", saveError);
+      setError("Could not save appearance preferences. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
-
-  if (!mounted) return null;
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-2xl space-y-6 pb-24 md:pb-8">
@@ -66,8 +83,13 @@ export default function AppearanceClient({ initialSettings }: { initialSettings:
         </CardHeader>
         <CardContent className="pt-6">
           <RadioGroup 
-            value={theme || "system"} 
-            onValueChange={(val) => setTheme(val)}
+            value={selectedTheme}
+            onValueChange={(val) => {
+              if (val === "light" || val === "dark" || val === "system") {
+                setSelectedTheme(val);
+                setTheme(val);
+              }
+            }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4"
           >
             <div>
@@ -159,6 +181,10 @@ export default function AppearanceClient({ initialSettings }: { initialSettings:
           {isSaving ? "Saving..." : "Save Preferences"}
         </Button>
       </div>
+
+      {error && (
+        <p role="alert" className="text-sm text-destructive">{error}</p>
+      )}
 
       {saved && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 md:bottom-8 bg-green-100 text-green-800 border border-green-300 px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4">

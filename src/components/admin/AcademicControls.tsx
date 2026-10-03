@@ -134,7 +134,11 @@ export function CreateSemesterForm({
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     const res = await createSemesterAction(formData);
-    if (res.success) (e.target as HTMLFormElement).reset();
+    if (res.success) {
+      (e.target as HTMLFormElement).reset();
+      setProgrammeId("");
+      setAcademicYearId("");
+    }
     else alert(res.error);
     setIsSubmitting(false);
   };

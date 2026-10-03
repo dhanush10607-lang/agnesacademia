@@ -3,7 +3,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function updateUserSettingsAction(updates: any) {
+type UserSettingsUpdates = {
+  theme?: "light" | "dark" | "system";
+  text_size?: "standard" | "large";
+  reduced_motion?: boolean;
+  high_contrast?: boolean;
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+};
+
+export async function updateUserSettingsAction(updates: UserSettingsUpdates) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -11,23 +20,19 @@ export async function updateUserSettingsAction(updates: any) {
     return { success: false, error: "Not authenticated" };
   }
 
-  // Ensure settings record exists
-  const { data: existing } = await supabase.from("user_settings").select("id").eq("user_id", user.id).single();
-  
-  if (!existing) {
-    await supabase.from("user_settings").insert({ user_id: user.id, ...updates });
-  } else {
-    const { error } = await supabase
-      .from("user_settings")
-      .update(updates)
-      .eq("user_id", user.id);
+  const { error } = await supabase
+    .from("user_settings")
+    .upsert(
+      { user_id: user.id, ...updates, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" }
+    );
 
-    if (error) {
-      console.error("Settings update error:", error);
-      return { success: false, error: "Failed to update settings" };
-    }
+  if (error) {
+    console.error("Settings update error:", error);
+    return { success: false, error: "Failed to update settings" };
   }
 
+  revalidatePath("/", "layout");
   revalidatePath("/profile");
   revalidatePath("/profile/settings/appearance");
   revalidatePath("/profile/settings/notifications");

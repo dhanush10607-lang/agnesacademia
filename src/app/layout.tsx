@@ -5,6 +5,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { NotificationPrompt } from "@/components/notifications/NotificationPrompt";
 import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "./Providers";
+import { createClient } from "@/lib/supabase/server";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -21,11 +23,29 @@ export const metadata: Metadata = {
   description: "One College. Every Course. Every Resource. The central academic ecosystem for St. Agnes College (Autonomous), Mangaluru.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  let appearanceSettings = {};
+
+  if (user) {
+    const { data: settings, error } = await supabase
+      .from("user_settings")
+      .select("theme, text_size, reduced_motion, high_contrast")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error loading appearance settings:", error);
+    } else if (settings) {
+      appearanceSettings = settings;
+    }
+  }
+
   return (
     <html
       lang="en"
@@ -33,11 +53,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
-        <Navbar />
-        <main className="flex-1 min-w-0 w-full">{children}</main>
-        <Footer />
-        <NotificationPrompt />
-        <Toaster />
+        <Providers settings={appearanceSettings}>
+          <Navbar />
+          <main className="flex-1 min-w-0 w-full">{children}</main>
+          <Footer />
+          <NotificationPrompt />
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );

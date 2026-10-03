@@ -10,11 +10,16 @@ export default async function AppearanceSettingsPage() {
     redirect("/login");
   }
 
-  const { data: settings } = await supabase
+  const { data: settings, error } = await supabase
     .from("user_settings")
-    .select("*")
+    .select("theme, text_size, reduced_motion, high_contrast")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error loading appearance settings:", error);
+    throw new Error("Unable to load appearance settings.");
+  }
 
   return <AppearanceClient initialSettings={settings || {}} />;
 }

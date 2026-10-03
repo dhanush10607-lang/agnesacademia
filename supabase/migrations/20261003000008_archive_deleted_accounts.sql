@@ -54,7 +54,7 @@ BEGIN
         'email_confirmed_at', email_confirmed_at,
         'phone_confirmed_at', phone_confirmed_at,
         'user_metadata', raw_user_meta_data,
-        'app_metadata', app_metadata,
+        'app_metadata', raw_app_meta_data,
         'is_anonymous', is_anonymous
     )
     INTO v_user

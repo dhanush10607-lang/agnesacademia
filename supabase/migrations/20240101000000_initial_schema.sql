@@ -53,30 +53,3 @@ CREATE INDEX idx_academic_years_programme_id ON public.academic_years(programme_
 CREATE INDEX idx_semesters_academic_year_id ON public.semesters(academic_year_id);
 CREATE INDEX idx_subjects_semester_id ON public.subjects(semester_id);
 
--- Insert Demo Data (safe seed data as requested)
-WITH new_dept AS (
-    INSERT INTO public.departments (name, description) 
-    VALUES ('Computer Science (Demo)', 'Department of Computer Science (Demo Data)')
-    RETURNING id
-),
-new_prog AS (
-    INSERT INTO public.programmes (department_id, name, description)
-    SELECT id, 'B.Sc Data Science (Demo)', 'Bachelor of Science in Data Science' FROM new_dept
-    RETURNING id
-),
-new_year AS (
-    INSERT INTO public.academic_years (programme_id, name)
-    SELECT id, 'II Year' FROM new_prog
-    RETURNING id
-),
-new_sem AS (
-    INSERT INTO public.semesters (academic_year_id, name)
-    SELECT id, 'Semester III' FROM new_year
-    RETURNING id
-)
-INSERT INTO public.subjects (semester_id, name, code)
-SELECT id, 'Database Management Systems (Demo)', 'DBMS-301' FROM new_sem
-UNION ALL
-SELECT id, 'Data Structures Using Python (Demo)', 'DS-302' FROM new_sem
-UNION ALL
-SELECT id, 'Probability and Statistics (Demo)', 'PS-303' FROM new_sem;
