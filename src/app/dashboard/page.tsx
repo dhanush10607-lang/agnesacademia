@@ -54,15 +54,19 @@ export default async function DashboardPage() {
         
       subjects.push({ ...subj, resourceCount: count || 0 });
     }
-  } else if (profile?.semester_id) {
-    // Fallback to old behavior if no explicit enrollments exist
-    const { data: subjData } = await supabase
-      .from("subjects")
-      .select("id, name, code, description")
-      .eq("semester_id", profile.semester_id);
+  } else if (profile?.curriculum_id) {
+    // Fetch from curriculum if no explicit enrollments exist
+    const { data: currData } = await supabase
+      .from("curriculum_subjects")
+      .select("subject:subjects!inner(id, name, code, description)")
+      .eq("curriculum_id", profile.curriculum_id)
+      .eq("subject.semester_id", profile.semester_id);
     
-    if (subjData) {
-      for (const subj of subjData) {
+    if (currData) {
+      for (const cs of currData) {
+        const subj: any = cs.subject;
+        if (!subj || Array.isArray(subj)) continue;
+        
         const { count } = await supabase
           .from("resources")
           .select("*", { count: 'exact', head: true })

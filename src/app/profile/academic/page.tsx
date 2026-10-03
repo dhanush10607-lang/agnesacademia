@@ -29,12 +29,21 @@ export default async function AcademicInfoPage() {
 
   if (!profile) redirect("/onboarding");
 
-  // Fetch subjects for this semester
-  const { data: subjects } = await supabase
-    .from("subjects")
-    .select("*")
-    .eq("semester_id", profile.semester_id || '00000000-0000-0000-0000-000000000000')
-    .order("name", { ascending: true });
+  // Fetch subjects for this semester from curriculum
+  let subjects: any[] = [];
+  
+  if (profile.curriculum_id) {
+    const { data: currSubjects } = await supabase
+      .from("curriculum_subjects")
+      .select("subject:subjects!inner(*)")
+      .eq("curriculum_id", profile.curriculum_id)
+      .eq("subject.semester_id", profile.semester_id);
+      
+    if (currSubjects) {
+      subjects = currSubjects.map((cs: any) => cs.subject);
+      subjects.sort((a: any, b: any) => a.name.localeCompare(b.name));
+    }
+  }
 
   // Fetch global settings
   const { data: globalSettings } = await supabase

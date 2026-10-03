@@ -58,14 +58,18 @@ export default async function MySemesterPage() {
   if (enrolledData && enrolledData.length > 0) {
     subjects = enrolledData.map(e => e.subject).filter(Boolean);
     subjects.sort((a, b) => a.name.localeCompare(b.name));
-  } else {
-    // Fallback to legacy semester query
-    const { data: fallbackSubjects } = await supabase
-      .from("subjects")
-      .select("*")
-      .eq("semester_id", profile.semester_id)
-      .order("name", { ascending: true });
-    subjects = fallbackSubjects || [];
+  } else if (profile.curriculum_id) {
+    // Fetch from curriculum if no explicit enrollments exist
+    const { data: currSubjects } = await supabase
+      .from("curriculum_subjects")
+      .select("subject:subjects!inner(*)")
+      .eq("curriculum_id", profile.curriculum_id)
+      .eq("subject.semester_id", profile.semester_id);
+      
+    if (currSubjects) {
+      subjects = currSubjects.map((cs: any) => cs.subject);
+      subjects.sort((a: any, b: any) => a.name.localeCompare(b.name));
+    }
   }
 
   return (
