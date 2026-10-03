@@ -124,7 +124,7 @@ export default function CurriculumSubjectManager({
                 
                 <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-12 gap-4">
                   {/* Subject Dropdown */}
-                  <div className="md:col-span-5 space-y-1">
+                  <div className="md:col-span-4 space-y-1">
                     <Label className="text-xs text-muted-foreground">Subject</Label>
                     <SearchableSubjectSelect 
                       subjects={allSubjects}
@@ -133,8 +133,18 @@ export default function CurriculumSubjectManager({
                     />
                   </div>
                   
+                  {/* Read-only Semester */}
+                  <div className="md:col-span-2 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Semester</Label>
+                    <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                      <span className="truncate">
+                        {allSubjects.find(s => s.id === sub.subject_id)?.semester?.name || '-'}
+                      </span>
+                    </div>
+                  </div>
+                  
                   {/* Subject Type */}
-                  <div className="md:col-span-4 space-y-1">
+                  <div className="md:col-span-3 space-y-1">
                     <Label className="text-xs text-muted-foreground">Subject Group</Label>
                     <Select 
                       value={sub.subject_type_id} 
@@ -212,7 +222,7 @@ function SearchableSubjectSelect({
         className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background cursor-pointer hover:bg-accent/50 transition-colors"
         onClick={() => setOpen(!open)}
       >
-        <span className="truncate">{selected ? `${selected.name} (${selected.code})${selected.semester?.name ? ` - ${selected.semester.name}` : ''}` : "Select a subject..."}</span>
+        <span className="truncate">{selected ? `${selected.name} (${selected.code})` : "Select a subject..."}</span>
         <span className="opacity-50 text-xs">▼</span>
       </div>
       
@@ -238,7 +248,7 @@ function SearchableSubjectSelect({
                     className={`relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground ${value === s.id ? "bg-accent text-accent-foreground font-medium" : ""}`}
                     onClick={() => { onChange(s.id); setOpen(false); setQuery(""); }}
                   >
-                    <span className="truncate">{s.name} ({s.code}){s.semester?.name ? ` - ${s.semester.name}` : ''}</span>
+                    <span className="truncate">{s.name} ({s.code}) {s.semester?.name ? `[${s.semester.name}]` : ''}</span>
                   </div>
                 ))
               )}
