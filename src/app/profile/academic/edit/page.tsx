@@ -45,7 +45,11 @@ export default async function EditAcademicProfilePage() {
   let initialSemesters: any[] = [];
 
   // Fetch all programmes since we are removing department selection
-  const { data: allProgrammes } = await supabase.from("programmes").select("id, name, department_id").eq("status", "active").order("name");
+  const { data: allProgrammes } = await supabase
+    .from("programmes")
+    .select("id, name, department_id, department:departments(name)")
+    .eq("status", "active")
+    .order("name");
   if (allProgrammes) initialProgrammes = allProgrammes;
   if (profile.programme_id) {
     const { data: currData } = await supabase.from("curricula").select("id, name").eq("programme_id", profile.programme_id).eq("is_active", true).order("name");

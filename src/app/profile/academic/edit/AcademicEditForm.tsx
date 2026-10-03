@@ -26,6 +26,9 @@ export default function AcademicEditForm({
   const router = useRouter();
 
   const [progId, setProgId] = useState<string>(currentProfile.programme_id || "");
+  const [departmentId, setDepartmentId] = useState<string | null>(
+    initialProgrammes.find(programme => programme.id === currentProfile.programme_id)?.department_id ?? null
+  );
   const [currId, setCurrId] = useState<string>(currentProfile.curriculum_id || "");
   const [yearId, setYearId] = useState<string>(currentProfile.academic_year_id || "");
   const [semId, setSemId] = useState<string>(currentProfile.semester_id || "");
@@ -76,14 +79,10 @@ export default function AcademicEditForm({
       await supabase.from("student_subjects").delete().eq("student_id", user.id);
     }
 
-    // Infer department_id from selected programme
-    const selectedProg = programmes.find(p => p.id === progId);
-    const inferredDeptId = selectedProg?.department_id ?? null;
-
     const { data: updatedProfile, error } = await supabase
       .from("profiles")
       .update({
-        department_id: inferredDeptId,
+        department_id: departmentId,
         programme_id: progId,
         curriculum_id: currId || null,
         academic_year_id: yearId,
@@ -142,7 +141,14 @@ export default function AcademicEditForm({
             <Label>Programme</Label>
             <Select 
               value={programmes.some(p => p.id === progId) ? progId : ""} 
-              onValueChange={(val) => { setProgId(val || ""); setCurrId(""); setYearId(""); setSemId(""); }}
+              onValueChange={(val) => {
+                const selectedProgramme = programmes.find(programme => programme.id === val);
+                setProgId(val || "");
+                setDepartmentId(selectedProgramme?.department_id ?? null);
+                setCurrId("");
+                setYearId("");
+                setSemId("");
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Programme">
@@ -155,6 +161,13 @@ export default function AcademicEditForm({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Department</Label>
+            <div className="flex h-10 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
+              {programmes.find(programme => programme.id === progId)?.department?.name || "Not assigned to this programme"}
+            </div>
           </div>
 
           <div className="space-y-2">
