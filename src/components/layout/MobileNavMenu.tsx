@@ -46,7 +46,14 @@ export function MobileNavMenu({ role }: Props) {
 
   const facultyLinks = [
     { href: "/faculty",  label: "Faculty Portal", icon: GraduationCap },
-    { href: "/upload",   label: "Upload Resource", icon: Upload },
+    { href: "/faculty/resources", label: "My Resources", icon: FileText },
+    { href: "/faculty/assignments", label: "Manage Assignments", icon: BookOpen },
+    { href: "/faculty/upload", label: "Upload Resource", icon: Upload },
+    { href: "/faculty/assignments/new", label: "Create Assignment", icon: BookOpen },
+    { href: "/faculty/quizzes/new", label: "Create Quiz", icon: Brain },
+    { href: "/faculty/announcements/new", label: "Create Announcement", icon: Bell },
+    { href: "/faculty/notices/new", label: "Publish Notice", icon: Bell },
+    { href: "/faculty/calendar/new", label: "Schedule Event", icon: CalendarDays },
     { href: "/notices",  label: "Notices",         icon: Bell },
     { href: "/calendar", label: "Academic Calendar", icon: CalendarDays },
     { href: "/dashboard",label: "Dashboard",       icon: LayoutDashboard },

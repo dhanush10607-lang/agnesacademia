@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Home, LayoutDashboard, Library, Search, Sparkles, Upload } from "lucide-react";
+import { BookOpen, FileCheck2, Home, LayoutDashboard, Library, Search, Shield, Sparkles, Upload } from "lucide-react";
 
 type MobileBottomNavProps = {
-  role: "student" | "faculty";
+  role: "student" | "faculty" | "moderator";
 };
 
 const studentItems = [
@@ -19,13 +19,26 @@ const studentItems = [
 const facultyItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/faculty", label: "Portal", icon: BookOpen },
-  { href: "/upload", label: "Upload", icon: Upload },
+  { href: "/faculty/resources", label: "Resources", icon: Upload },
+  { href: "/faculty/assignments", label: "Assignments", icon: Library },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+];
+
+const moderatorItems = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/moderation", label: "Moderation", icon: Shield },
+  { href: "/moderation/reports", label: "Reports", icon: FileCheck2 },
+  { href: "/search", label: "Search", icon: Search },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 ];
 
 export function MobileBottomNav({ role }: MobileBottomNavProps) {
   const pathname = usePathname();
-  const items = role === "student" ? studentItems : facultyItems;
+  const items = role === "student"
+    ? studentItems
+    : role === "faculty"
+      ? facultyItems
+      : moderatorItems;
 
   return (
     <div className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background/95 pb-safe shadow-[0_-8px_24px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl lg:hidden">

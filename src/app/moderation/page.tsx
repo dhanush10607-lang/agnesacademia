@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Clock, AlertTriangle, ShieldCheck, ExternalLink, Filter, Flag } from "lucide-react";
+import { FileText, Clock, AlertTriangle, ShieldCheck, ExternalLink, Filter, Flag, Search, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -66,13 +66,20 @@ export default async function ModerationDashboardPage({
         <p className="text-lg text-muted-foreground">
           Review and moderate student-contributed academic resources.
         </p>
-        <Link
-          href="/moderation/reports"
-          className={buttonVariants({ variant: "outline", className: "mt-4" })}
-        >
-          <Flag className="mr-2 h-4 w-4" />
-          Review user reports
-        </Link>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/moderation/reports" className={buttonVariants({ variant: "outline" })}>
+            <Flag className="mr-2 h-4 w-4" />
+            Review user reports
+          </Link>
+          <Link href="/search" className={buttonVariants({ variant: "outline" })}>
+            <Search className="mr-2 h-4 w-4" />
+            Search Resources
+          </Link>
+          <Link href="/dashboard" className={buttonVariants({ variant: "outline" })}>
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-8">

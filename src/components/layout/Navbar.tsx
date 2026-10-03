@@ -3,7 +3,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import {
   BookOpen, Search, Bookmark, LayoutDashboard,
   Sparkles, GraduationCap, HelpCircle, Upload, Bell,
-  Library, Settings
+  Library, Settings, ClipboardList, FileText, Brain, Megaphone,
+  CalendarDays, Shield, FileCheck2
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/actions/auth";
@@ -47,9 +48,17 @@ export async function Navbar() {
 
   const facultyLinks = [
     { href: "/faculty",         label: "Faculty Portal", icon: GraduationCap },
-    { href: "/upload",          label: "Upload",         icon: Upload },
+    { href: "/faculty/resources", label: "My Resources", icon: FileText },
+    { href: "/faculty/assignments", label: "Assignments", icon: ClipboardList },
+    { href: "/faculty/upload",   label: "Upload",         icon: Upload },
     { href: "/notices",         label: "Notices",        icon: Bell },
-    { href: "/ai",              label: "Ask AGNES",      icon: Sparkles, highlight: true },
+  ];
+
+  const moderatorLinks = [
+    { href: "/moderation",         label: "Moderation", icon: Shield },
+    { href: "/moderation/reports", label: "Reports", icon: FileCheck2 },
+    { href: "/search",             label: "Search", icon: Search },
+    { href: "/dashboard",          label: "Dashboard", icon: LayoutDashboard },
   ];
 
   const guestLinks = [
@@ -68,7 +77,35 @@ export async function Navbar() {
 
   const desktopLinks = role === "student"
     ? studentLinks
-    : (role === "faculty" ? facultyLinks : (role === "administrator" ? adminLinks : guestLinks));
+    : role === "faculty"
+      ? facultyLinks
+      : role === "moderator"
+        ? moderatorLinks
+        : role === "administrator"
+          ? adminLinks
+          : guestLinks;
+
+  const portalLinks = role === "faculty"
+    ? [
+        { href: "/faculty/assignments/new", label: "Create Assignment", icon: ClipboardList },
+        { href: "/faculty/quizzes/new", label: "Create Quiz", icon: Brain },
+        { href: "/faculty/announcements/new", label: "Create Announcement", icon: Megaphone },
+        { href: "/faculty/notices/new", label: "Publish Notice", icon: Bell },
+        { href: "/faculty/calendar/new", label: "Schedule Event", icon: CalendarDays },
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/profile", label: "Profile & Settings", icon: Settings },
+        { href: "/help", label: "Help & Guide", icon: HelpCircle },
+      ]
+    : role === "moderator"
+      ? [
+          { href: "/notices", label: "Notices", icon: Bell },
+          { href: "/calendar", label: "Academic Calendar", icon: CalendarDays },
+          { href: "/departments", label: "Departments", icon: Library },
+          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/profile", label: "Profile & Settings", icon: Settings },
+          { href: "/help", label: "Help & Guide", icon: HelpCircle },
+        ]
+      : [];
 
   return (
     <>
@@ -102,6 +139,27 @@ export async function Navbar() {
                 </Link>
               );
             })}
+            {portalLinks.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger render={
+                  <Button variant="ghost" className="h-auto px-2 py-2 text-sm font-medium text-muted-foreground hover:text-foreground xl:px-3" />
+                }>
+                  More
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-60">
+                  <DropdownMenuLabel>
+                    {role === "faculty" ? "Faculty Tools" : "Moderator Links"}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {portalLinks.map(({ href, label, icon: Icon }) => (
+                    <DropdownMenuItem key={href} render={<Link href={href} />}>
+                      <Icon className="mr-2 h-4 w-4" />
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </nav>
 
           {/* Right side */}
@@ -109,7 +167,7 @@ export async function Navbar() {
             {user ? (
               <>
                 {/* Moderator */}
-                {(role === "moderator" || role === "administrator") && (
+                {role === "administrator" && (
                   <div className="hidden lg:block">
                     <Link
                       href="/moderation"
@@ -248,6 +306,9 @@ export async function Navbar() {
       {/* Faculty bottom nav */}
       {user && role === "faculty" && (
         <MobileBottomNav role="faculty" />
+      )}
+      {user && role === "moderator" && (
+        <MobileBottomNav role="moderator" />
       )}
     </>
   );

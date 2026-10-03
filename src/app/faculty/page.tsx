@@ -77,6 +77,12 @@ export default async function FacultyDashboardPage() {
           <Link href="/faculty/upload" className={buttonVariants({ variant: "default" })}>
             <UploadCloud className="w-4 h-4 mr-2" /> Upload Resource
           </Link>
+          <Link href="/faculty/resources" className={buttonVariants({ variant: "outline" })}>
+            <FileText className="w-4 h-4 mr-2" /> Manage Resources
+          </Link>
+          <Link href="/faculty/assignments" className={buttonVariants({ variant: "outline" })}>
+            <ClipboardList className="w-4 h-4 mr-2" /> Manage Assignments
+          </Link>
           <Link href="/faculty/assignments/new" className={buttonVariants({ variant: "outline" })}>
             <ClipboardList className="w-4 h-4 mr-2" /> Create Assignment
           </Link>
