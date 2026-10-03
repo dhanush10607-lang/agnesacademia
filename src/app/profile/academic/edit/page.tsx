@@ -44,10 +44,9 @@ export default async function EditAcademicProfilePage() {
   let initialYears: any[] = [];
   let initialSemesters: any[] = [];
 
-  if (profile.department_id) {
-    const { data } = await supabase.from("programmes").select("id, name").eq("department_id", profile.department_id).order("name");
-    if (data) initialProgrammes = data;
-  }
+  // Fetch all programmes since we are removing department selection
+  const { data: allProgrammes } = await supabase.from("programmes").select("id, name, department_id").eq("status", "active").order("name");
+  if (allProgrammes) initialProgrammes = allProgrammes;
   if (profile.programme_id) {
     const { data: currData } = await supabase.from("curricula").select("id, name").eq("programme_id", profile.programme_id).eq("is_active", true).order("name");
     if (currData) initialCurricula = currData;
@@ -74,7 +73,6 @@ export default async function EditAcademicProfilePage() {
       </div>
 
       <AcademicEditForm 
-        departments={departments || []} 
         initialProgrammes={initialProgrammes}
         initialCurricula={initialCurricula}
         initialYears={initialYears}

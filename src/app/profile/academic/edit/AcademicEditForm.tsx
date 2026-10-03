@@ -10,14 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertTriangle, CheckCircle } from "lucide-react";
 
 export default function AcademicEditForm({
-  departments,
   initialProgrammes = [],
   initialCurricula = [],
   initialYears = [],
   initialSemesters = [],
   currentProfile
 }: {
-  departments: any[];
   initialProgrammes?: any[];
   initialCurricula?: any[];
   initialYears?: any[];
@@ -27,7 +25,6 @@ export default function AcademicEditForm({
   const supabase = createClient();
   const router = useRouter();
 
-  const [deptId, setDeptId] = useState<string>(currentProfile.department_id || "");
   const [progId, setProgId] = useState<string>(currentProfile.programme_id || "");
   const [currId, setCurrId] = useState<string>(currentProfile.curriculum_id || "");
   const [yearId, setYearId] = useState<string>(currentProfile.academic_year_id || "");
@@ -42,12 +39,7 @@ export default function AcademicEditForm({
   const [errorMsg, setErrorMsg] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Load Programmes when Dept changes
-  useEffect(() => {
-    if (!deptId) return;
-    supabase.from("programmes").select("id, name").eq("department_id", deptId).order("name")
-      .then(({ data }) => setProgrammes(data || []));
-  }, [deptId, supabase]);
+  // Programmes are already passed as initialProgrammes, no need to fetch based on deptId
 
   // Load Years & Curricula when Prog changes
   useEffect(() => {
@@ -67,7 +59,7 @@ export default function AcademicEditForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!deptId || !progId || !yearId || !semId) {
+    if (!progId || !yearId || !semId) {
       setErrorMsg("Please select all fields");
       return;
     }
@@ -84,10 +76,14 @@ export default function AcademicEditForm({
       await supabase.from("student_subjects").delete().eq("student_id", user.id);
     }
 
+    // Infer department_id from selected programme
+    const selectedProg = programmes.find(p => p.id === progId);
+    const inferredDeptId = selectedProg?.department_id || currentProfile.department_id;
+
     const { error } = await supabase
       .from("profiles")
       .update({
-        department_id: deptId,
+        department_id: inferredDeptId,
         programme_id: progId,
         curriculum_id: currId || null,
         academic_year_id: yearId,
@@ -140,26 +136,8 @@ export default function AcademicEditForm({
           )}
 
           <div className="space-y-2">
-            <Label>Department</Label>
-            <Select 
-              value={departments.some(d => d.id === deptId) ? deptId : ""} 
-              onValueChange={(val) => { setDeptId(val || ""); setProgId(""); setCurrId(""); setYearId(""); setSemId(""); }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Department" />
-              </SelectTrigger>
-              <SelectContent>
-                {departments.map(d => (
-                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
             <Label>Programme</Label>
             <Select 
-              disabled={!deptId} 
               value={programmes.some(p => p.id === progId) ? progId : ""} 
               onValueChange={(val) => { setProgId(val || ""); setCurrId(""); setYearId(""); setSemId(""); }}
             >
