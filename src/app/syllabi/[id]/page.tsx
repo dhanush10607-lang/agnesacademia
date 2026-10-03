@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, FileText, Download, Eye, BookOpen, Clock, GraduationCap } from "lucide-react";
+import { ChevronLeft, FileText, Download, BookOpen, Clock, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -11,6 +11,8 @@ import { BookmarkButton } from "@/components/BookmarkButton";
 import { checkIsBookmarked } from "@/app/actions/bookmarks";
 import { ReportResourceDialog } from "@/components/ReportResourceDialog";
 import { getPublicResourceFileUrl } from "@/lib/storage-file-url";
+import { isOfficeFilePath } from "@/lib/office-file";
+import { FilePreviewButton } from "@/components/OfficePreviewButton";
 
 export default async function SyllabusDetailPage({
   params,
@@ -184,16 +186,22 @@ export default async function SyllabusDetailPage({
                     <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">Official PDF</h3>
+                    <h3 className="font-semibold text-foreground">
+                      {syllabus.file_path && isOfficeFilePath(syllabus.file_path) ? "Official File" : "Official PDF"}
+                    </h3>
                     <p className="text-xs text-muted-foreground">
-                      {syllabus.file_size ? formatBytes(syllabus.file_size) : 'PDF Document'}
+                      {syllabus.file_size ? formatBytes(syllabus.file_size) : isOfficeFilePath(syllabus.file_path) ? 'Office Document' : 'PDF Document'}
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <a href="#file-preview" className={buttonVariants({ variant: "secondary", className: "w-full" })}>
-                    <Eye className="w-4 h-4 mr-2" /> View Syllabus
-                  </a>
+                  <FilePreviewButton
+                    filePath={syllabus.file_path}
+                    title="Syllabus"
+                    buttonLabel="View Syllabus"
+                    variant="secondary"
+                    className="w-full"
+                  />
                   <a
                     href={getPublicResourceFileUrl(syllabus.file_path, true)}
                     className={buttonVariants({ variant: "outline", className: "w-full" })}
@@ -234,7 +242,7 @@ export default async function SyllabusDetailPage({
           )}
         </div>
       </div>
-      {syllabus.file_path && (
+      {syllabus.file_path && !isOfficeFilePath(syllabus.file_path) && (
         <section id="file-preview" className="mt-8 scroll-mt-24">
           <h2 className="mb-4 text-xl font-semibold">Syllabus File Preview</h2>
           <iframe

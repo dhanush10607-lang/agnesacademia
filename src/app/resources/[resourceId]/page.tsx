@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { FileText, Download, Eye, Calendar, User, Folder, ChevronLeft } from "lucide-react";
+import { FileText, Download, Calendar, User, Folder, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { TrackView } from "@/components/TrackView";
@@ -11,6 +11,8 @@ import { BookmarkButton } from "@/components/BookmarkButton";
 import { checkIsBookmarked } from "@/app/actions/bookmarks";
 import { ReportResourceDialog } from "@/components/ReportResourceDialog";
 import { getPublicResourceFileUrl } from "@/lib/storage-file-url";
+import { isOfficeFilePath } from "@/lib/office-file";
+import { FilePreviewButton } from "@/components/OfficePreviewButton";
 
 export default async function ResourceDetailPage({
   params,
@@ -112,10 +114,11 @@ export default async function ResourceDetailPage({
               />
               {resource.file_path && (
                 <>
-                  <a href="#file-preview" className={buttonVariants({ variant: "outline", className: "w-full sm:w-auto" })}>
-                    <Eye className="w-4 h-4 mr-2" />
-                    View File
-                  </a>
+                  <FilePreviewButton
+                    filePath={resource.file_path}
+                    title={resource.title}
+                    className="w-full sm:w-auto"
+                  />
                   <a
                     href={getPublicResourceFileUrl(resource.file_path, true)}
                     className={buttonVariants({ variant: "default", className: "w-full sm:w-auto" })}
@@ -185,7 +188,7 @@ export default async function ResourceDetailPage({
         </CardContent>
       </Card>
 
-      {resource.file_path && (
+      {resource.file_path && !isOfficeFilePath(resource.file_path) && (
         <section id="file-preview" className="mt-8 scroll-mt-24">
           <h2 className="mb-4 text-xl font-semibold">File Preview</h2>
           <iframe

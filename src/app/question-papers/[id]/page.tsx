@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { Download, Eye, Calendar, User, ChevronLeft } from "lucide-react";
+import { Download, Calendar, User, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { TrackView } from "@/components/TrackView";
@@ -11,6 +11,8 @@ import { BookmarkButton } from "@/components/BookmarkButton";
 import { checkIsBookmarked } from "@/app/actions/bookmarks";
 import { ReportResourceDialog } from "@/components/ReportResourceDialog";
 import { getPublicResourceFileUrl } from "@/lib/storage-file-url";
+import { isOfficeFilePath } from "@/lib/office-file";
+import { FilePreviewButton } from "@/components/OfficePreviewButton";
 
 export default async function QuestionPaperDetailPage({
   params,
@@ -115,16 +117,17 @@ export default async function QuestionPaperDetailPage({
               />
               {paper.file_path && (
                 <>
-                  <a href="#file-preview" className={buttonVariants({ variant: "outline", className: "w-full sm:w-auto" })}>
-                    <Eye className="w-4 h-4 mr-2" />
-                    View File
-                  </a>
+                  <FilePreviewButton
+                    filePath={paper.file_path}
+                    title={paper.title}
+                    className="w-full sm:w-auto"
+                  />
                   <a
                     href={getPublicResourceFileUrl(paper.file_path, true)}
                     className={buttonVariants({ variant: "default", className: "w-full sm:w-auto" })}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download PDF
+                    {isOfficeFilePath(paper.file_path) ? "Download Original File" : "Download PDF"}
                   </a>
                 </>
               )}
@@ -174,7 +177,7 @@ export default async function QuestionPaperDetailPage({
                       {paper.uploader?.full_name || "Unknown"}
                     </dd>
                   </div>
-                  {paper.file_path && (
+                  {paper.file_path && !isOfficeFilePath(paper.file_path) && (
                     <>
                       <div className="flex items-start">
                         <dt className="w-32 text-muted-foreground">File Type</dt>
