@@ -2,6 +2,8 @@
 
 This small service converts `.doc`, `.docx`, `.ppt`, and `.pptx` files to PDF with LibreOffice. It is intended for Render's free Docker web service. Conversion happens on the service, while the original files remain in Supabase and the existing download links continue to download those originals.
 
+PowerPoint files use LibreOffice Impress's explicit PDF export filter, and the service checks the generated PDF signature and end marker before returning a preview.
+
 ## Deploy to Render
 
 Create a **Web Service** from this repository and choose **Docker**. Set the service's root directory to `office-converter` and select the **Free** instance plan. Render's free instance has 512 MB RAM and 0.1 CPU, sleeps after 15 minutes without traffic, and can take about a minute to wake. Larger documents may fail or time out. Uploaded and converted files are temporary and deleted after each request.

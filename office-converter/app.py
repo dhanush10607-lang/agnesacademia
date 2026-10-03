@@ -139,6 +139,7 @@ def convert_document(request: ConversionRequest):
 def convert_ticket(ticket: str) -> Response:
     file_path = decode_ticket(ticket)
     extension = Path(file_path).suffix.lower()
+    export_filter = "impress_pdf_Export" if extension in (".ppt", ".pptx") else "writer_pdf_Export"
     source = download_source(file_path)
 
     with tempfile.TemporaryDirectory(prefix="agnes-office-") as temp_dir:
@@ -156,7 +157,7 @@ def convert_ticket(ticket: str) -> Response:
                     "--headless",
                     f"-env:UserInstallation={profile_dir.as_uri()}",
                     "--convert-to",
-                    "pdf",
+                    f"pdf:{export_filter}",
                     "--outdir",
                     str(output_dir),
                     str(source_file),
@@ -184,6 +185,11 @@ def convert_ticket(ticket: str) -> Response:
         pdf_data = pdf_file.read_bytes()
         if len(pdf_data) > MAX_PDF_BYTES:
             raise HTTPException(status_code=413, detail="The converted PDF is too large to preview.")
+        if not pdf_data.startswith(b"%PDF-") or not pdf_data.rstrip().endswith(b"%%EOF"):
+            raise HTTPException(
+                status_code=422,
+                detail="LibreOffice returned an incomplete PDF. Try converting the PowerPoint again.",
+            )
 
     return Response(
         content=pdf_data,

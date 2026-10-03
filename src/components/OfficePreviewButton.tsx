@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, LoaderCircle } from "lucide-react";
+import { ExternalLink, Eye, LoaderCircle } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -148,11 +148,25 @@ export function OfficePreviewButton({
           </DialogHeader>
           <div className="min-h-0 overflow-hidden rounded-lg border bg-muted">
             {pdfUrl ? (
-              <iframe
-                src={pdfUrl}
-                title={`PDF preview of ${title}`}
-                className="h-full min-h-[50vh] w-full"
-              />
+              <div className="flex h-full min-h-0 flex-col">
+                <div className="flex justify-end border-b bg-background p-2">
+                  <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Open PDF in new tab
+                  </a>
+                </div>
+                <iframe
+                  key={pdfUrl}
+                  src={pdfUrl}
+                  title={`PDF preview of ${title}`}
+                  className="min-h-0 w-full flex-1"
+                />
+              </div>
             ) : (
               <div className="flex h-full min-h-[50vh] flex-col items-center justify-center gap-4 p-6 text-center">
                 {loading && <LoaderCircle className="h-8 w-8 animate-spin text-primary" />}
