@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ResourceFilterSidebar } from "./ResourceFilterSidebar";
+import { getPublicResourceFileUrl } from "@/lib/storage-file-url";
 
 export default async function ResourcesSearchPage({
   searchParams,
@@ -256,9 +257,7 @@ export default async function ResourcesSearchPage({
                     <div className="flex flex-col sm:flex-row gap-2 shrink-0">
                       {res.file_path && (
                         <a 
-                          href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/resources/${res.file_path}`} 
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          href={getPublicResourceFileUrl(res.file_path, true)}
                           className={buttonVariants({ variant: "outline" })}
                         >
                           <Download className="w-4 h-4 mr-2" />

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { buttonVariants } from "@/components/ui/button";
+import { getPublicResourceFileUrl } from "@/lib/storage-file-url";
 
 export default async function SubjectDetailPage({
   params,
@@ -48,7 +49,7 @@ export default async function SubjectDetailPage({
   if (notesCategory) {
     const { data } = await supabase
       .from("resources")
-      .select("id, title, description, created_at, file_type, file_size")
+      .select("id, title, description, created_at, file_path, file_type, file_size")
       .eq("subject_id", subjectId)
       .eq("category_id", notesCategory.id)
       .eq("status", "published")
@@ -59,7 +60,7 @@ export default async function SubjectDetailPage({
   // Fetch Question Papers
   const { data: questionPapers } = await supabase
     .from("question_papers")
-    .select("id, title, description, exam_type, academic_year_id, exam_date, file_type, file_size, created_at")
+    .select("id, title, description, exam_type, academic_year_id, exam_date, file_path, file_type, file_size, created_at")
     .eq("subject_id", subjectId)
     .eq("status", "published")
     .order("created_at", { ascending: false });
@@ -75,7 +76,7 @@ export default async function SubjectDetailPage({
   // Fetch Syllabus
   const { data: syllabus } = await supabase
     .from("syllabi")
-    .select("id, course_code, credits, course_objectives, file_type, file_size, created_at")
+    .select("id, course_code, credits, course_objectives, file_path, file_type, file_size, created_at")
     .eq("subject_id", subjectId)
     .eq("status", "published")
     .maybeSingle();
@@ -174,13 +175,18 @@ export default async function SubjectDetailPage({
                       </div>
                     </div>
                   </div>
-                  <Link 
-                    href={`/resources/${res.id}`} 
-                    className={buttonVariants({ variant: "secondary", size: "sm" })}
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    View Details
-                  </Link>
+                  <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                    <Link href={`/resources/${res.id}`} className={buttonVariants({ variant: "secondary", size: "sm" })}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      View
+                    </Link>
+                    {res.file_path && (
+                      <a href={getPublicResourceFileUrl(res.file_path, true)} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -224,13 +230,18 @@ export default async function SubjectDetailPage({
                       </div>
                     </div>
                   </div>
-                  <Link 
-                    href={`/question-papers/${qp.id}`} 
-                    className={buttonVariants({ variant: "secondary", size: "sm" })}
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    View Paper
-                  </Link>
+                  <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                    <Link href={`/question-papers/${qp.id}`} className={buttonVariants({ variant: "secondary", size: "sm" })}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      View
+                    </Link>
+                    {qp.file_path && (
+                      <a href={getPublicResourceFileUrl(qp.file_path, true)} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -302,9 +313,16 @@ export default async function SubjectDetailPage({
                       <div><span className="font-medium text-foreground">Updated:</span> {format(new Date(syllabus.created_at), "MMM d, yyyy")}</div>
                     </div>
                   </div>
-                  <Link href={`/syllabi/${syllabus.id}`} className={buttonVariants({ variant: "default" })}>
-                    <Eye className="w-4 h-4 mr-2" /> View Full Syllabus
-                  </Link>
+                  <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                    <Link href={`/syllabi/${syllabus.id}`} className={buttonVariants({ variant: "secondary" })}>
+                      <Eye className="w-4 h-4 mr-2" /> View
+                    </Link>
+                    {syllabus.file_path && (
+                      <a href={getPublicResourceFileUrl(syllabus.file_path, true)} className={buttonVariants({ variant: "outline" })}>
+                        <Download className="w-4 h-4 mr-2" /> Download
+                      </a>
+                    )}
+                  </div>
                 </div>
                 {syllabus.course_objectives && (
                   <div className="mb-4">

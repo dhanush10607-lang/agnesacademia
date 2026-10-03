@@ -1,15 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { FileText, Download, Bookmark, Calendar, User, Folder, ChevronLeft } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { FileText, Download, Eye, Calendar, User, Folder, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { TrackView } from "@/components/TrackView";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { checkIsBookmarked } from "@/app/actions/bookmarks";
 import { ReportResourceDialog } from "@/components/ReportResourceDialog";
+import { getPublicResourceFileUrl } from "@/lib/storage-file-url";
 
 export default async function ResourceDetailPage({
   params,
@@ -109,14 +110,21 @@ export default async function ResourceDetailPage({
                 url={`/resources/${resource.id}`} 
                 initialIsBookmarked={isBookmarked}
               />
-              <Link 
-                href={resource.file_path ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/resources/${resource.file_path}` : '#'} 
-                target="_blank"
-                className={buttonVariants({ variant: "default", className: "w-full sm:w-auto" })}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download File
-              </Link>
+              {resource.file_path && (
+                <>
+                  <a href="#file-preview" className={buttonVariants({ variant: "outline", className: "w-full sm:w-auto" })}>
+                    <Eye className="w-4 h-4 mr-2" />
+                    View File
+                  </a>
+                  <a
+                    href={getPublicResourceFileUrl(resource.file_path, true)}
+                    className={buttonVariants({ variant: "default", className: "w-full sm:w-auto" })}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download File
+                  </a>
+                </>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -176,6 +184,17 @@ export default async function ResourceDetailPage({
           </div>
         </CardContent>
       </Card>
+
+      {resource.file_path && (
+        <section id="file-preview" className="mt-8 scroll-mt-24">
+          <h2 className="mb-4 text-xl font-semibold">File Preview</h2>
+          <iframe
+            src={getPublicResourceFileUrl(resource.file_path)}
+            title={`Preview of ${resource.title}`}
+            className="h-[75vh] min-h-[500px] w-full rounded-xl border bg-muted"
+          />
+        </section>
+      )}
 
       <div className="mt-8 flex justify-center">
         <ReportResourceDialog itemType="note" itemId={resource.id} />

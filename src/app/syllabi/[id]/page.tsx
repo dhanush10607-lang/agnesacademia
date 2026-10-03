@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, FileText, Download, BookOpen, Clock, GraduationCap } from "lucide-react";
+import { ChevronLeft, FileText, Download, Eye, BookOpen, Clock, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -10,6 +10,7 @@ import { TrackView } from "@/components/TrackView";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { checkIsBookmarked } from "@/app/actions/bookmarks";
 import { ReportResourceDialog } from "@/components/ReportResourceDialog";
+import { getPublicResourceFileUrl } from "@/lib/storage-file-url";
 
 export default async function SyllabusDetailPage({
   params,
@@ -189,13 +190,17 @@ export default async function SyllabusDetailPage({
                     </p>
                   </div>
                 </div>
-                <Link 
-                  href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/resources/${syllabus.file_path}`} 
-                  target="_blank"
-                  className={buttonVariants({ variant: "default", className: "w-full" })}
-                >
-                  <Download className="w-4 h-4 mr-2" /> Download Syllabus
-                </Link>
+                <div className="flex flex-col gap-2">
+                  <a href="#file-preview" className={buttonVariants({ variant: "secondary", className: "w-full" })}>
+                    <Eye className="w-4 h-4 mr-2" /> View Syllabus
+                  </a>
+                  <a
+                    href={getPublicResourceFileUrl(syllabus.file_path, true)}
+                    className={buttonVariants({ variant: "outline", className: "w-full" })}
+                  >
+                    <Download className="w-4 h-4 mr-2" /> Download Syllabus
+                  </a>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -229,6 +234,16 @@ export default async function SyllabusDetailPage({
           )}
         </div>
       </div>
+      {syllabus.file_path && (
+        <section id="file-preview" className="mt-8 scroll-mt-24">
+          <h2 className="mb-4 text-xl font-semibold">Syllabus File Preview</h2>
+          <iframe
+            src={getPublicResourceFileUrl(syllabus.file_path)}
+            title="Syllabus file preview"
+            className="h-[75vh] min-h-[500px] w-full rounded-xl border bg-muted"
+          />
+        </section>
+      )}
       <div className="mt-8 flex justify-center">
         <ReportResourceDialog itemType="syllabus" itemId={syllabus.id} />
       </div>
