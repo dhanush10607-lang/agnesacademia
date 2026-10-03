@@ -191,9 +191,9 @@ export function MobileNavMenu({ role }: Props) {
                               key={link.href}
                               href={link.href}
                               onClick={() => setOpen(false)}
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
+                              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                             >
-                              <Icon className="w-5 h-5 shrink-0 text-primary/70" />
+                              <Icon className="w-5 h-5 shrink-0 text-primary" />
                               {link.label}
                             </Link>
                           );
@@ -211,9 +211,9 @@ export function MobileNavMenu({ role }: Props) {
                         key={link.href}
                         href={link.href}
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                       >
-                        <Icon className="w-5 h-5 shrink-0 text-primary/70" />
+                        <Icon className="w-5 h-5 shrink-0 text-primary" />
                         {link.label}
                       </Link>
                     );
@@ -228,7 +228,7 @@ export function MobileNavMenu({ role }: Props) {
                   <Settings className="w-4 h-4" /> Profile & Settings
                 </Link>
                 <form action={logout} onSubmit={() => setOpen(false)}>
-                  <Button type="submit" variant="destructive" className="w-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/50">
+                  <Button type="submit" variant="destructive" className="w-full bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:text-white dark:hover:bg-red-600">
                     Sign Out
                   </Button>
                 </form>
