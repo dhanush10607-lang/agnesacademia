@@ -13,7 +13,10 @@ export default async function AdminSemestersPage() {
     .order("name", { ascending: true });
 
   const { data: programmes } = await supabase.from("programmes").select("id, name").eq("status", "active");
-  const { data: years } = await supabase.from("academic_years").select("id, name").eq("status", "active");
+  const { data: years } = await supabase
+    .from("academic_years")
+    .select("id, name, programme_id")
+    .eq("status", "active");
 
   return (
     <div>

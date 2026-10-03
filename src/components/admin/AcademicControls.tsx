@@ -117,8 +117,17 @@ export function ArchiveYearButton({ id }: { id: string }) {
 }
 
 // Semesters
-export function CreateSemesterForm({ programmes, years }: { programmes: any[], years: any[] }) {
+export function CreateSemesterForm({
+  programmes,
+  years,
+}: {
+  programmes: { id: string; name: string }[];
+  years: { id: string; name: string; programme_id: string }[];
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [programmeId, setProgrammeId] = useState("");
+  const [academicYearId, setAcademicYearId] = useState("");
+  const availableYears = years.filter(year => year.programme_id === programmeId);
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -138,7 +147,15 @@ export function CreateSemesterForm({ programmes, years }: { programmes: any[], y
       </div>
       <div className="flex-grow space-y-2">
         <Label htmlFor="programme_id">Programme</Label>
-        <Select name="programme_id" required>
+        <Select
+          name="programme_id"
+          required
+          value={programmeId}
+          onValueChange={value => {
+            setProgrammeId(value || "");
+            setAcademicYearId("");
+          }}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select Programme">
               {(value) => programmes.find(programme => programme.id === value)?.name || "Select Programme"}
@@ -151,14 +168,26 @@ export function CreateSemesterForm({ programmes, years }: { programmes: any[], y
       </div>
       <div className="flex-grow space-y-2">
         <Label htmlFor="academic_year_id">Academic Year</Label>
-        <Select name="academic_year_id" required>
+        <Select
+          name="academic_year_id"
+          required
+          value={academicYearId}
+          onValueChange={value => setAcademicYearId(value || "")}
+          disabled={!programmeId || availableYears.length === 0}
+        >
           <SelectTrigger>
-            <SelectValue placeholder="Select Year">
-              {(value) => years.find(year => year.id === value)?.name || "Select Year"}
+            <SelectValue placeholder={
+              !programmeId
+                ? "Select programme first"
+                : availableYears.length === 0
+                  ? "No academic years for this programme"
+                  : "Select Year"
+            }>
+              {(value) => availableYears.find(year => year.id === value)?.name || "Select Year"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {years.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+            {availableYears.map(year => <SelectItem key={year.id} value={year.id}>{year.name}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>

@@ -155,6 +155,20 @@ export async function createSemesterAction(formData: FormData) {
   const academic_year_id = formData.get("academic_year_id") as string;
 
   try {
+    const { data: academicYear, error: academicYearError } = await supabase
+      .from("academic_years")
+      .select("programme_id")
+      .eq("id", academic_year_id)
+      .eq("status", "active")
+      .single();
+
+    if (academicYearError || !academicYear) {
+      return { success: false, error: "The selected academic year is not available." };
+    }
+    if (academicYear.programme_id !== programme_id) {
+      return { success: false, error: "The academic year must belong to the selected programme." };
+    }
+
     const { data: s, error } = await supabase.from("semesters").insert({ name, programme_id, academic_year_id }).select().single();
     if (error) throw error;
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'create', target_type: 'semester', target_id: s.id, metadata: { name } });
