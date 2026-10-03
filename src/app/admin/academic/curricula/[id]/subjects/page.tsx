@@ -34,7 +34,7 @@ export default async function CurriculumSubjectsPage({
     .from("curriculum_subjects")
     .select(`
       *,
-      subject:subjects(id, name, code, credits)
+      subject:subjects(id, name, code, credits, semester:semesters(name))
     `)
     .eq("curriculum_id", id)
     .order("display_order", { ascending: true });
@@ -43,7 +43,7 @@ export default async function CurriculumSubjectsPage({
   // For MVP, fetch all active subjects.
   const { data: allSubjects } = await supabase
     .from("subjects")
-    .select("id, name, code, credits")
+    .select("id, name, code, credits, semester:semesters(name)")
     .eq("is_active", true)
     .order("name", { ascending: true });
 

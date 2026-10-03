@@ -23,15 +23,17 @@ export default async function SubjectsPage() {
   
   if (profile.curriculum_id) {
     // New Multi-subject model
-    const { data: curriculumData } = await supabase
+    const { data: curriculumData, error } = await supabase
       .from("curriculum_subjects")
       .select(`
         id, is_compulsory, is_selectable, minimum_selection, maximum_selection,
-        subject:subjects (id, name, code, subject_type_id),
+        subject:subjects!inner (id, name, code, subject_type_id, semester_id),
         subject_type:subject_types (name, display_order)
       `)
       .eq("curriculum_id", profile.curriculum_id)
-      .eq("semester", (profile.semester as any)?.name || "");
+      .eq("subject.semester_id", profile.semester_id);
+      
+    if (error) console.error("Error fetching curriculum subjects:", error);
       
     availableSubjects = curriculumData?.map((cs: any) => ({
       ...cs.subject,
