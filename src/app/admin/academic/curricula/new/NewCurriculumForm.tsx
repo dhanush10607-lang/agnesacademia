@@ -50,13 +50,13 @@ export function NewCurriculumForm({ programmes, academicYears, action }: Props) 
         <p className="text-xs text-muted-foreground">A descriptive name for this combination.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="space-y-2 md:col-span-1">
           <Label htmlFor="code">Code</Label>
           <Input id="code" name="code" placeholder="e.g. BSC-MPC" />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <Label htmlFor="academic_year_id">Academic Year</Label>
           <select
             id="academic_year_id"
