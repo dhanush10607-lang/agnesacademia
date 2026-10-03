@@ -1,23 +1,40 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { NewCurriculumForm } from "./NewCurriculumForm";
 
 export default async function NewCurriculumPage() {
   const supabase = await createClient();
 
-  // Fetch programmes for the dropdown
-  const { data: programmes } = await supabase
-    .from("programmes")
-    .select("id, name")
-    .eq("status", "active")
-    .order("name");
+  const [
+    { data: programmes, error: programmesError },
+    { data: academicYears, error: academicYearsError },
+  ] = await Promise.all([
+    supabase
+      .from("programmes")
+      .select("id, name")
+      .eq("status", "active")
+      .order("name"),
+    supabase
+      .from("academic_years")
+      .select("id, name, programme_id")
+      .eq("status", "active")
+      .order("name"),
+  ]);
+
+  if (programmesError) {
+    console.error("Error loading programmes for curriculum creation:", programmesError);
+    throw new Error("Unable to load programmes for curriculum creation.");
+  }
+
+  if (academicYearsError) {
+    console.error("Error loading academic years for curriculum creation:", academicYearsError);
+    throw new Error("Unable to load academic years for curriculum creation.");
+  }
 
   async function createCurriculum(formData: FormData) {
     "use server";
@@ -28,8 +45,28 @@ export default async function NewCurriculumPage() {
     const code = formData.get("code") as string;
     const description = formData.get("description") as string;
     const programme_id = formData.get("programme_id") as string;
-    const academic_year = formData.get("academic_year") as string;
-    
+    const academicYearId = formData.get("academic_year_id") as string;
+    let academic_year: string | null = null;
+
+    if (academicYearId) {
+      const { data: academicYear, error: academicYearError } = await supabase
+        .from("academic_years")
+        .select("name, programme_id")
+        .eq("id", academicYearId)
+        .eq("status", "active")
+        .single();
+
+      if (academicYearError || !academicYear) {
+        console.error("Error validating curriculum academic year:", academicYearError);
+        throw new Error("The selected academic year could not be found.");
+      }
+      if (academicYear.programme_id !== programme_id) {
+        throw new Error("The selected academic year does not belong to this programme.");
+      }
+
+      academic_year = academicYear.name;
+    }
+
     const { error } = await supabase.from("curricula").insert({
       name,
       code: code || null,
@@ -41,8 +78,7 @@ export default async function NewCurriculumPage() {
     
     if (error) {
       console.error("Error creating curriculum:", error);
-      // In a real app we'd return an error state, but for simplicity we'll just redirect back on success
-      return; 
+      throw new Error("Unable to create the curriculum.");
     }
     
     revalidatePath("/admin/academic/curricula");
@@ -66,54 +102,11 @@ export default async function NewCurriculumPage() {
           <CardTitle>Curriculum Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={createCurriculum} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="programme_id">Programme <span className="text-red-500">*</span></Label>
-              <select 
-                id="programme_id" 
-                name="programme_id" 
-                required 
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">Select a Programme</option>
-                {programmes?.map(prog => (
-                  <option key={prog.id} value={prog.id}>{prog.name}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="name">Curriculum Name <span className="text-red-500">*</span></Label>
-              <Input id="name" name="name" placeholder="e.g. B.Sc MPC (2024)" required />
-              <p className="text-xs text-muted-foreground">A descriptive name for this combination.</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="code">Code</Label>
-                <Input id="code" name="code" placeholder="e.g. BSC-MPC" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="academic_year">Academic Year</Label>
-                <Input id="academic_year" name="academic_year" placeholder="e.g. 2024-2025" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" placeholder="Optional details..." />
-            </div>
-
-            <div className="pt-4 flex justify-end gap-3">
-              <Link href="/admin/academic/curricula">
-                <Button variant="outline" type="button">Cancel</Button>
-              </Link>
-              <Button type="submit">
-                <Save className="w-4 h-4 mr-2" /> Create Curriculum
-              </Button>
-            </div>
-          </form>
+          <NewCurriculumForm
+            programmes={programmes || []}
+            academicYears={academicYears || []}
+            action={createCurriculum}
+          />
         </CardContent>
       </Card>
     </div>
