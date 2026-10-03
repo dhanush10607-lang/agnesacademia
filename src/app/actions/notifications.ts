@@ -50,7 +50,7 @@ export async function registerDeviceAction(token: string, browser: string, os: s
     // Remember the token on this browser so logout can deactivate it
     const cookieStore = await cookies();
     cookieStore.set(FCM_COOKIE, token, {
-      httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 60 * 60 * 24 * 365,
+      httpOnly: false, sameSite: "lax", secure: true, path: "/", maxAge: 60 * 60 * 24 * 365,
     });
 
     return { success: true };
@@ -77,6 +77,8 @@ export async function unregisterDeviceAction(token?: string) {
       .eq("registration_token", t);
 
     if (error) throw error;
+    // Device is now inactive -> clear marker so next login re-activates it
+    cookieStore.delete(FCM_COOKIE);
     return { success: true };
   } catch (error) {
     console.error("Failed to unregister device:", error);

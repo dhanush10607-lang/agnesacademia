@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { app, refreshForToken, requestForToken } from "@/lib/firebase/client";
 import { registerDeviceAction } from "@/app/actions/notifications";
 import { createClient } from "@/lib/supabase/client";
@@ -41,6 +42,12 @@ function readReg(): { userId: string; token: string; at: number } | null {
   try { return JSON.parse(localStorage.getItem(REG_KEY) || "null"); } catch { return null; }
 }
 
+// Set by registerDeviceAction, deleted by logout. If it's missing/different,
+// the server has (or may have) deactivated this device -> register again.
+function deviceCookieMatches(token: string) {
+  return document.cookie.split("; ").some((c) => c === `agnes_fcm_token=${encodeURIComponent(token)}` || c === `agnes_fcm_token=${token}`);
+}
+
 async function registerToken(userId: string, token: string) {
   const { os, browser, deviceType } = getDeviceInfo();
   const res = await registerDeviceAction(token, browser, os, deviceType);
@@ -55,12 +62,18 @@ export function NotificationPrompt() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const listenerAttached = useRef(false);
+  const pathname = usePathname();
 
   // Track the logged-in user (handles login, logout and switching accounts
   // without a full page reload, since the root layout never remounts).
+  // Login/logout happen in server actions, so also re-check on navigation.
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, [pathname]);
+
+  useEffect(() => {
+    const supabase = createClient();
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserId(session?.user?.id ?? null);
     });
@@ -114,6 +127,7 @@ export function NotificationPrompt() {
         !prev ||
         prev.userId !== userId ||          // another user logged in on this device
         prev.token !== token ||            // FCM rotated the token
+        !deviceCookieMatches(token) ||     // logged out since (device was deactivated)
         Date.now() - prev.at > RE_REGISTER_MS;
 
       if (needsRegister) {
@@ -123,7 +137,7 @@ export function NotificationPrompt() {
     })().catch(console.warn);
 
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [userId, pathname]);
 
   const handleEnable = async () => {
     if (!userId) return;
