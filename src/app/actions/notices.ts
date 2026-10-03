@@ -59,15 +59,16 @@ export async function createNoticeAction(formData: FormData) {
       const targetIds = await getTargetUserIds(department_id, programme_id, semester_id, subject_id, curriculum_id);
       
       if (targetIds.length > 0) {
-        // Run asynchronously so it doesn't block the UI response
-        sendNotifications({
+        // Must be awaited: on Vercel the function is frozen after the response,
+        // so un-awaited work is silently dropped.
+        await sendNotifications({
           userIds: targetIds,
           title: `New Notice: ${title}`,
           message: content,
           category: 'notice',
           actionUrl: `/notices/${insertedNotice.id}`,
           priority: priority === 'high' ? 'high' : 'normal'
-        }).catch(console.error);
+        });
       }
     } catch (pushErr) {
       console.error("Push notification error in notice:", pushErr);

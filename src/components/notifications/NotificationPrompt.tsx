@@ -1,136 +1,171 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { app, refreshForToken } from "@/lib/firebase/client";
+import { useState, useEffect, useRef } from "react";
+import { app, refreshForToken, requestForToken } from "@/lib/firebase/client";
 import { registerDeviceAction } from "@/app/actions/notifications";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/client";
+import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bell, X } from "lucide-react";
-import { getMessaging, onMessage } from "firebase/messaging";
-import { toast } from "sonner"; // Assuming sonner is used for toasts, if not I'll just use a generic approach
+import { getMessaging, onMessage, isSupported } from "firebase/messaging";
+import { toast } from "sonner";
+
+// localStorage keys
+const PROMPTED_KEY = "agnes_push_prompted";
+const REG_KEY = "agnes_push_registration"; // { userId, token, at }
+const RE_REGISTER_MS = 24 * 60 * 60 * 1000; // refresh last_seen once a day
+
+function getDeviceInfo() {
+  const ua = navigator.userAgent;
+  let os = "Unknown";
+  // Order matters: Android UA contains "Linux", iOS UA contains "Mac"
+  if (/Android/i.test(ua)) os = "Android";
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+  else if (/Win/i.test(ua)) os = "Windows";
+  else if (/Mac/i.test(ua)) os = "MacOS";
+  else if (/Linux/i.test(ua)) os = "Linux";
+
+  let browser = "Unknown";
+  // Order matters: Edge UA contains "Chrome", Chrome UA contains "Safari"
+  if (/Edg\//.test(ua)) browser = "Edge";
+  else if (/OPR\//.test(ua)) browser = "Opera";
+  else if (/Firefox/.test(ua)) browser = "Firefox";
+  else if (/Chrome/.test(ua)) browser = "Chrome";
+  else if (/Safari/.test(ua)) browser = "Safari";
+
+  const deviceType = /Mobile|Android|iP(ad|hone|od)/.test(ua) ? "mobile" : "desktop";
+  return { os, browser, deviceType };
+}
+
+function readReg(): { userId: string; token: string; at: number } | null {
+  try { return JSON.parse(localStorage.getItem(REG_KEY) || "null"); } catch { return null; }
+}
+
+async function registerToken(userId: string, token: string) {
+  const { os, browser, deviceType } = getDeviceInfo();
+  const res = await registerDeviceAction(token, browser, os, deviceType);
+  if (res?.success) {
+    localStorage.setItem(REG_KEY, JSON.stringify({ userId, token, at: Date.now() }));
+  }
+  return res;
+}
 
 export function NotificationPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const listenerAttached = useRef(false);
 
+  // Track the logged-in user (handles login, logout and switching accounts
+  // without a full page reload, since the root layout never remounts).
   useEffect(() => {
-    // Check if we already asked
-    const hasAsked = localStorage.getItem("agnes_push_prompted");
-    const permission = "Notification" in window ? Notification.permission : "denied";
-    
-    if (!hasAsked && permission === "default") {
-      // Small delay so it doesn't pop up instantly on first load
-      const timer = setTimeout(() => setShowPrompt(true), 5000);
-      return () => clearTimeout(timer);
-    }
-
-    // Set up foreground listener if permission is granted
-    // If permission was denied, show prompt to allow retry
-    if (permission === "denied") {
-      setShowPrompt(true);
-    }
-    if (permission === "granted" && "serviceWorker" in navigator) {
-      try {
-        const messaging = getMessaging(app);
-        onMessage(messaging, (payload) => {
-          toast.message(payload.notification?.title || "New Notification", {
-            description: payload.notification?.body,
-            icon: <Bell className="w-4 h-4" />
-          });
-        });
-
-        // Silently ensure the token is registered with the backend for this session
-        if (!sessionStorage.getItem("agnes_push_registered_session")) {
-          // Note: we use requestForToken here instead of refreshForToken so we don't invalidate it unnecessarily
-          import("@/lib/firebase/client").then(({ requestForToken }) => {
-            requestForToken().then(async (token) => {
-              if (token) {
-                const ua = navigator.userAgent;
-                let os = "Unknown", browser = "Unknown";
-                if (ua.indexOf("Win") !== -1) os = "Windows";
-                else if (ua.indexOf("Mac") !== -1) os = "MacOS";
-                else if (ua.indexOf("Linux") !== -1) os = "Linux";
-                else if (ua.indexOf("Android") !== -1) os = "Android";
-                else if (ua.indexOf("like Mac") !== -1) os = "iOS";
-
-                if (ua.indexOf("Chrome") !== -1) browser = "Chrome";
-                else if (ua.indexOf("Safari") !== -1) browser = "Safari";
-                else if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
-                else if (ua.indexOf("Edge") !== -1) browser = "Edge";
-
-                const deviceType = /Mobile|Android|iP(ad|hone)/.test(ua) ? "mobile" : "desktop";
-                
-                await registerDeviceAction(token, browser, os, deviceType);
-                sessionStorage.setItem("agnes_push_registered_session", "true");
-                console.log("Silently registered active push token for session.");
-              }
-            }).catch(console.warn);
-          });
-        }
-      } catch (e) {
-        console.warn("Foreground listener setup failed:", e);
-      }
-    }
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Whenever the user changes, make sure THIS device's token is bound to THEM.
+  useEffect(() => {
+    if (!userId) {
+      setShowPrompt(false);
+      return;
+    }
+    if (!("Notification" in window)) return;
+
+    const permission = Notification.permission;
+
+    if (permission === "default") {
+      if (!localStorage.getItem(PROMPTED_KEY)) {
+        const timer = setTimeout(() => setShowPrompt(true), 5000);
+        return () => clearTimeout(timer);
+      }
+      return;
+    }
+
+    if (permission !== "granted") return;
+
+    let cancelled = false;
+    (async () => {
+      if (!(await isSupported())) return;
+
+      // Foreground messages -> toast (attach once)
+      if (!listenerAttached.current) {
+        listenerAttached.current = true;
+        try {
+          onMessage(getMessaging(app), (payload) => {
+            toast.message(payload.notification?.title || "New Notification", {
+              description: payload.notification?.body,
+              icon: <Bell className="w-4 h-4" />,
+            });
+          });
+        } catch (e) {
+          console.warn("Foreground listener setup failed:", e);
+        }
+      }
+
+      const token = await requestForToken();
+      if (cancelled || !token) return;
+
+      const prev = readReg();
+      const needsRegister =
+        !prev ||
+        prev.userId !== userId ||          // another user logged in on this device
+        prev.token !== token ||            // FCM rotated the token
+        Date.now() - prev.at > RE_REGISTER_MS;
+
+      if (needsRegister) {
+        const res = await registerToken(userId, token);
+        if (!res?.success) console.warn("Push registration failed:", res?.error);
+      }
+    })().catch(console.warn);
+
+    return () => { cancelled = true; };
+  }, [userId]);
+
   const handleEnable = async () => {
+    if (!userId) return;
     setIsRegistering(true);
     try {
       const perm = await Notification.requestPermission();
-    if (perm !== "granted") {
-      // Permission not granted – keep prompt visible for retry
-      setShowPrompt(true);
-      setIsRegistering(false);
-      return;
-    }
-    const token = await refreshForToken();
-      if (token) {
-        const ua = navigator.userAgent;
-        let os = "Unknown";
-        if (ua.indexOf("Win") !== -1) os = "Windows";
-        if (ua.indexOf("Mac") !== -1) os = "MacOS";
-        if (ua.indexOf("Linux") !== -1) os = "Linux";
-        if (ua.indexOf("Android") !== -1) os = "Android";
-        if (ua.indexOf("like Mac") !== -1) os = "iOS";
-
-        let browser = "Unknown";
-        if (ua.indexOf("Chrome") !== -1) browser = "Chrome";
-        else if (ua.indexOf("Safari") !== -1) browser = "Safari";
-        else if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
-        else if (ua.indexOf("Edge") !== -1) browser = "Edge";
-
-        const deviceType = /Mobile|Android|iP(ad|hone)/.test(ua) ? "mobile" : "desktop";
-
-        const response = await registerDeviceAction(token, browser, os, deviceType);
-        if (response?.success) {
-          localStorage.setItem("agnes_push_prompted", "true");
-          setShowPrompt(false);
-          toast.success("Push notifications enabled!");
-        } else {
-          toast.error("Failed to register device: " + (response?.error || "Unknown error"));
-          setShowPrompt(true); // Keep open to retry
-        }
-      } else {
-        // Permission was denied or token generation failed
+      if (perm !== "granted") {
+        toast.error("Notifications are blocked. Allow them in your browser's site settings.");
+        localStorage.setItem(PROMPTED_KEY, "true");
+        setShowPrompt(false);
+        return;
+      }
+      const token = await refreshForToken();
+      if (!token) {
         toast.error("Could not generate push token. Please check browser permissions.");
-        setShowPrompt(true);
+        return;
+      }
+      const response = await registerToken(userId, token);
+      if (response?.success) {
+        localStorage.setItem(PROMPTED_KEY, "true");
+        setShowPrompt(false);
+        toast.success("Push notifications enabled!");
+      } else {
+        toast.error("Failed to register device: " + (response?.error || "Unknown error"));
       }
     } catch (e: any) {
       console.error(e);
       toast.error("An error occurred: " + (e.message || "Unknown error"));
+    } finally {
+      setIsRegistering(false);
     }
-    setIsRegistering(false);
   };
 
   const handleDismiss = () => {
-    localStorage.setItem("agnes_push_prompted", "true"); // Don't ask again for a while
+    localStorage.setItem(PROMPTED_KEY, "true");
     setShowPrompt(false);
   };
 
-  if (!showPrompt) return null;
+  if (!showPrompt || !userId) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-full max-w-sm animate-in slide-in-from-bottom-5">
+    <div className="fixed bottom-20 md:bottom-4 right-4 left-4 md:left-auto z-50 md:w-full md:max-w-sm animate-in slide-in-from-bottom-5">
       <Card className="border-border shadow-lg bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <CardHeader className="pb-3 pt-4">
           <div className="flex justify-between items-start">
@@ -140,7 +175,7 @@ export function NotificationPrompt() {
               </div>
               <CardTitle className="text-lg">Stay Updated</CardTitle>
             </div>
-            <button onClick={handleDismiss} className="text-muted-foreground hover:text-foreground">
+            <button id="push-prompt-close" onClick={handleDismiss} className="text-muted-foreground hover:text-foreground">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -149,10 +184,10 @@ export function NotificationPrompt() {
           </CardDescription>
         </CardHeader>
         <CardFooter className="flex justify-end gap-2 pb-4">
-          <Button variant="ghost" size="sm" onClick={handleDismiss}>
+          <Button id="push-prompt-dismiss" variant="ghost" size="sm" onClick={handleDismiss}>
             Not Now
           </Button>
-          <Button size="sm" onClick={handleEnable} disabled={isRegistering}>
+          <Button id="push-prompt-enable" size="sm" onClick={handleEnable} disabled={isRegistering}>
             {isRegistering ? "Enabling..." : "Enable Notifications"}
           </Button>
         </CardFooter>

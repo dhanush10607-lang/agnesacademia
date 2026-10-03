@@ -45,6 +45,21 @@ export default {
         { auth: { persistSession: false } }
       );
 
+      // History-only notification (admin unticked "send push")
+      if (notification.metadata?.skip_push === true) {
+        return new Response("Push skipped by sender", { status: 200 });
+      }
+
+      // Respect the user's push preference
+      const { data: settings } = await supabase
+        .from("user_settings")
+        .select("push_notifications")
+        .eq("user_id", notification.user_id)
+        .maybeSingle();
+      if (settings && settings.push_notifications === false) {
+        return new Response("User disabled push", { status: 200 });
+      }
+
       // 2. Find active devices for this user
       const { data: devices, error: deviceError } = await supabase
         .from("push_devices")
@@ -70,7 +85,7 @@ export default {
 
       const { data: insertedDeliveries, error: deliveryError } = await supabase
         .from("notification_deliveries")
-        .insert(deliveriesToInsert)
+        .upsert(deliveriesToInsert, { onConflict: "notification_id,push_device_id", ignoreDuplicates: true })
         .select("id, push_device_id");
 
       if (deliveryError || !insertedDeliveries) {
@@ -126,8 +141,11 @@ export default {
           if (
             error.code === 'messaging/invalid-registration-token' ||
             error.code === 'messaging/registration-token-not-registered' ||
+            error.code === 'messaging/invalid-argument' ||
             error.message?.includes('invalid-registration-token') ||
-            error.message?.includes('registration-token-not-registered')
+            error.message?.includes('registration-token-not-registered') ||
+            error.message?.includes('Device unregistered') ||
+            error.message?.includes('Requested entity was not found')
           ) {
             await supabase
               .from("push_devices")

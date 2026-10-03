@@ -78,6 +78,12 @@ export async function register(formData: FormData) {
 
 export async function logout() {
   const supabase = await createClient()
+  try {
+    const { unregisterDeviceAction } = await import("./notifications")
+    await unregisterDeviceAction()
+  } catch (e) {
+    console.warn("Could not deactivate push token on logout:", e)
+  }
   await supabase.auth.signOut()
   revalidatePath("/", "layout")
   redirect("/login")

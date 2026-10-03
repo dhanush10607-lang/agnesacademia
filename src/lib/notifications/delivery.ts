@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js"; // Use a service role client here
 
 // Use a dedicated service role client for background notification delivery
-function getServiceRoleSupabase() {
+export function getServiceRoleSupabase() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     console.warn("Missing SUPABASE_SERVICE_ROLE_KEY. Notification delivery tracking will fail.");
     return null;
@@ -21,51 +21,47 @@ export interface NotificationPayload {
   actionUrl?: string;
   priority?: "low" | "normal" | "high" | "critical";
   metadata?: any;
+  /** When false, the notification is stored in history only (no push). */
+  sendPush?: boolean;
 }
 
 export async function sendNotifications(payload: NotificationPayload) {
   const supabase = getServiceRoleSupabase();
-  
-  if (!supabase) return; // Cannot process without service role key
-  if (payload.userIds.length === 0) return;
 
-  // 1. Fetch user preferences (for the relevant category)
-  const { data: userSettings } = await supabase
-    .from("user_settings")
-    .select("user_id, email_notifications, push_notifications")
-    .in("user_id", payload.userIds);
+  if (!supabase) throw new Error("Server is missing SUPABASE_SERVICE_ROLE_KEY");
+  const userIds = Array.from(new Set(payload.userIds.filter(Boolean)));
+  if (userIds.length === 0) return { inserted: 0 };
 
-  const pushEnabledUserIds = new Set(
-    (userSettings || [])
-      .filter((s) => s.push_notifications !== false)
-      .map((s) => s.user_id)
-    );
-
-  // Fallback: if no settings found, default to true
-  const targetUserIds = payload.userIds.filter(id => 
-    pushEnabledUserIds.has(id) || !userSettings?.find(s => s.user_id === id)
-  );
-
-  if (targetUserIds.length === 0) return;
-
-  // 2. Create in-app notifications
-  // This INSERT will trigger the Supabase Edge Function (push-notifications)
-  // via a Database Webhook, which handles the FCM push delivery.
-  const notificationsToInsert = targetUserIds.map((userId) => ({
+  // Every targeted user ALWAYS gets the notification in their in-app history.
+  // Push preference (user_settings.push_notifications) is respected by the
+  // push-notifications Edge Function, which is triggered by this INSERT via a
+  // Database Webhook. metadata.skip_push lets callers suppress push entirely.
+  const batchId = crypto.randomUUID();
+  const notificationsToInsert = userIds.map((userId) => ({
     user_id: userId,
     title: payload.title,
     message: payload.message,
     category: payload.category,
-    action_url: payload.actionUrl,
+    action_url: payload.actionUrl || null,
     priority: payload.priority || "normal",
-    metadata: payload.metadata || {},
+    metadata: {
+      ...(payload.metadata || {}),
+      batch_id: batchId,
+      skip_push: payload.sendPush === false,
+    },
   }));
 
-  const { error: insertError } = await supabase
-    .from("notifications")
-    .insert(notificationsToInsert);
-
-  if (insertError) {
-    console.error("Failed to insert in-app notifications:", insertError);
+  // Insert in chunks to avoid oversized requests on large broadcasts
+  const CHUNK = 500;
+  let inserted = 0;
+  for (let i = 0; i < notificationsToInsert.length; i += CHUNK) {
+    const chunk = notificationsToInsert.slice(i, i + CHUNK);
+    const { error } = await supabase.from("notifications").insert(chunk);
+    if (error) {
+      console.error("Failed to insert in-app notifications:", error);
+      throw error;
+    }
+    inserted += chunk.length;
   }
+  return { inserted, batchId };
 }

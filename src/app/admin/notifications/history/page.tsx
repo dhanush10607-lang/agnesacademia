@@ -14,20 +14,35 @@ export default async function AdminNotificationHistoryPage() {
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "administrator") redirect("/dashboard");
 
-  // Fetch recent push deliveries grouped by notification_id (simplified view for history)
-  // We'll fetch notifications that have deliveries, or just recent admin notifications.
-  const { data: recentNotifications } = await supabase
+  // RLS only lets a user read their OWN notifications, so the admin view must
+  // use the service role to see every recipient's copy.
+  const { getServiceRoleSupabase } = await import("@/lib/notifications/delivery");
+  const db: any = getServiceRoleSupabase() || supabase;
+
+  const { data: recentNotifications } = await db
     .from("notifications")
     .select(`
-      id, title, category, priority, created_at,
+      id, title, category, priority, created_at, metadata,
       notification_deliveries (id, status)
     `)
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(2000);
 
-  // Group stats
-  const historyItems = (recentNotifications || []).map((n: any) => {
-    const deliveries = n.notification_deliveries || [];
+  // One broadcast = many rows (one per recipient). Group them back together.
+  const groups = new Map<string, any>();
+  for (const n of recentNotifications || []) {
+    const key = n.metadata?.batch_id || `${n.title}|${n.category}|${String(n.created_at).slice(0, 19)}`;
+    let g = groups.get(key);
+    if (!g) {
+      g = { id: key, title: n.title, category: n.category, priority: n.priority, created_at: n.created_at, recipients: 0, deliveries: [] as any[] };
+      groups.set(key, g);
+    }
+    g.recipients += 1;
+    g.deliveries.push(...(n.notification_deliveries || []));
+  }
+
+  const historyItems = Array.from(groups.values()).slice(0, 50).map((g: any) => {
+    const deliveries = g.deliveries;
     const total = deliveries.length;
     const sent = deliveries.filter((d: any) => d.status === 'sent').length;
     const failed = deliveries.filter((d: any) => d.status === 'failed').length;
@@ -40,8 +55,8 @@ export default async function AdminNotificationHistoryPage() {
     else if (failed > 0 && sent === 0) status = "Failed";
 
     return {
-      ...n,
-      stats: { total, sent, failed, pending },
+      ...g,
+      stats: { total: g.recipients, sent, failed, pending },
       status
     };
   });
