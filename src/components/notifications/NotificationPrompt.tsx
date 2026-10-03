@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { app, refreshForToken, requestForToken } from "@/lib/firebase/client";
 import { registerDeviceAction } from "@/app/actions/notifications";
+import { recordCurrentSessionAction } from "@/app/actions/sessions";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,37 @@ export function NotificationPrompt() {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const { os, browser, deviceType } = getDeviceInfo();
+    let recording = false;
+
+    const recordSession = async () => {
+      if (recording || document.visibilityState !== "visible") return;
+      recording = true;
+      try {
+        const result = await recordCurrentSessionAction(browser, os, deviceType);
+        if (!result.success) {
+          console.error("Could not record the current session:", result.error);
+        }
+      } catch (error) {
+        console.error("Could not record the current session:", error);
+      } finally {
+        recording = false;
+      }
+    };
+
+    void recordSession();
+    const heartbeat = window.setInterval(recordSession, 60_000);
+    document.addEventListener("visibilitychange", recordSession);
+
+    return () => {
+      window.clearInterval(heartbeat);
+      document.removeEventListener("visibilitychange", recordSession);
+    };
+  }, [userId]);
 
   // Whenever the user changes, make sure THIS device's token is bound to THEM.
   useEffect(() => {

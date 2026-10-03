@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import { getAuthSessionId } from "@/lib/auth/session-id"
 
 function friendlyAuthError(msg: string): string {
   if (msg.toLowerCase().includes("invalid login")) return "Incorrect email or password. Please check your details and try again."
@@ -83,6 +84,23 @@ export async function logout() {
     await unregisterDeviceAction()
   } catch (e) {
     console.warn("Could not deactivate push token on logout:", e)
+  }
+  const [
+    { data: { user } },
+    { data: { session } },
+  ] = await Promise.all([supabase.auth.getUser(), supabase.auth.getSession()])
+  if (user && session?.user.id === user.id) {
+    try {
+      const sessionId = getAuthSessionId(session.access_token)
+      const { error } = await supabase
+        .from("user_sessions")
+        .update({ revoked_at: new Date().toISOString() })
+        .eq("user_id", user.id)
+        .eq("session_id", sessionId)
+      if (error) console.warn("Could not update active session status during logout:", error)
+    } catch (e) {
+      console.warn("Could not identify active session during logout:", e)
+    }
   }
   await supabase.auth.signOut()
   revalidatePath("/", "layout")
