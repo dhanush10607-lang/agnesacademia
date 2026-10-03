@@ -4,6 +4,40 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { UploadCloud, Info } from "lucide-react";
 import { UploadForm } from "@/components/UploadForm";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getCurriculumSemesterSubjects } from "@/lib/curriculumSubjects";
+
+type UploadSubject = {
+  id: string;
+  name: string;
+  semester: { name: string } | null;
+};
+
+function toUploadSubjects(rows: unknown[]): UploadSubject[] {
+  return rows.flatMap((row) => {
+    if (typeof row !== "object" || row === null) return [];
+
+    const record = row as Record<string, unknown>;
+    const relatedSubject = "subject" in record ? record.subject : row;
+    const subject = Array.isArray(relatedSubject) ? relatedSubject[0] : relatedSubject;
+    if (typeof subject !== "object" || subject === null) return [];
+
+    const subjectRecord = subject as Record<string, unknown>;
+    if (typeof subjectRecord.id !== "string" || typeof subjectRecord.name !== "string") return [];
+
+    const relatedSemester = subjectRecord.semester;
+    const semester = Array.isArray(relatedSemester) ? relatedSemester[0] : relatedSemester;
+    const semesterName =
+      typeof semester === "object" && semester !== null && "name" in semester && typeof semester.name === "string"
+        ? semester.name
+        : null;
+
+    return [{
+      id: subjectRecord.id,
+      name: subjectRecord.name,
+      semester: semesterName ? { name: semesterName } : null,
+    }];
+  }).sort((a, b) => a.name.localeCompare(b.name));
+}
 
 export default async function UploadPage() {
   const supabase = await createClient();
@@ -19,32 +53,52 @@ export default async function UploadPage() {
     .select("id, name")
     .order("name", { ascending: true });
 
-  // Fetch profile to get role and semester
+  // Fetch the student's current academic context.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, semester_id")
+    .select("role, semester_id, curriculum_id, semester:semesters(name)")
     .eq("id", user.id)
     .single();
 
-  // Fetch subjects. Filter by semester_id if it's a student.
-  let subjectQuery = supabase
-    .from("subjects")
-    .select(`
-      id, name,
-      semester:semesters(name)
-    `)
-    .order("name", { ascending: true });
-
+  let subjects: UploadSubject[] = [];
   if (profile?.role === "student") {
-    if (profile.semester_id) {
-      subjectQuery = subjectQuery.eq("semester_id", profile.semester_id);
+    const { data: enrolledSubjects, error: enrollmentError } = await supabase
+      .from("student_subjects")
+      .select("subject:subjects(id, name, semester:semesters(name))")
+      .eq("student_id", user.id)
+      .eq("enrollment_status", "ENROLLED");
+
+    if (enrollmentError) {
+      console.error("Failed to fetch the student's enrolled subjects for upload:", enrollmentError);
     } else {
-      // If student hasn't set their semester, they see no subjects.
-      subjectQuery = subjectQuery.eq("semester_id", "00000000-0000-0000-0000-000000000000"); 
+      subjects = toUploadSubjects(enrolledSubjects || []);
+    }
+
+    if (subjects.length === 0 && !enrollmentError && profile?.curriculum_id) {
+      const curriculumSubjects = await getCurriculumSemesterSubjects(
+        supabase,
+        profile.curriculum_id,
+        profile.semester_id,
+        profile.semester?.[0]?.name,
+      );
+
+      subjects = toUploadSubjects(curriculumSubjects);
+    }
+  } else {
+    const { data: availableSubjects, error: subjectError } = await supabase
+      .from("subjects")
+      .select(`
+        id, name,
+        semester:semesters(name)
+      `)
+      .order("name", { ascending: true });
+
+    if (subjectError) {
+      console.error("Failed to fetch subjects for upload:", subjectError);
+    } else {
+      subjects = toUploadSubjects(availableSubjects || []);
     }
   }
-
-  const { data: subjects } = await subjectQuery;
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-3xl">
@@ -72,7 +126,7 @@ export default async function UploadPage() {
           <CardDescription>Fill out the details below to submit your file.</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <UploadForm categories={categories || []} subjects={(subjects as any) || []} />
+          <UploadForm categories={categories || []} subjects={subjects} />
         </CardContent>
       </Card>
     </div>

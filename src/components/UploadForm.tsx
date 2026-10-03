@@ -16,7 +16,7 @@ export function UploadForm({
   subjects
 }: {
   categories: { id: string; name: string }[];
-  subjects: { id: string; name: string; semester: { name: string } }[];
+  subjects: { id: string; name: string; semester: { name: string } | null }[];
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
