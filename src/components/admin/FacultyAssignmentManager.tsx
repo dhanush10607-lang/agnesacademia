@@ -198,20 +198,21 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
                 </motion.div>
               )}
 
-              <Card className="overflow-hidden border-border">
-                <CardHeader className="flex flex-row items-center justify-between gap-4 py-4">
-                  <div>
-                    <CardTitle className="text-lg flex items-center">
-                      <GraduationCap className="w-5 h-5 mr-2 text-primary" /> Assign Departments
+              <Card className="min-w-0 overflow-hidden border-border">
+                <CardHeader className="flex flex-col items-start justify-between gap-3 py-4 sm:flex-row sm:items-center">
+                  <div className="min-w-0 w-full">
+                    <CardTitle className="flex items-start text-base leading-snug sm:items-center sm:text-lg">
+                      <GraduationCap className="mr-2 mt-0.5 h-5 w-5 shrink-0 text-primary sm:mt-0" />
+                      <span className="min-w-0 break-words">Assign Departments</span>
                     </CardTitle>
-                    <CardDescription className="mt-1">
+                    <CardDescription className="mt-1 break-words [overflow-wrap:anywhere]">
                       {activeStep === "subjects"
                         ? currentFacultyDepts.map(id => departmentsList.find(dept => dept.id === id)?.name).filter(Boolean).join(", ")
                         : "Select one or more departments to continue."}
                     </CardDescription>
                   </div>
                   {activeStep === "subjects" && (
-                    <Button type="button" variant="outline" size="sm" onClick={() => setActiveStep("departments")}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setActiveStep("departments")} className="self-end sm:self-auto">
                       Change
                     </Button>
                   )}
@@ -222,14 +223,14 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <CardContent className="pt-0 pb-5">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <CardContent className="min-w-0 pt-0 pb-5">
+                    <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                       {departmentsList.map(dept => {
                         const isAssigned = currentFacultyDepts.includes(dept.id);
                         return (
                           <div
                             key={dept.id}
-                            className={`flex items-start space-x-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                            className={`flex min-w-0 items-start gap-3 rounded-xl border p-3 transition-all cursor-pointer ${
                               isAssigned
                                 ? "border-primary bg-primary/5 shadow-sm"
                                 : "border-border hover:border-primary/40 hover:bg-muted/50"
@@ -243,7 +244,7 @@ export function FacultyAssignmentManager({ facultyList, subjectsList, department
                             />
                             <Label
                               htmlFor={`dept-${dept.id}`}
-                              className="font-semibold cursor-pointer text-sm leading-tight"
+                              className="min-w-0 flex-1 cursor-pointer break-words text-sm font-semibold leading-tight [overflow-wrap:anywhere]"
                             >
                               {dept.name}
                             </Label>
