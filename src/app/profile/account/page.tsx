@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Settings, AlertTriangle, LogOut } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { logout } from "@/app/actions/auth";
+import { DeleteAccountForm } from "./DeleteAccountForm";
 
 export default async function AccountPage() {
   const supabase = await createClient();
@@ -71,7 +73,7 @@ export default async function AccountPage() {
               <h4 className="font-medium text-foreground">Sign Out</h4>
               <p className="text-sm text-muted-foreground">End your current session.</p>
             </div>
-            <form action="/auth/signout" method="POST">
+            <form action={logout}>
               <Button variant="outline" type="submit" className="shrink-0">
                 <LogOut className="w-4 h-4 mr-2" /> Sign Out
               </Button>
@@ -82,14 +84,12 @@ export default async function AccountPage() {
             <div>
               <h4 className="font-medium text-foreground">Delete Account</h4>
               <p className="text-sm text-muted-foreground">Permanently delete your account and data.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your private account data will be deleted. Shared contributions will remain without your author attribution.
+              </p>
             </div>
-            <Button variant="destructive" disabled className="shrink-0">
-              Request Deletion
-            </Button>
+            <DeleteAccountForm />
           </div>
-          <p className="text-xs text-muted-foreground text-center">
-            Account deletion requests must currently be processed manually by an administrator.
-          </p>
         </CardContent>
       </Card>
     </div>
