@@ -121,7 +121,7 @@ export function MobileNavMenu({ role }: Props) {
     {
       title: "Communication",
       links: [
-        { href: "/admin/notices", label: "Notices", icon: Bell },
+        { href: "/admin/notifications", label: "Push Center", icon: Bell },
         { href: "/admin/calendar", label: "Calendar", icon: CalendarDays },
       ],
     },
