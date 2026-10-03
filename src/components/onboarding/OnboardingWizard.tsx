@@ -14,7 +14,7 @@ import { saveOnboardingProfile, skipOnboarding, type OnboardingData } from "@/ap
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Dept     = { id: string; name: string };
-type Prog     = { id: string; name: string; department_id: string };
+type Prog     = { id: string; name: string; department_id: string | null };
 type Year     = { id: string; name: string; programme_id: string };
 type Semester = { id: string; name: string; academic_year_id: string };
 type Subject  = { id: string; name: string; code?: string };

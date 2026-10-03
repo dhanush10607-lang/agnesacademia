@@ -86,7 +86,10 @@ export async function createProgrammeAction(formData: FormData) {
 
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;
-  const department_id = formData.get("department_id") as string;
+  const departmentValue = formData.get("department_id");
+  const department_id = typeof departmentValue === "string" && departmentValue
+    ? departmentValue
+    : null;
 
   try {
     const { data: p, error } = await supabase.from("programmes").insert({ name, code, department_id }).select().single();

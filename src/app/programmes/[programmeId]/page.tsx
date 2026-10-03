@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ChevronRight, Calendar, ChevronLeft } from "lucide-react";
+import { ChevronRight, Calendar, ChevronLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -23,6 +23,13 @@ export default async function ProgrammeDetailPage({
     notFound();
   }
 
+  const { data: curricula, error: curriculaError } = await supabase
+    .from("curricula")
+    .select("id, name, description, academic_year")
+    .eq("programme_id", programmeId)
+    .eq("is_active", true)
+    .order("name");
+
   // Fetch academic years and nested semesters
   const { data: academicYears, error: yearsError } = await supabase
     .from("academic_years")
@@ -38,20 +45,58 @@ export default async function ProgrammeDetailPage({
         <ChevronRight className="h-4 w-4 shrink-0" />
         <Link href="/departments" className="hover:text-primary transition-colors">Departments</Link>
         <ChevronRight className="h-4 w-4 shrink-0" />
-        <Link href={`/departments/${programme.department_id}`} className="hover:text-primary transition-colors">
-          {programme.department.name}
-        </Link>
-        <ChevronRight className="h-4 w-4 shrink-0" />
+        {programme.department && (
+          <>
+            <Link href={`/departments/${programme.department_id}`} className="hover:text-primary transition-colors">
+              {programme.department.name}
+            </Link>
+            <ChevronRight className="h-4 w-4 shrink-0" />
+          </>
+        )}
         <span className="text-foreground font-medium">{programme.name}</span>
       </nav>
 
       <div className="mb-12">
-        <Link href={`/departments/${programme.department_id}`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-4 transition-colors">
-          <ChevronLeft className="h-4 w-4 mr-1" /> Back to {programme.department.name}
-        </Link>
+        {programme.department && (
+          <Link href={`/departments/${programme.department_id}`} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-4 transition-colors">
+            <ChevronLeft className="h-4 w-4 mr-1" /> Back to {programme.department.name}
+          </Link>
+        )}
         <h1 className="text-4xl font-heading font-extrabold text-foreground mb-4">{programme.name}</h1>
         <p className="text-lg text-muted-foreground">{programme.description || "Select an academic year and semester to view subjects."}</p>
       </div>
+
+      <section className="mb-12">
+        <h2 className="text-2xl font-heading font-bold mb-6 border-b pb-2">Curricula / Combinations</h2>
+        {curriculaError ? (
+          <p className="text-destructive">Error loading curricula.</p>
+        ) : !curricula || curricula.length === 0 ? (
+          <Card className="border-dashed bg-muted/20">
+            <CardContent className="py-8 text-center text-muted-foreground">
+              No curricula or combinations are listed for this programme yet.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {curricula.map((curriculum) => (
+              <Card key={curriculum.id}>
+                <CardHeader className="flex-row items-start gap-3 space-y-0">
+                  <BookOpen className="mt-1 h-5 w-5 shrink-0 text-primary" />
+                  <div className="min-w-0">
+                    <CardTitle className="text-base">{curriculum.name}</CardTitle>
+                    {curriculum.academic_year && (
+                      <p className="mt-1 text-sm text-muted-foreground">{curriculum.academic_year}</p>
+                    )}
+                    {curriculum.description && (
+                      <p className="mt-2 text-sm text-muted-foreground">{curriculum.description}</p>
+                    )}
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
 
       <h2 className="text-2xl font-heading font-bold mb-6 border-b pb-2">Academic Timeline</h2>
 
@@ -78,8 +123,8 @@ export default async function ProgrammeDetailPage({
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {year.semesters
-                    .sort((a: any, b: any) => a.name.localeCompare(b.name))
-                    .map((semester: any) => (
+                    .sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name))
+                    .map((semester: { id: string; name: string }) => (
                     <Link key={semester.id} href={`/semesters/${semester.id}`} className="block group">
                       <Card className="border-muted shadow-sm hover:shadow-md hover:border-primary/30 transition-all bg-background">
                         <CardHeader className="p-4">

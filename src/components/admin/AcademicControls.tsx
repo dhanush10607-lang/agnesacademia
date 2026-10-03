@@ -37,11 +37,11 @@ export function CreateProgrammeForm({ departments }: { departments: any[] }) {
         <Input id="code" name="code" placeholder="BSCDS" required />
       </div>
       <div className="flex-grow space-y-2">
-        <Label htmlFor="department_id">Department</Label>
-        <Select name="department_id" required>
+        <Label htmlFor="department_id">Department (Optional)</Label>
+        <Select name="department_id">
           <SelectTrigger>
-            <SelectValue placeholder="Select Dept">
-              {(value) => departments.find(department => department.id === value)?.name || "Select Dept"}
+            <SelectValue placeholder="No department">
+              {(value) => departments.find(department => department.id === value)?.name || "No department"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
