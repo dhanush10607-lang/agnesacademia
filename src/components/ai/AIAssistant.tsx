@@ -11,10 +11,15 @@ export function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length === 0) return;
+
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+    }
   }, [messages]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -69,7 +74,7 @@ export function AIAssistant() {
 
   return (
     <div className="flex flex-col h-[min(600px,55dvh)] sm:h-[600px]">
-      <div className="flex-grow overflow-y-auto p-4 md:p-6 space-y-6">
+      <div ref={messagesContainerRef} className="min-h-0 flex-grow overflow-y-auto p-4 md:p-6 space-y-6">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
             <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
@@ -126,7 +131,6 @@ export function AIAssistant() {
               </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <div className="p-4 bg-background border-t">
