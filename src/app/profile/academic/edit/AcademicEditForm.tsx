@@ -78,9 +78,9 @@ export default function AcademicEditForm({
 
     // Infer department_id from selected programme
     const selectedProg = programmes.find(p => p.id === progId);
-    const inferredDeptId = selectedProg?.department_id || currentProfile.department_id;
+    const inferredDeptId = selectedProg?.department_id ?? null;
 
-    const { error } = await supabase
+    const { data: updatedProfile, error } = await supabase
       .from("profiles")
       .update({
         department_id: inferredDeptId,
@@ -89,11 +89,14 @@ export default function AcademicEditForm({
         academic_year_id: yearId,
         semester_id: semId
       })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .select("id")
+      .maybeSingle();
 
     setIsSubmitting(false);
 
-    if (error) {
+    if (error || !updatedProfile) {
+      if (error) console.error("Academic profile update failed:", error);
       setErrorMsg("Failed to update profile. Please try again.");
     } else {
       setSuccess(true);

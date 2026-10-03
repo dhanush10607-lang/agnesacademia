@@ -22,6 +22,7 @@ export default async function AcademicInfoPage() {
       *,
       department:departments(name),
       programme:programmes(name),
+      curriculum:curricula(name),
       semester:semesters(name),
       academic_year:academic_years(name)
     `)
@@ -115,6 +116,12 @@ export default async function AcademicInfoPage() {
               <dt className="text-sm font-medium text-muted-foreground">Programme</dt>
               <dd className="mt-1 text-base font-semibold text-foreground">
                 {profile.programme?.name || "Not set"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Curriculum</dt>
+              <dd className="mt-1 text-base font-semibold text-foreground">
+                {profile.curriculum?.name || "Not set"}
               </dd>
             </div>
             <div>
