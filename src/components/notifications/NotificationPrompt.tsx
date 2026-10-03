@@ -101,16 +101,23 @@ export function NotificationPrompt() {
 
         const deviceType = /Mobile|Android|iP(ad|hone)/.test(ua) ? "mobile" : "desktop";
 
-        await registerDeviceAction(token, browser, os, deviceType);
-        localStorage.setItem("agnes_push_prompted", "true");
-        setShowPrompt(false);
+        const response = await registerDeviceAction(token, browser, os, deviceType);
+        if (response?.success) {
+          localStorage.setItem("agnes_push_prompted", "true");
+          setShowPrompt(false);
+          toast.success("Push notifications enabled!");
+        } else {
+          toast.error("Failed to register device: " + (response?.error || "Unknown error"));
+          setShowPrompt(true); // Keep open to retry
+        }
       } else {
-        // Permission was denied – keep the prompt visible so the user can retry after changing browser settings
-        // Do NOT store "denied" in localStorage; allow future attempts
+        // Permission was denied or token generation failed
+        toast.error("Could not generate push token. Please check browser permissions.");
         setShowPrompt(true);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      toast.error("An error occurred: " + (e.message || "Unknown error"));
     }
     setIsRegistering(false);
   };

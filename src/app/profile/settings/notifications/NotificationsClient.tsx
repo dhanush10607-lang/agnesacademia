@@ -46,13 +46,19 @@ export default function NotificationsClient({ initialSettings }: { initialSettin
 
         const deviceType = /Mobile|Android|iP(ad|hone)/.test(ua) ? "mobile" : "desktop";
 
-        await registerDeviceAction(token, browser, os, deviceType);
-        setPermissionState("🟢 Enabled");
+        const response = await registerDeviceAction(token, browser, os, deviceType);
+        if (response?.success) {
+          setPermissionState("🟢 Enabled");
+          // Assume toast is imported or just rely on state
+        } else {
+          setPermissionState(`🔴 Error: ${response?.error || "Unknown"}`);
+        }
       } else {
-        setPermissionState("🔴 Blocked by Browser");
+        setPermissionState("🔴 Blocked or Token Failed");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setPermissionState(`🔴 Error: ${e.message}`);
     }
   };
 
