@@ -9,14 +9,15 @@ import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 
-export default async function EditCurriculumPage({ params }: { params: { id: string } }) {
+export default async function EditCurriculumPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
+  const { id } = await params;
 
   // Fetch the current curriculum
   const { data: curriculum, error: currError } = await supabase
     .from("curricula")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (currError || !curriculum) {
@@ -50,7 +51,7 @@ export default async function EditCurriculumPage({ params }: { params: { id: str
         programme_id,
         academic_year: academic_year || null
       })
-      .eq("id", params.id);
+      .eq("id", id);
     
     if (error) {
       console.error("Error updating curriculum:", error);

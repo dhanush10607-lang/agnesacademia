@@ -7,15 +7,16 @@ import CurriculumSubjectManager from "./CurriculumSubjectManager";
 export default async function CurriculumSubjectsPage({
   params
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
   const supabase = await createClient();
+  const { id } = await params;
 
   // Fetch Curriculum Details
   const { data: curriculum, error: curriculumError } = await supabase
     .from("curricula")
     .select("*, programme:programmes(name)")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (curriculumError || !curriculum) {
@@ -35,7 +36,7 @@ export default async function CurriculumSubjectsPage({
       *,
       subject:subjects(id, name, code, credits)
     `)
-    .eq("curriculum_id", params.id)
+    .eq("curriculum_id", id)
     .order("display_order", { ascending: true });
 
   // Fetch all available subjects in the system (or ideally filter by department)
@@ -65,7 +66,7 @@ export default async function CurriculumSubjectsPage({
       </div>
 
       <CurriculumSubjectManager 
-        curriculumId={params.id}
+        curriculumId={id}
         subjectTypes={subjectTypes || []}
         assignedSubjects={assignedSubjects || []}
         allSubjects={allSubjects || []}
