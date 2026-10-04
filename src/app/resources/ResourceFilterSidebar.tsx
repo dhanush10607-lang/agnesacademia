@@ -46,8 +46,8 @@ export function ResourceFilterSidebar({
   const hasActiveFilters = currentCategory || currentSubject;
 
   return (
-    <div className="w-full shrink-0 md:w-64">
-      <details className="group rounded-xl border bg-card shadow-sm md:hidden">
+    <div className="w-full shrink-0 lg:w-64">
+      <details className="group rounded-xl border bg-card shadow-sm lg:hidden">
         <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
           <span className="flex min-w-0 items-center gap-2">
             <Filter className="h-4 w-4 shrink-0 text-primary" />
@@ -75,7 +75,7 @@ export function ResourceFilterSidebar({
         </div>
       </details>
 
-      <div className="sticky top-20 hidden space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm md:block">
+      <div className="sticky top-20 hidden space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm lg:block">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-lg font-semibold">
             <Filter className="h-4 w-4" /> Filters

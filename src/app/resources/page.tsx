@@ -211,7 +211,7 @@ export default async function ResourcesSearchPage({
         </form>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col gap-8 lg:flex-row">
         <ResourceFilterSidebar 
           categories={categories || []} 
           subjects={subjects || []} 
