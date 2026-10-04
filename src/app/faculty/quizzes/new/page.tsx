@@ -16,19 +16,25 @@ export default async function NewQuizPage() {
   if (!profile || profile.role !== 'faculty') redirect("/dashboard");
 
   // Fetch ONLY assigned subjects for this faculty member
-  const { data: facultySubjects } = await supabase
+  const { data: facultySubjects, error: subjectError } = await supabase
     .from("faculty_subjects")
     .select(`
       subject:subjects(id, name, code)
     `)
     .eq("faculty_id", user.id);
 
-  const subjects = facultySubjects?.map(fs => fs.subject).filter(Boolean) || [];
+  if (subjectError) {
+    console.error("Could not load faculty quiz subjects:", subjectError);
+  }
+  const subjects = (facultySubjects || []).flatMap(fs => {
+    const subject = fs.subject;
+    return Array.isArray(subject) ? subject : subject ? [subject] : [];
+  });
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-3xl">
-      <Link href="/faculty" className={buttonVariants({ variant: "ghost", className: "mb-6" })}>
-        <ChevronLeft className="w-4 h-4 mr-2" /> Back to Dashboard
+      <Link href="/faculty/quizzes" className={buttonVariants({ variant: "ghost", className: "mb-6" })}>
+        <ChevronLeft className="w-4 h-4 mr-2" /> Back to My Quizzes
       </Link>
 
       <div className="mb-8">
@@ -40,7 +46,11 @@ export default async function NewQuizPage() {
         </p>
       </div>
 
-      {subjects.length === 0 ? (
+      {subjectError ? (
+        <Card className="border-red-300 bg-red-50 text-red-700">
+          <CardContent className="py-8">Could not load your assigned subjects. Refresh the page to try again.</CardContent>
+        </Card>
+      ) : subjects.length === 0 ? (
         <Card className="border-dashed bg-muted/20">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <ShieldCheck className="h-12 w-12 text-muted-foreground mb-4 opacity-40" />
@@ -55,7 +65,7 @@ export default async function NewQuizPage() {
             <CardDescription>First, define the core settings for this quiz. You will add questions on the next page.</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
-            <QuizForm subjects={subjects as any} />
+            <QuizForm subjects={subjects} />
           </CardContent>
         </Card>
       )}

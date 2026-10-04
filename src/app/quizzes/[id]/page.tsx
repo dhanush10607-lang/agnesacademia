@@ -21,8 +21,7 @@ export default async function QuizIntroPage({
     .from("quizzes")
     .select(`
       *,
-      subject:subjects(name, code),
-      questions:quiz_questions(id)
+      subject:subjects(name, code)
     `)
     .eq("id", id)
     .single();
@@ -31,16 +30,26 @@ export default async function QuizIntroPage({
     notFound();
   }
 
-  const questionCount = quiz.questions?.length || 0;
+  const { data: questionCountData, error: questionCountError } = await supabase
+    .from("quiz_public_question_counts")
+    .select("question_count")
+    .eq("quiz_id", id)
+    .maybeSingle();
+  if (questionCountError) {
+    console.error("Could not load quiz question count:", questionCountError);
+  }
+  const questionCount = questionCountData?.question_count || 0;
 
   // Check attempt limits
   const { count: attemptCount } = await supabase
     .from("quiz_attempts")
     .select("id", { count: 'exact' })
     .eq("quiz_id", id)
-    .eq("student_id", user.id);
+    .eq("student_id", user.id)
+    .neq("status", "abandoned");
 
   const hasReachedLimit = quiz.max_attempts && (attemptCount || 0) >= quiz.max_attempts;
+  const subject = Array.isArray(quiz.subject) ? quiz.subject[0] : quiz.subject;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -57,9 +66,9 @@ export default async function QuizIntroPage({
               </div>
               <h1 className="text-3xl font-heading font-extrabold mb-2">{quiz.title}</h1>
               <p className="text-muted-foreground font-medium flex items-center justify-center gap-2">
-                <span>{(quiz.subject as any)?.code}</span>
+                <span>{subject?.code}</span>
                 <span>•</span>
-                <span>{(quiz.subject as any)?.name}</span>
+                <span>{subject?.name}</span>
                 {quiz.unit_name && (
                   <>
                     <span>•</span>

@@ -50,6 +50,7 @@ export async function Navbar() {
     { href: "/faculty",         label: "Faculty Portal", icon: GraduationCap },
     { href: "/faculty/resources", label: "My Resources", icon: FileText },
     { href: "/faculty/assignments", label: "Assignments", icon: ClipboardList },
+    { href: "/faculty/quizzes", label: "Quizzes", icon: Brain },
     { href: "/faculty/upload",   label: "Upload",         icon: Upload },
     { href: "/notices",         label: "Notices",        icon: Bell },
   ];
@@ -87,7 +88,8 @@ export async function Navbar() {
 
   const portalLinks = role === "faculty"
     ? [
-        { href: "/faculty/assignments/new", label: "Create Assignment", icon: ClipboardList },
+      { href: "/faculty/quizzes", label: "Manage Quizzes", icon: Brain },
+      { href: "/faculty/assignments/new", label: "Create Assignment", icon: ClipboardList },
         { href: "/faculty/quizzes/new", label: "Create Quiz", icon: Brain },
         { href: "/faculty/announcements/new", label: "Create Announcement", icon: Megaphone },
         { href: "/faculty/notices/new", label: "Publish Notice", icon: Bell },

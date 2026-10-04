@@ -2,109 +2,201 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-export async function submitQuizAction(attemptId: string, quizId: string, answers: Record<string, string>) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+export type QuizAttemptQuestion = {
+  id: string;
+  question_text: string;
+  marks: number;
+  options: { id: string; option_text: string }[];
+};
 
-  if (!user) return { success: false, error: "Not authenticated" };
+export type QuizAttemptData = {
+  attemptId: string;
+  startedAt: string;
+  expiresAt: string | null;
+  tabSwitchCount: number;
+  quiz: { id: string; title: string; duration_minutes: number | null };
+  questions: QuizAttemptQuestion[];
+  answers: Record<string, string>;
+};
 
-  // 1. Fetch the quiz and all questions with correct options securely
-  const { data: quiz } = await supabase.from("quizzes").select("passing_score_percentage").eq("id", quizId).single();
-  const { data: questions } = await supabase
-    .from("quiz_questions")
-    .select(`
-      id, marks,
-      options:quiz_options(id, is_correct)
-    `)
-    .eq("quiz_id", quizId);
+type ActionResult = { success: boolean; error?: string; attemptId?: string };
 
-  if (!quiz || !questions) {
-    return { success: false, error: "Quiz not found" };
-  }
-
-  let score = 0;
-  let totalMarks = 0;
-  const answerInserts = [];
-
-  // 2. Calculate score and prepare answer rows
-  for (const q of questions) {
-    totalMarks += q.marks;
-    const selectedOptionId = answers[q.id];
-    
-    // Find correct option
-    const correctOption = q.options?.find((o: any) => o.is_correct);
-    
-    let isCorrect = false;
-    let marksAwarded = 0;
-
-    if (selectedOptionId && correctOption && selectedOptionId === correctOption.id) {
-      isCorrect = true;
-      marksAwarded = q.marks;
-      score += q.marks;
-    }
-
-    answerInserts.push({
-      attempt_id: attemptId,
-      question_id: q.id,
-      selected_option_id: selectedOptionId || null,
-      is_correct: isCorrect,
-      marks_awarded: marksAwarded
-    });
-  }
-
-  const percentage = totalMarks > 0 ? (score / totalMarks) * 100 : 0;
-  const isPassed = percentage >= (quiz.passing_score_percentage || 40);
-
-  try {
-    // 3. Update Attempt Record
-    const { error: attemptError } = await supabase
-      .from("quiz_attempts")
-      .update({
-        completed_at: new Date().toISOString(),
-        score,
-        total_marks: totalMarks,
-        percentage,
-        is_passed: isPassed,
-        status: 'completed'
-      })
-      .eq("id", attemptId)
-      .eq("student_id", user.id);
-
-    if (attemptError) throw attemptError;
-
-    // 4. Insert Answers
-    const { error: answersError } = await supabase
-      .from("quiz_answers")
-      .insert(answerInserts);
-
-    if (answersError) throw answersError;
-
-    return { success: true, attemptId };
-  } catch (error) {
-    console.error("Quiz submission error:", error);
-    return { success: false, error: "Failed to submit quiz" };
-  }
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
-export async function startQuizAttemptAction(quizId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
 
-  if (!user) return { success: false, error: "Not authenticated" };
+function parseAttemptData(value: unknown): QuizAttemptData | null {
+  if (!isRecord(value) || !isRecord(value.quiz) || !Array.isArray(value.questions)) return null;
+  if (!isRecord(value.answers)) return null;
+  if (
+    typeof value.attemptId !== "string" ||
+    typeof value.startedAt !== "string" ||
+    typeof value.tabSwitchCount !== "number" ||
+    !(typeof value.expiresAt === "string" || value.expiresAt === null) ||
+    typeof value.quiz.id !== "string" ||
+    typeof value.quiz.title !== "string" ||
+    !(typeof value.quiz.duration_minutes === "number" || value.quiz.duration_minutes === null)
+  ) return null;
 
-  const { data: attempt, error } = await supabase
-    .from("quiz_attempts")
-    .insert({
-      quiz_id: quizId,
-      student_id: user.id,
-      status: 'in_progress'
-    })
-    .select("id")
-    .single();
+  const questions: QuizAttemptQuestion[] = [];
+  for (const question of value.questions) {
+    if (!isRecord(question) || !Array.isArray(question.options)) return null;
+    if (typeof question.id !== "string" || typeof question.question_text !== "string" || typeof question.marks !== "number") return null;
 
-  if (error || !attempt) {
-    return { success: false, error: "Failed to start attempt" };
+    const options: QuizAttemptQuestion["options"] = [];
+    for (const option of question.options) {
+      if (!isRecord(option) || typeof option.id !== "string" || typeof option.option_text !== "string") return null;
+      options.push({ id: option.id, option_text: option.option_text });
+    }
+    questions.push({ id: question.id, question_text: question.question_text, marks: question.marks, options });
   }
 
-  return { success: true, attemptId: attempt.id };
+  if (!questions.length || questions.some(question => question.options.length < 2)) return null;
+
+  const answers: Record<string, string> = {};
+  for (const [questionId, optionId] of Object.entries(value.answers)) {
+    if (typeof optionId !== "string" || !isUuid(questionId) || !isUuid(optionId)) return null;
+    answers[questionId] = optionId;
+  }
+
+  return {
+    attemptId: value.attemptId,
+    startedAt: value.startedAt,
+    expiresAt: value.expiresAt,
+    tabSwitchCount: value.tabSwitchCount,
+    quiz: {
+      id: value.quiz.id,
+      title: value.quiz.title,
+      duration_minutes: value.quiz.duration_minutes,
+    },
+    questions,
+    answers,
+  };
+}
+
+export async function startQuizAttemptAction(quizId: string): Promise<
+  | { success: true; attempt: QuizAttemptData }
+  | { success: true; completedAttemptId: string }
+  | { success: false; error: string }
+> {
+  if (!isUuid(quizId)) return { success: false, error: "Invalid quiz." };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Sign in to take this quiz." };
+
+  const { data, error } = await supabase.rpc("start_quiz_attempt", { p_quiz_id: quizId });
+  if (error) {
+    console.error("Quiz start RPC failed:", error);
+    return { success: false, error: "Could not start the quiz. Please try again." };
+  }
+
+  if (!isRecord(data) || data.success !== true) {
+    return {
+      success: false,
+      error: isRecord(data) && typeof data.error === "string" ? data.error : "Could not start this quiz.",
+    };
+  }
+
+  if (typeof data.completedAttemptId === "string") {
+    return { success: true, completedAttemptId: data.completedAttemptId };
+  }
+
+  const attempt = parseAttemptData(data);
+  if (!attempt) {
+    console.error("Quiz start RPC returned an invalid attempt payload.");
+    return { success: false, error: "Could not load this quiz attempt safely." };
+  }
+
+  return { success: true, attempt };
+}
+
+export async function saveQuizAnswerAction(
+  attemptId: string,
+  questionId: string,
+  optionId: string,
+): Promise<ActionResult> {
+  if (![attemptId, questionId, optionId].every(isUuid)) {
+    return { success: false, error: "Invalid quiz answer." };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Sign in to save your answer." };
+
+  const { data, error } = await supabase.rpc("save_quiz_answer", {
+    p_attempt_id: attemptId,
+    p_question_id: questionId,
+    p_option_id: optionId,
+  });
+  if (error) {
+    console.error("Quiz answer save RPC failed:", error);
+    return { success: false, error: "Your answer could not be saved. Please retry." };
+  }
+  if (!isRecord(data) || data.success !== true) {
+    return { success: false, error: isRecord(data) && typeof data.error === "string" ? data.error : "Your answer could not be saved." };
+  }
+
+  return { success: true };
+}
+
+export async function recordQuizFocusEventAction(attemptId: string): Promise<ActionResult & { tabSwitchCount?: number }> {
+  if (!isUuid(attemptId)) return { success: false, error: "Invalid quiz attempt." };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Sign in to continue this quiz." };
+
+  const { data, error } = await supabase.rpc("record_quiz_focus_event", { p_attempt_id: attemptId });
+  if (error) {
+    console.error("Quiz focus event RPC failed:", error);
+    return { success: false, error: "The focus event could not be recorded." };
+  }
+  if (!isRecord(data) || data.success !== true) {
+    return { success: false, error: isRecord(data) && typeof data.error === "string" ? data.error : "The focus event could not be recorded." };
+  }
+
+  return {
+    success: true,
+    tabSwitchCount: typeof data.tabSwitchCount === "number" ? data.tabSwitchCount : undefined,
+  };
+}
+
+export async function submitQuizAction(
+  attemptId: string,
+  answers: Record<string, string>,
+): Promise<ActionResult> {
+  if (!isUuid(attemptId) || !answers || typeof answers !== "object" || Array.isArray(answers)) {
+    return { success: false, error: "Invalid quiz submission." };
+  }
+
+  const submittedAnswers: Record<string, string> = {};
+  for (const [questionId, optionId] of Object.entries(answers)) {
+    if (!isUuid(questionId) || !isUuid(optionId)) {
+      return { success: false, error: "Invalid quiz submission." };
+    }
+    submittedAnswers[questionId] = optionId;
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Sign in to submit this quiz." };
+
+  const { data, error } = await supabase.rpc("submit_quiz_attempt", {
+    p_attempt_id: attemptId,
+    p_answers: submittedAnswers,
+  });
+  if (error) {
+    console.error("Quiz submission RPC failed:", error);
+    return { success: false, error: "Could not submit the quiz. Please try again." };
+  }
+  if (!isRecord(data) || data.success !== true || typeof data.attemptId !== "string") {
+    return { success: false, error: isRecord(data) && typeof data.error === "string" ? data.error : "Could not submit this quiz." };
+  }
+
+  return { success: true, attemptId: data.attemptId };
 }

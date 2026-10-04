@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BrainCircuit, ChevronLeft, ListChecks } from "lucide-react";
 import { QuizQuestionForm } from "@/components/QuizQuestionForm";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import { QuizStatusControl } from "@/components/QuizStatusControl";
 
 export default async function ManageQuizQuestionsPage({
   params,
@@ -32,14 +33,34 @@ export default async function ManageQuizQuestionsPage({
   }
 
   // Fetch existing questions
-  const { data: questions } = await supabase
+  const { data: questions, error: questionsError } = await supabase
     .from("quiz_questions")
-    .select(`
-      *,
-      options:quiz_options(*)
-    `)
+    .select("*")
     .eq("quiz_id", id)
     .order("created_at", { ascending: true });
+  if (questionsError) {
+    console.error("Could not load quiz questions:", questionsError);
+  }
+
+  const questionIds = questions?.map(question => question.id) || [];
+  const { data: options, error: optionsError } = questionIds.length
+    ? await supabase
+        .from("quiz_faculty_options")
+        .select("id, question_id, option_text, is_correct, order_index")
+        .in("question_id", questionIds)
+        .order("order_index")
+    : { data: [], error: null };
+  if (optionsError) {
+    console.error("Could not load quiz options:", optionsError);
+  }
+
+  type FacultyOption = { id: string; question_id: string; option_text: string; is_correct: boolean; order_index: number };
+  const optionsByQuestion = new Map<string, FacultyOption[]>();
+  for (const option of (options || []) as FacultyOption[]) {
+    const questionOptions = optionsByQuestion.get(option.question_id) || [];
+    questionOptions.push(option);
+    optionsByQuestion.set(option.question_id, questionOptions);
+  }
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-5xl">
@@ -52,11 +73,19 @@ export default async function ManageQuizQuestionsPage({
           <h1 className="text-4xl font-heading font-extrabold text-foreground mb-2 flex items-center">
             <BrainCircuit className="w-8 h-8 mr-3 text-primary" /> {quiz.title}
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Manage questions and answers for this quiz.
+          <p className="text-lg text-muted-foreground">Manage questions and answers for this quiz.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Status: <span className="font-semibold capitalize">{quiz.status}</span>
+            {quiz.status === "published" && " · Students can attempt this quiz."}
           </p>
         </div>
+        <QuizStatusControl quizId={id} status={quiz.status} />
       </div>
+      {(questionsError || optionsError) && (
+        <div role="alert" className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700">
+          Quiz content could not be fully loaded. Refresh the page before editing or publishing.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Existing Questions */}
@@ -82,7 +111,7 @@ export default async function ManageQuizQuestionsPage({
                     </div>
                     
                     <div className="space-y-2 pl-6">
-                      {q.options?.sort((a: any, b: any) => a.order_index - b.order_index).map((opt: any) => (
+                      {(optionsByQuestion.get(q.id) || []).map((opt) => (
                         <div key={opt.id} className={`p-2 rounded-md text-sm border ${opt.is_correct ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-muted/30 border-transparent'}`}>
                           {opt.option_text} {opt.is_correct && <span className="text-green-600 dark:text-green-400 font-medium text-xs ml-2">(Correct Answer)</span>}
                         </div>
@@ -105,7 +134,7 @@ export default async function ManageQuizQuestionsPage({
         </div>
 
         {/* Right Column: Add Question Form */}
-        <div className="space-y-6">
+        {quiz.status === "draft" && <div className="space-y-6">
           <Card className="border-border shadow-sm sticky top-24">
             <CardHeader className="bg-muted/30 border-b">
               <CardTitle>Add New Question</CardTitle>
@@ -114,7 +143,7 @@ export default async function ManageQuizQuestionsPage({
               <QuizQuestionForm quizId={id} />
             </CardContent>
           </Card>
-        </div>
+        </div>}
       </div>
     </div>
   );

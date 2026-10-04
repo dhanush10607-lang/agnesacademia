@@ -89,6 +89,9 @@ export default async function FacultyDashboardPage() {
           <Link href="/faculty/quizzes/new" className={buttonVariants({ variant: "outline" })}>
             <BrainCircuit className="w-4 h-4 mr-2" /> Create Quiz
           </Link>
+          <Link href="/faculty/quizzes" className={buttonVariants({ variant: "outline" })}>
+            <BrainCircuit className="w-4 h-4 mr-2" /> Manage Quizzes
+          </Link>
           <Link href="/faculty/notices/new" className={buttonVariants({ variant: "outline" })}>
             <Megaphone className="w-4 h-4 mr-2" /> Publish Notice
           </Link>

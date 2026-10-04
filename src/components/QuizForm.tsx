@@ -53,8 +53,8 @@ export function QuizForm({
           <Button onClick={() => router.push(`/faculty/quizzes/${newQuizId}/questions`)} variant="default">
             Add Questions Now
           </Button>
-          <Button onClick={() => router.push("/faculty")} variant="outline">
-            Back to Dashboard
+          <Button onClick={() => router.push("/faculty/quizzes")} variant="outline">
+            Manage Quizzes
           </Button>
         </div>
       </div>
@@ -125,25 +125,14 @@ export function QuizForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="space-y-2">
         <div className="space-y-2">
           <Label htmlFor="passing_score">Passing Score (%)</Label>
           <Input id="passing_score" name="passing_score" type="number" min="1" max="100" defaultValue="40" />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="status">Initial Status</Label>
-          <Select name="status" defaultValue="draft">
-            <SelectTrigger>
-              <SelectValue>
-                {(value) => value === "draft" ? "Draft (Hidden)" : value === "published" ? "Published" : ""}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">Draft (Hidden)</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          New quizzes are saved as drafts. Add and verify questions before publishing them to students.
+        </p>
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
