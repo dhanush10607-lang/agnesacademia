@@ -11,10 +11,10 @@ export async function RecentlyAddedSection() {
   if (!resources || resources.length === 0) return null;
 
   const categoryColors: Record<string, string> = {
-    notes:          "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    question_paper: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-    question_bank:  "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-    syllabus:       "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    notes:           "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    "question papers": "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+    "question bank":   "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+    syllabus:         "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     default:        "bg-muted text-muted-foreground",
   };
 
@@ -33,14 +33,14 @@ export async function RecentlyAddedSection() {
 
         <AnimateList className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {resources.map(r => {
-            const slug = (r.category as any)?.slug ?? "default";
-            const color = categoryColors[slug] ?? categoryColors.default;
+            const categoryName = (r.category as any)?.name ?? "Resource";
+            const color = categoryColors[categoryName.toLowerCase()] ?? categoryColors.default;
             return (
               <AnimateItem key={r.id}>
                 <Link href={`/resources/${r.id}`} className="group block bg-card border border-border rounded-2xl p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200">
                   <div className="flex items-center justify-between mb-2">
                     <Badge className={`text-[10px] px-2 py-0.5 h-5 font-semibold border-0 ${color}`}>
-                      {(r.category as any)?.name ?? "Resource"}
+                      {categoryName}
                     </Badge>
                     <span className="text-[10px] text-muted-foreground">{format(new Date(r.created_at), "MMM d")}</span>
                   </div>

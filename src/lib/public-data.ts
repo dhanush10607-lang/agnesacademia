@@ -173,7 +173,7 @@ const getRecentlyAddedResources = unstable_cache(
       .select(`
         id, title, created_at,
         subject:subjects(name),
-        category:resource_categories(name, slug)
+        category:resource_categories(name)
       `)
       .eq("status", "published")
       .order("created_at", { ascending: false })
