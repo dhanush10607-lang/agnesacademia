@@ -28,6 +28,7 @@ export function QuizInterface({
   answers: initialAnswers,
   tabSwitchCount: initialTabSwitchCount,
   watermarkLabel,
+  fullscreenSession,
 }: {
   attemptId: string;
   expiresAt: string | null;
@@ -36,6 +37,7 @@ export function QuizInterface({
   answers: Record<string, string>;
   tabSwitchCount: number;
   watermarkLabel: string;
+  fullscreenSession: boolean;
 }) {
   const router = useRouter();
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -114,14 +116,20 @@ export function QuizInterface({
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") handleFocusLoss();
     };
+    const handleFullscreenChange = () => {
+      if (fullscreenSession && !document.fullscreenElement) handleFocusLoss();
+    };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleFocusLoss);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    handleFullscreenChange();
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleFocusLoss);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [attemptId, handleFinalSubmit, quiz.id, router]);
+  }, [attemptId, fullscreenSession, handleFinalSubmit, quiz.id, router]);
 
   useEffect(() => {
     const handleScreenshotShortcut = (event: KeyboardEvent) => {
@@ -165,7 +173,7 @@ export function QuizInterface({
 
   return (
     <div className="flex min-h-screen min-w-0 flex-col bg-muted/20">
-      <header className="sticky top-16 z-40 border-b bg-background shadow-sm">
+      <header className="sticky top-0 z-40 border-b bg-background shadow-sm">
         <div className="container mx-auto flex min-h-16 min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 sm:flex-nowrap sm:px-4">
           <div className="min-w-0 flex-1 truncate font-bold sm:max-w-md">{quiz.title}</div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-4 lg:gap-8">
