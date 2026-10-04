@@ -1,13 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { EditCurriculumForm } from "./EditCurriculumForm";
 
 export default async function EditCurriculumPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -31,34 +29,81 @@ export default async function EditCurriculumPage({ params }: { params: Promise<{
     .eq("status", "active")
     .order("name");
 
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("academic_sessions")
+    .select("id, name, programme_id")
+    .eq("status", "active")
+    .order("name");
+
+  if (sessionsError) {
+    console.error("Error loading academic sessions for curriculum edit:", sessionsError);
+    throw new Error("Unable to load academic sessions for curriculum edit.");
+  }
+
   async function updateCurriculum(formData: FormData) {
     "use server";
     
     const supabase = await createClient();
-    
-    const name = formData.get("name") as string;
-    const code = formData.get("code") as string;
-    const description = formData.get("description") as string;
-    const programme_id = formData.get("programme_id") as string;
-    const academic_year = formData.get("academic_year") as string;
-    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/login");
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (profileError || profile?.role !== "administrator") {
+      throw new Error("You are not authorized to update curricula.");
+    }
+
+    const nameValue = formData.get("name");
+    const codeValue = formData.get("code");
+    const descriptionValue = formData.get("description");
+    const programmeValue = formData.get("programme_id");
+    const academicSessionValue = formData.get("academic_session_id");
+    if (typeof nameValue !== "string" || !nameValue.trim() ||
+        typeof programmeValue !== "string" || !programmeValue ||
+        (codeValue !== null && typeof codeValue !== "string") ||
+        (descriptionValue !== null && typeof descriptionValue !== "string") ||
+        (academicSessionValue !== null && typeof academicSessionValue !== "string")) {
+      throw new Error("Enter valid curriculum details.");
+    }
+
+    let academic_year: string | null = null;
+    if (academicSessionValue) {
+      const { data: academicSession, error: sessionError } = await supabase
+        .from("academic_sessions")
+        .select("name, programme_id")
+        .eq("id", academicSessionValue)
+        .eq("status", "active")
+        .single();
+      if (sessionError || !academicSession) {
+        console.error("Error validating curriculum session:", sessionError);
+        throw new Error("The selected academic session is not available.");
+      }
+      if (academicSession.programme_id !== programmeValue) {
+        throw new Error("The selected academic session must belong to this programme.");
+      }
+      academic_year = academicSession.name;
+    }
+
     const { error } = await supabase
       .from("curricula")
       .update({
-        name,
-        code: code || null,
-        description: description || null,
-        programme_id,
-        academic_year: academic_year || null
+        name: nameValue.trim(),
+        code: typeof codeValue === "string" ? codeValue || null : null,
+        description: typeof descriptionValue === "string" ? descriptionValue || null : null,
+        programme_id: programmeValue,
+        academic_year
       })
       .eq("id", id);
     
     if (error) {
       console.error("Error updating curriculum:", error);
-      return; 
+      throw new Error("Unable to update the curriculum.");
     }
     
     revalidatePath("/admin/academic/curricula");
+    revalidatePath(`/admin/academic/curricula/${id}/edit`);
     redirect("/admin/academic/curricula");
   }
 
@@ -79,54 +124,12 @@ export default async function EditCurriculumPage({ params }: { params: Promise<{
           <CardTitle>Curriculum Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={updateCurriculum} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="programme_id">Programme <span className="text-red-500">*</span></Label>
-              <select 
-                id="programme_id" 
-                name="programme_id" 
-                required 
-                defaultValue={curriculum.programme_id}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">Select a Programme</option>
-                {programmes?.map(prog => (
-                  <option key={prog.id} value={prog.id}>{prog.name}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="name">Curriculum Name <span className="text-red-500">*</span></Label>
-              <Input id="name" name="name" defaultValue={curriculum.name} required />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="code">Code</Label>
-                <Input id="code" name="code" defaultValue={curriculum.code || ""} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="academic_year">Academic Year</Label>
-                <Input id="academic_year" name="academic_year" defaultValue={curriculum.academic_year || ""} />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" defaultValue={curriculum.description || ""} />
-            </div>
-
-            <div className="pt-4 flex justify-end gap-3">
-              <Link href="/admin/academic/curricula">
-                <Button variant="outline" type="button">Cancel</Button>
-              </Link>
-              <Button type="submit">
-                <Save className="w-4 h-4 mr-2" /> Save Changes
-              </Button>
-            </div>
-          </form>
+          <EditCurriculumForm
+            programmes={programmes || []}
+            sessions={sessions || []}
+            curriculum={curriculum}
+            action={updateCurriculum}
+          />
         </CardContent>
       </Card>
     </div>
