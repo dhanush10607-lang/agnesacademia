@@ -237,8 +237,8 @@ export function MobileNavMenu({ role }: Props) {
                   <Settings className="w-4 h-4" /> Profile & Settings
                 </Link>
                 <LogoutForm className="w-full">
-                  <Button type="submit" variant="destructive" className="min-h-12 w-full justify-center gap-2 rounded-xl border border-destructive/20 bg-destructive text-destructive-foreground shadow-sm transition-all hover:bg-destructive/90 active:scale-[0.98]">
-                    <LogOut className="h-4 w-4" />
+                  <Button type="submit" variant="destructive" className="min-h-12 w-full justify-center gap-2 rounded-xl border border-red-700 bg-red-600 text-white shadow-sm transition-all hover:bg-red-700 hover:text-white active:scale-[0.98] [&_svg]:text-white">
+                    <LogOut className="h-4 w-4 text-white" />
                     Sign Out
                   </Button>
                 </LogoutForm>
