@@ -4,40 +4,75 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { BrainCircuit, Clock, HelpCircle, Play } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getCurriculumSemesterSubjects } from "@/lib/curriculumSubjects";
 
 export default async function QuizzesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let subjectIds: string[] = [];
+  if (!user) redirect("/login");
 
-  if (user) {
-    const { data: enrolledData } = await supabase
-      .from("student_subjects")
-      .select("subject_id")
-      .eq("student_id", user.id)
-      .eq("enrollment_status", "ENROLLED");
-    
-    if (enrolledData && enrolledData.length > 0) {
-      subjectIds = enrolledData.map(e => e.subject_id);
+  let subjectIds: string[] = [];
+  let subjectFilterError = "";
+  let emptyMessage = "No quizzes are available for subjects in your current curriculum and semester.";
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role, curriculum_id, semester_id, semester:semesters(name)")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError) {
+    console.error("Could not load student quiz profile:", profileError);
+    subjectFilterError = "Your curriculum and semester could not be loaded.";
+  } else if (profile?.role !== "student") {
+    emptyMessage = "Quizzes are available to student accounts.";
+  } else if (!profile.curriculum_id || !profile.semester_id) {
+    emptyMessage = "Set your current curriculum and semester in your academic profile to see relevant quizzes.";
+  } else {
+    const semester = Array.isArray(profile.semester) ? profile.semester[0] : profile.semester;
+    const curriculumSubjects = await getCurriculumSemesterSubjects(
+      supabase,
+      profile.curriculum_id,
+      profile.semester_id,
+      semester?.name,
+    );
+    const curriculumSubjectIds: string[] = curriculumSubjects.flatMap(
+      ({ subject }: { subject: { id: string } | null }) =>
+      subject?.id ? [subject.id] : [],
+    );
+
+    if (curriculumSubjectIds.length > 0) {
+      const { data: enrolledData, error: enrollmentError } = await supabase
+        .from("student_subjects")
+        .select("subject_id")
+        .eq("student_id", user.id)
+        .eq("enrollment_status", "ENROLLED");
+
+      if (enrollmentError) {
+        console.error("Could not load student quiz enrollments:", enrollmentError);
+        subjectFilterError = "Your current subjects could not be loaded.";
+      } else if (enrolledData?.length) {
+        const enrolledIds = new Set(enrolledData.map(enrollment => enrollment.subject_id));
+        subjectIds = curriculumSubjectIds.filter(subjectId => enrolledIds.has(subjectId));
+      } else {
+        subjectIds = curriculumSubjectIds;
+      }
     }
   }
 
-  // Fetch published quizzes
-  let query = supabase
-    .from("quizzes")
-    .select(`
-      *,
-      subject:subjects(name, code)
-    `)
-    .eq("status", 'published')
-    .order("created_at", { ascending: false });
-
-  if (subjectIds.length > 0) {
-    query = query.in("subject_id", subjectIds);
-  }
-
-  const { data: quizzes, error: quizError } = await query;
+  const { data: quizzes, error: quizError } = subjectIds.length > 0
+    ? await supabase
+        .from("quizzes")
+        .select(`
+          *,
+          subject:subjects(name, code)
+        `)
+        .eq("status", "published")
+        .in("subject_id", subjectIds)
+        .order("created_at", { ascending: false })
+    : { data: [], error: null };
   if (quizError) console.error("Could not load published quizzes:", quizError);
 
   const quizIds = quizzes?.map(quiz => quiz.id) || [];
@@ -64,9 +99,9 @@ export default async function QuizzesPage() {
           </p>
         </div>
 
-        {(quizError || countError) && (
+        {(subjectFilterError || quizError || countError) && (
           <div role="alert" className="mb-5 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700">
-            {quizError ? "Quizzes could not be loaded." : "Question counts could not be loaded."} Please refresh the page.
+            {subjectFilterError || (quizError ? "Quizzes could not be loaded." : "Question counts could not be loaded.")} Please refresh the page.
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -79,7 +114,7 @@ export default async function QuizzesPage() {
                   <CardHeader className="pb-4">
                     <div className="flex justify-between items-start mb-2">
                       <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
-                        {subject?.code || "Subject"}
+                        {subject?.name || "Subject"}
                       </Badge>
                       <Badge variant="secondary" className="capitalize">
                         {quiz.difficulty}
@@ -114,8 +149,8 @@ export default async function QuizzesPage() {
           ) : (
             <div className="col-span-full py-20 text-center border border-dashed rounded-xl bg-muted/10">
               <BrainCircuit className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="text-xl font-bold mb-2">No quizzes available yet</h3>
-              <p className="text-muted-foreground">Check back later when faculty members have published quizzes.</p>
+              <h3 className="text-xl font-bold mb-2">No quizzes available</h3>
+              <p className="text-muted-foreground">{emptyMessage}</p>
             </div>
           )}
         </div>

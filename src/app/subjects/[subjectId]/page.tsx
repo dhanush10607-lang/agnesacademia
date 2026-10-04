@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronRight, FileText, ChevronLeft, Download, Eye, FolderOpen } from "lucide-react";
+import { ChevronRight, FileText, ChevronLeft, Download, Eye, FolderOpen, BrainCircuit, Clock, HelpCircle, Play } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +81,29 @@ export default async function SubjectDetailPage({
     .eq("status", "published")
     .maybeSingle();
 
+  const { data: quizzes, error: quizzesError } = await supabase
+    .from("quizzes")
+    .select("id, title, difficulty, duration_minutes, unit_name")
+    .eq("subject_id", subjectId)
+    .eq("status", "published")
+    .order("created_at", { ascending: false });
+
+  if (quizzesError) console.error("Could not load published subject quizzes:", quizzesError);
+
+  const quizIds = quizzes?.map(quiz => quiz.id) || [];
+  const { data: questionCounts, error: questionCountsError } = quizIds.length
+    ? await supabase
+        .from("quiz_public_question_counts")
+        .select("quiz_id, question_count")
+        .in("quiz_id", quizIds)
+    : { data: [], error: null };
+
+  if (questionCountsError) console.error("Could not load subject quiz question counts:", questionCountsError);
+
+  const questionCountByQuizId = new Map(
+    (questionCounts || []).map(row => [row.quiz_id, row.question_count] as const),
+  );
+
   const sem = subject.semester;
   const prog = sem.academic_year.programme;
 
@@ -133,6 +156,7 @@ export default async function SubjectDetailPage({
           <TabsTrigger value="question_bank" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-2 py-3">Question Bank</TabsTrigger>
           <TabsTrigger value="syllabus" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-2 py-3">Syllabus</TabsTrigger>
           <TabsTrigger value="assignments" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-2 py-3">Assignments</TabsTrigger>
+          <TabsTrigger value="quizzes" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-2 py-3">Quizzes</TabsTrigger>
           <TabsTrigger value="videos" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-2 py-3">Videos</TabsTrigger>
         </TabsList>
 
@@ -343,6 +367,47 @@ export default async function SubjectDetailPage({
           )}
         </TabsContent>
         
+        <TabsContent value="quizzes" className="pt-6">
+          {(quizzesError || questionCountsError) && (
+            <div role="alert" className="mb-5 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700">
+              {quizzesError ? "Quizzes could not be loaded." : "Quiz question counts could not be loaded."} Please refresh the page.
+            </div>
+          )}
+          {quizzes && quizzes.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {quizzes.map(quiz => (
+                <Card key={quiz.id} className="border-border shadow-sm">
+                  <CardContent className="flex h-full flex-col p-5">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                        {subject.name}
+                      </Badge>
+                      <Badge variant="secondary" className="capitalize">{quiz.difficulty}</Badge>
+                    </div>
+                    <h3 className="mb-2 text-lg font-semibold">{quiz.title}</h3>
+                    {quiz.unit_name && <p className="mb-4 text-sm text-muted-foreground">{quiz.unit_name}</p>}
+                    <div className="mb-5 flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center"><HelpCircle className="mr-1 h-4 w-4" />{questionCountByQuizId.get(quiz.id) || 0} Qs</span>
+                      <span className="flex items-center"><Clock className="mr-1 h-4 w-4" />{quiz.duration_minutes ? `${quiz.duration_minutes}m` : "No limit"}</span>
+                    </div>
+                    <Link href={`/quizzes/${quiz.id}`} className={buttonVariants({ className: "mt-auto w-full" })}>
+                      <Play className="mr-2 h-4 w-4" /> Start Quiz
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : !quizzesError ? (
+            <Card className="border-dashed bg-muted/20">
+              <CardContent className="flex flex-col items-center justify-center py-24 text-center">
+                <BrainCircuit className="mb-6 h-16 w-16 text-muted-foreground opacity-40" />
+                <h3 className="mb-2 text-xl font-semibold">No quizzes available</h3>
+                <p className="max-w-md text-muted-foreground">No quizzes have been published for this subject yet. Please check back later.</p>
+              </CardContent>
+            </Card>
+          ) : null}
+        </TabsContent>
+
         {/* Coming soon states for other tabs */}
         {['assignments', 'videos'].map((tab) => (
           <TabsContent key={tab} value={tab} className="pt-6">
