@@ -107,3 +107,66 @@ export function TextSkeleton({ lines = 3 }: { lines?: number }) {
     </div>
   );
 }
+
+export function ProfileSettingsSkeleton() {
+  return (
+    <div className="container mx-auto max-w-4xl space-y-6 px-4 py-8 pb-24 md:pb-8" role="status">
+      <span className="sr-only">Loading profile settings</span>
+      <Sk className="h-4 w-32" />
+      <div className="space-y-3">
+        <Sk className="h-9 w-64 max-w-full" />
+        <Sk className="h-4 w-80 max-w-full" />
+      </div>
+      <div className="space-y-5 rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
+        <div className="space-y-2 border-b border-border pb-4">
+          <Sk className="h-6 w-48" />
+          <Sk className="h-4 w-72 max-w-full" />
+        </div>
+        {Array.from({ length: 3 }, (_, index) => (
+          <div key={index} className="space-y-2">
+            <Sk className="h-4 w-36" />
+            <Sk className="h-11 w-full rounded-md" />
+          </div>
+        ))}
+        <Sk className="h-10 w-32" />
+      </div>
+      <div className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
+        <Sk className="h-6 w-40" />
+        <Sk className="h-4 w-64 max-w-full" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Sk className="h-20 w-full rounded-xl" />
+          <Sk className="h-20 w-full rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function AdminSettingsSkeleton() {
+  return (
+    <div className="space-y-8" role="status">
+      <span className="sr-only">Loading platform settings</span>
+      <div className="space-y-3">
+        <Sk className="h-9 w-72 max-w-full" />
+        <Sk className="h-4 w-96 max-w-full" />
+      </div>
+      <div className="grid gap-8 lg:grid-cols-2">
+        {Array.from({ length: 2 }, (_, index) => (
+          <div key={index} className="space-y-5 rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
+            <div className="space-y-2 border-b border-border pb-4">
+              <Sk className="h-6 w-48" />
+              <Sk className="h-4 w-full" />
+            </div>
+            {Array.from({ length: index === 0 ? 3 : 2 }, (_, fieldIndex) => (
+              <div key={fieldIndex} className="space-y-2">
+                <Sk className="h-4 w-40" />
+                <Sk className="h-10 w-full rounded-md" />
+              </div>
+            ))}
+            <Sk className="h-9 w-full rounded-md" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
