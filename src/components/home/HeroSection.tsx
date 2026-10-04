@@ -61,7 +61,7 @@ export function HeroSection() {
             </Badge>
           </motion.div>
           
-          <motion.div variants={itemVariants} className="space-y-3 sm:space-y-4">
+          <motion.div variants={itemVariants} className="w-full space-y-3 sm:space-y-4">
             <h1 className="text-3xl font-heading font-extrabold leading-[1.08] tracking-tight text-foreground min-[400px]:text-4xl md:text-5xl lg:text-7xl">
               One College.<br className="hidden sm:block" /> Every Course. <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">Every Resource.</span>
             </h1>
@@ -70,7 +70,7 @@ export function HeroSection() {
             </p>
             <Link
               href="/departments"
-              className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+              className="mx-auto flex min-h-11 w-full max-w-sm items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 sm:w-fit"
             >
               <Building2 className="h-4 w-4" />
               Explore Departments
