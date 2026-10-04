@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Menu, X, Search, Library, BookOpen, FileText, Brain, Bell, HelpCircle, LayoutDashboard, Upload, GraduationCap, CalendarDays, Shield, Settings, Users, Home } from "lucide-react";
+import { Menu, X, Search, Library, BookOpen, FileText, Brain, Bell, HelpCircle, LayoutDashboard, Upload, GraduationCap, CalendarDays, Shield, Settings, Users, Home, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LogoutForm } from "@/components/auth/LogoutForm";
 
@@ -232,12 +232,13 @@ export function MobileNavMenu({ role }: Props) {
             </nav>
 
             {role !== "guest" && (
-              <div className="shrink-0 space-y-2 border-t p-4 pb-safe">
-                <Link href="/profile" className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border rounded-xl text-sm font-semibold hover:bg-muted transition-colors" onClick={() => setOpen(false)}>
+              <div className="shrink-0 space-y-3 border-t bg-muted/20 p-4 pb-safe">
+                <Link href="/profile" className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-muted" onClick={() => setOpen(false)}>
                   <Settings className="w-4 h-4" /> Profile & Settings
                 </Link>
-                <LogoutForm onSubmit={() => setOpen(false)}>
-                  <Button type="submit" variant="destructive" className="w-full bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:text-white dark:hover:bg-red-600">
+                <LogoutForm className="w-full">
+                  <Button type="submit" variant="destructive" className="min-h-12 w-full justify-center gap-2 rounded-xl border border-destructive/20 bg-destructive text-destructive-foreground shadow-sm transition-all hover:bg-destructive/90 active:scale-[0.98]">
+                    <LogOut className="h-4 w-4" />
                     Sign Out
                   </Button>
                 </LogoutForm>

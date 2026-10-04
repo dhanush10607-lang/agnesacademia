@@ -190,6 +190,11 @@ html[data-reduced-motion="true"] *::after {
   100% { background-position: 200% 0; }
 }
 
+@keyframes logout-progress {
+  0% { transform: translateX(-130%); }
+  100% { transform: translateX(260%); }
+}
+
 .skeleton {
   background: linear-gradient(
     90deg,
