@@ -53,6 +53,8 @@ export function QuizInterface({
   const submittingRef = useRef(false);
   const autoSubmissionTriggeredRef = useRef(false);
   const focusEventTriggeredRef = useRef(false);
+  const pendingFocusEventRef = useRef(false);
+  const retryFocusEventRef = useRef<() => void>(() => {});
   const handleFinalSubmit = useCallback(async () => {
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -82,6 +84,7 @@ export function QuizInterface({
     const handleOnline = () => {
       setIsBrowserOnline(true);
       setConnectionLost(false);
+      if (pendingFocusEventRef.current) retryFocusEventRef.current();
     };
 
     window.addEventListener("offline", handleOffline);
@@ -93,6 +96,18 @@ export function QuizInterface({
       window.removeEventListener("online", handleOnline);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isBrowserOnline || !pendingFocusEventRef.current) return;
+
+    const retryTimer = window.setInterval(() => {
+      if (navigator.onLine && pendingFocusEventRef.current) {
+        retryFocusEventRef.current();
+      }
+    }, 5000);
+
+    return () => window.clearInterval(retryTimer);
+  }, [isBrowserOnline]);
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -113,8 +128,9 @@ export function QuizInterface({
   }, [expiresAt, handleFinalSubmit]);
 
   useEffect(() => {
-    const handleFocusLoss = () => {
+    const recordFocusEvent = () => {
       if (focusEventTriggeredRef.current) return;
+      pendingFocusEventRef.current = false;
       focusEventTriggeredRef.current = true;
       void recordQuizFocusEventAction(attemptId, answersRef.current).then(result => {
         if (result.success && typeof result.tabSwitchCount === "number") {
@@ -127,13 +143,22 @@ export function QuizInterface({
           }
         } else if (result.error) {
           focusEventTriggeredRef.current = false;
+          pendingFocusEventRef.current = true;
           setFocusMessage(result.error);
         }
       }).catch(error => {
         console.error("Could not record quiz tab-switch event:", error);
         focusEventTriggeredRef.current = false;
+        pendingFocusEventRef.current = true;
         setFocusMessage("A tab switch could not be recorded.");
       });
+    };
+    retryFocusEventRef.current = () => {
+      if (pendingFocusEventRef.current) recordFocusEvent();
+    };
+    const handleFocusLoss = () => {
+      pendingFocusEventRef.current = true;
+      recordFocusEvent();
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") handleFocusLoss();
@@ -150,6 +175,7 @@ export function QuizInterface({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleFocusLoss);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      retryFocusEventRef.current = () => {};
     };
   }, [attemptId, fullscreenSession, handleFinalSubmit, quiz.id, router]);
 
