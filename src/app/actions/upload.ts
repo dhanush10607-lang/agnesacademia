@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { updateTag } from "next/cache";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 import { normalizeSemesterName } from "@/lib/curriculumSubjects";
 
 export type UploadCurriculumSubject = {
@@ -149,6 +151,7 @@ export async function createResourceRecords(records: UploadResourceRecord[]) {
       details: `Batch uploaded ${records.length} resources.`
     });
 
+    updateTag(PUBLIC_CACHE_TAGS.resources);
     return { success: true };
   } catch (error) {
     console.error("Upload error:", error);

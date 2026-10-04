@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -48,6 +49,7 @@ export async function createDepartmentAction(formData: FormData) {
       metadata: { name }
     });
 
+    updateTag(PUBLIC_CACHE_TAGS.departments);
     revalidatePath("/admin/academic/departments");
     return { success: true };
   } catch (error) {
@@ -82,6 +84,7 @@ export async function archiveDepartmentAction(id: string) {
       target_id: id
     });
 
+    updateTag(PUBLIC_CACHE_TAGS.departments);
     revalidatePath("/admin/academic/departments");
     return { success: true };
   } catch (error) {
@@ -106,6 +109,7 @@ export async function createProgrammeAction(formData: FormData) {
     const { data: p, error } = await supabase.from("programmes").insert({ name, code, department_id }).select().single();
     if (error) throw error;
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'create', target_type: 'programme', target_id: p.id, metadata: { name, code } });
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/programmes");
     return { success: true };
   } catch (error) { return { success: false, error: "Failed" }; }
@@ -119,6 +123,7 @@ export async function archiveProgrammeAction(id: string) {
   try {
     await supabase.from("programmes").update({ status: 'archived' }).eq("id", id);
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'archive', target_type: 'programme', target_id: id });
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/programmes");
     return { success: true };
   } catch (error) { return { success: false, error: "Failed" }; }
@@ -179,6 +184,7 @@ export async function createYearAction(formData: FormData) {
         target_id: existingYear.id,
         metadata: { name },
       });
+      updateTag(PUBLIC_CACHE_TAGS.programmes);
       revalidatePath("/admin/academic/years");
       revalidatePath("/admin/academic/semesters");
       return { success: true };
@@ -191,6 +197,7 @@ export async function createYearAction(formData: FormData) {
       .single();
     if (error) throw error;
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'create', target_type: 'academic_year', target_id: y.id, metadata: { name } });
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/years");
     revalidatePath("/admin/academic/semesters");
     return { success: true };
@@ -208,6 +215,7 @@ export async function archiveYearAction(id: string) {
   try {
     await supabase.from("academic_years").update({ status: 'archived' }).eq("id", id);
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'archive', target_type: 'academic_year', target_id: id });
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/years");
     return { success: true };
   } catch (error) { return { success: false, error: "Failed" }; }
@@ -266,6 +274,7 @@ export async function createAcademicSessionAction(formData: FormData) {
       target_id: session.id,
       metadata: { name: nameValue },
     });
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/years");
     return { success: true };
   } catch (error) {
@@ -295,6 +304,7 @@ export async function archiveAcademicSessionAction(id: string) {
       target_type: "academic_session",
       target_id: id,
     });
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/years");
     return { success: true };
   } catch (error) {
@@ -377,6 +387,7 @@ export async function createSemesterAction(formData: FormData) {
     }).select().single();
     if (error) throw error;
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'create', target_type: 'semester', target_id: s.id, metadata: { name } });
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/semesters");
     return { success: true };
   } catch (error) { return { success: false, error: "Failed" }; }
@@ -397,6 +408,7 @@ export async function updateSemesterSessionAction(semesterId: string, sessionId:
     });
     if (error) throw error;
 
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/semesters");
     revalidatePath("/profile");
     revalidatePath("/profile/academic");
@@ -419,6 +431,7 @@ export async function archiveSemesterAction(id: string) {
   try {
     await supabase.from("semesters").update({ status: 'archived' }).eq("id", id);
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'archive', target_type: 'semester', target_id: id });
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/semesters");
     return { success: true };
   } catch (error) { return { success: false, error: "Failed" }; }
@@ -489,6 +502,7 @@ export async function createSubjectAction(formData: FormData) {
     if (subjectDepartmentError) throw subjectDepartmentError;
 
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'create', target_type: 'subject', target_id: s.id, metadata: { name, code } });
+    updateTag(PUBLIC_CACHE_TAGS.subjects);
     revalidatePath("/admin/academic/subjects");
     return { success: true };
   } catch (error) { return { success: false, error: "Failed" }; }
@@ -502,6 +516,7 @@ export async function archiveSubjectAction(id: string) {
   try {
     await supabase.from("subjects").update({ status: 'archived' }).eq("id", id);
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'archive', target_type: 'subject', target_id: id });
+    updateTag(PUBLIC_CACHE_TAGS.subjects);
     revalidatePath("/admin/academic/subjects");
     return { success: true };
   } catch (error) { return { success: false, error: "Failed" }; }

@@ -1,37 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { ChevronRight, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { getPublicDepartmentIndex } from "@/lib/public-data";
 
 export default async function DepartmentsPage() {
-  const supabase = await createClient();
-  const [
-    { data: departments, error },
-    { data: unassignedProgrammes, error: programmesError },
-  ] = await Promise.all([
-    supabase
-      .from("departments")
-      .select("*")
-      .eq("status", "active")
-      .order("name"),
-    supabase
-      .from("programmes")
-      .select("id, name, description")
-      .is("department_id", null)
-      .eq("status", "active")
-      .order("name"),
-  ]);
-
-  if (error) {
-    return (
-      <div className="container px-4 py-24 mx-auto text-center">
-        <h2 className="text-2xl font-bold text-destructive">Error Loading Departments</h2>
-        <p className="text-muted-foreground mt-2">{error.message}</p>
-        <p className="mt-4 text-sm text-muted-foreground">Make sure you have connected Supabase and run the migrations.</p>
-      </div>
-    );
-  }
+  const { departments, unassignedProgrammes } = await getPublicDepartmentIndex();
 
   return (
     <div className="container px-4 py-12 mx-auto max-w-5xl">
@@ -63,7 +37,7 @@ export default async function DepartmentsPage() {
         </div>
       )}
 
-      {!departments?.length && !unassignedProgrammes?.length && !programmesError && (
+      {!departments?.length && !unassignedProgrammes?.length && (
         <Card className="border-dashed bg-muted/20">
           <CardContent className="flex flex-col items-center justify-center py-20 text-center">
             <GraduationCap className="mb-4 h-12 w-12 text-muted-foreground opacity-50" />
@@ -73,9 +47,7 @@ export default async function DepartmentsPage() {
         </Card>
       )}
 
-      {programmesError ? (
-        <p className="mt-8 text-destructive">Error loading programmes.</p>
-      ) : unassignedProgrammes && unassignedProgrammes.length > 0 ? (
+      {unassignedProgrammes && unassignedProgrammes.length > 0 ? (
         <section className="mt-12">
           <h2 className="mb-6 border-b pb-2 text-2xl font-heading font-bold">Other Programmes</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { ChevronRight, GraduationCap, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getPublicDepartmentPageData } from "@/lib/public-data";
 
 export default async function DepartmentDetailPage({
   params,
@@ -10,25 +10,12 @@ export default async function DepartmentDetailPage({
   params: Promise<{ departmentId: string }>;
 }) {
   const { departmentId } = await params;
-  const supabase = await createClient();
+  const { department, departmentError, programmes, programmeError } =
+    await getPublicDepartmentPageData(departmentId);
 
-  // Fetch department
-  const { data: department, error: deptError } = await supabase
-    .from("departments")
-    .select("*")
-    .eq("id", departmentId)
-    .single();
-
-  if (deptError || !department) {
+  if (departmentError || !department) {
     notFound();
   }
-
-  // Fetch programmes
-  const { data: programmes, error: progError } = await supabase
-    .from("programmes")
-    .select("*")
-    .eq("department_id", departmentId)
-    .order("name");
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-5xl">
@@ -51,7 +38,7 @@ export default async function DepartmentDetailPage({
 
       <h2 className="text-2xl font-heading font-bold mb-6 border-b pb-2">Programmes Offered</h2>
 
-      {progError ? (
+      {programmeError ? (
         <p className="text-destructive">Error loading programmes.</p>
       ) : !programmes || programmes.length === 0 ? (
         <Card className="border-dashed bg-muted/20">

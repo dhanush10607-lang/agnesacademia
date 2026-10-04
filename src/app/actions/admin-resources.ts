@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 export async function updateResourceStatusAction(resourceId: string, newStatus: string) {
   const supabase = await createClient();
@@ -31,6 +32,7 @@ export async function updateResourceStatusAction(resourceId: string, newStatus: 
       metadata: { new_status: newStatus }
     });
 
+    updateTag(PUBLIC_CACHE_TAGS.resources);
     revalidatePath("/admin/resources");
     return { success: true };
   } catch (error) {

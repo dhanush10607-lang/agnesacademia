@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 import { NewCurriculumForm } from "./NewCurriculumForm";
 
 export default async function NewCurriculumPage() {
@@ -81,6 +82,7 @@ export default async function NewCurriculumPage() {
       throw new Error("Unable to create the curriculum.");
     }
     
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/curricula");
     redirect("/admin/academic/curricula");
   }

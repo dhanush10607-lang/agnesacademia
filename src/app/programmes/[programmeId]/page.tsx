@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ChevronRight, Calendar, ChevronLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getPublicProgrammePageData } from "@/lib/public-data";
 
 export default async function ProgrammeDetailPage({
   params,
@@ -10,32 +10,18 @@ export default async function ProgrammeDetailPage({
   params: Promise<{ programmeId: string }>;
 }) {
   const { programmeId } = await params;
-  const supabase = await createClient();
-
-  // Fetch programme with department
-  const { data: programme, error: progError } = await supabase
-    .from("programmes")
-    .select("*, department:departments(*)")
-    .eq("id", programmeId)
-    .single();
+  const {
+    programme,
+    programmeError: progError,
+    curricula,
+    curriculaError,
+    academicYears,
+    academicYearsError: yearsError,
+  } = await getPublicProgrammePageData(programmeId);
 
   if (progError || !programme) {
     notFound();
   }
-
-  const { data: curricula, error: curriculaError } = await supabase
-    .from("curricula")
-    .select("id, name, description, academic_year")
-    .eq("programme_id", programmeId)
-    .eq("is_active", true)
-    .order("name");
-
-  // Fetch academic years and nested semesters
-  const { data: academicYears, error: yearsError } = await supabase
-    .from("academic_years")
-    .select("*, semesters(*)")
-    .eq("programme_id", programmeId)
-    .order("name");
 
   return (
     <div className="container px-4 py-8 mx-auto max-w-5xl">

@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { updateTag } from "next/cache";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 export async function uploadFacultyResourceAction(formData: FormData) {
   const supabase = await createClient();
@@ -83,6 +85,9 @@ export async function uploadFacultyResourceAction(formData: FormData) {
       details: `Faculty resource uploaded: ${title}. Status: ${status}`
     });
 
+    if (status === "published") {
+      updateTag(PUBLIC_CACHE_TAGS.resources);
+    }
     return { success: true, status };
   } catch (error) {
     console.error("Upload error:", error);

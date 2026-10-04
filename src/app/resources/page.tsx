@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { format } from "@/lib/date-time";
 import { ResourceFilterSidebar } from "./ResourceFilterSidebar";
 import { getPublicResourceFileUrl } from "@/lib/storage-file-url";
+import { getPublicResourceFilterData, getPublicResourcesPage } from "@/lib/public-data";
 
 export default async function ResourcesSearchPage({
   searchParams,
@@ -21,16 +22,15 @@ export default async function ResourcesSearchPage({
   const subjectFilter = typeof resolvedParams.subject === 'string' ? resolvedParams.subject : '';
   const limit = 20;
 
-  const supabase = await createClient();
   let results: any[] = [];
   let totalCount = 0;
 
   // Fetch filter options
-  const [{ data: categories }, { data: subjectRows }, { data: curriculumSubjectRows }] = await Promise.all([
-    supabase.from("resource_categories").select("id, name").order("name"),
-    supabase.from("subjects").select("id, name").eq("is_active", true).order("name"),
-    supabase.from("curriculum_subjects").select("subject_id, curriculum:curricula(code)")
-  ]);
+  const {
+    categories,
+    subjects: subjectRows,
+    curriculumSubjects: curriculumSubjectRows,
+  } = await getPublicResourceFilterData();
   const curriculumCodesBySubject = new Map<string, Set<string>>();
   (curriculumSubjectRows || []).forEach(({ subject_id, curriculum }) => {
     const linkedCurricula = Array.isArray(curriculum) ? curriculum : curriculum ? [curriculum] : [];
@@ -47,6 +47,7 @@ export default async function ResourcesSearchPage({
   }));
 
   if (query || categoryFilter || subjectFilter) {
+    const supabase = await createClient();
     const formattedQuery = query ? query.split(' ').join(' | ') : '';
 
     // 1. Search Notes (Resources)
@@ -178,14 +179,7 @@ export default async function ResourcesSearchPage({
     results = results.slice((page - 1) * limit, page * limit);
   } else {
     // Default empty search state
-    let baseQuery = supabase
-      .from("resources")
-      .select("id, title, description, created_at, file_path, category:resource_categories(name), subject:subjects(name)", { count: 'exact' })
-      .eq("status", "published")
-      .order("created_at", { ascending: false })
-      .range((page - 1) * limit, page * limit - 1);
-      
-    const { data, count } = await baseQuery;
+    const { data, count } = await getPublicResourcesPage(page, limit);
       
     if (data) {
       results = data.map(r => ({

@@ -1,23 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ScrollReveal, AnimateList, AnimateItem } from "@/lib/motion";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { format } from "@/lib/date-time";
 import { Badge } from "@/components/ui/badge";
+import { getPublicRecentlyAddedResources } from "@/lib/public-data";
 
 export async function RecentlyAddedSection() {
-  const supabase = await createClient();
-
-  const { data: resources } = await supabase
-    .from("academic_resources")
-    .select(`
-      id, title, created_at,
-      subject:subjects(name),
-      category:resource_categories(name, slug)
-    `)
-    .eq("status", "approved")
-    .order("created_at", { ascending: false })
-    .limit(6);
+  const resources = await getPublicRecentlyAddedResources();
 
   if (!resources || resources.length === 0) return null;
 

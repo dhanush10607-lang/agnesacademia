@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { EditCurriculumForm } from "./EditCurriculumForm";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 export default async function EditCurriculumPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -102,6 +103,7 @@ export default async function EditCurriculumPage({ params }: { params: Promise<{
       throw new Error("Unable to update the curriculum.");
     }
     
+    updateTag(PUBLIC_CACHE_TAGS.programmes);
     revalidatePath("/admin/academic/curricula");
     revalidatePath(`/admin/academic/curricula/${id}/edit`);
     redirect("/admin/academic/curricula");

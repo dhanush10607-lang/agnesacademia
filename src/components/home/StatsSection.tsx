@@ -1,21 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
 import { Building2, GraduationCap, BookOpen, Layers } from "lucide-react";
+import { getPublicHomeStats } from "@/lib/public-data";
 
 export async function StatsSection() {
-  const supabase = await createClient();
-
-  // Fetch exact counts with minimal payload
-  const [
-    { count: deptCount },
-    { count: progCount },
-    { count: subjCount },
-    { count: resCount }
-  ] = await Promise.all([
-    supabase.from('departments').select('*', { count: 'exact', head: true }),
-    supabase.from('programmes').select('*', { count: 'exact', head: true }),
-    supabase.from('subjects').select('*', { count: 'exact', head: true }),
-    supabase.from('academic_resources').select('*', { count: 'exact', head: true }).eq('status', 'approved')
-  ]);
+  const {
+    departmentCount: deptCount,
+    programmeCount: progCount,
+    subjectCount: subjCount,
+    resourceCount: resCount,
+  } = await getPublicHomeStats();
 
   const stats = [
     { label: "Departments", value: deptCount || 0, icon: Building2, color: "text-blue-500", bg: "bg-blue-500/10" },

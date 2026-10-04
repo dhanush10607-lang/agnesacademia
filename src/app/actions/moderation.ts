@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 export async function moderateResourceAction(
   resourceId: string, 
@@ -53,6 +54,7 @@ export async function moderateResourceAction(
       details: reason ? `Reason: ${reason}` : undefined
     });
 
+    updateTag(PUBLIC_CACHE_TAGS.resources);
     revalidatePath("/moderation");
     
     return { success: true };

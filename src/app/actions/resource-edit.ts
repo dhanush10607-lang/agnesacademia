@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 export async function editResourceAction(formData: FormData) {
   const supabase = await createClient();
@@ -37,6 +38,7 @@ export async function editResourceAction(formData: FormData) {
       return { success: false, error: "Failed to update resource. You might not have permission." };
     }
 
+    updateTag(PUBLIC_CACHE_TAGS.resources);
     revalidatePath(`/resources/${resourceId}`);
     revalidatePath("/faculty/resources");
     revalidatePath("/faculty");
