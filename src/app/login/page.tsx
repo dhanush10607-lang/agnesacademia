@@ -24,7 +24,7 @@ export default function LoginPage() {
           <span className="font-heading font-extrabold text-xl tracking-tight">AGNES ACADEMIA</span>
         </Link>
 
-        <div className="relative z-20 mt-auto flex flex-col gap-4 xl:gap-6">
+        <div className="relative z-20 mt-10 flex flex-col gap-4 2xl:mt-16 xl:gap-6">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -38,7 +38,7 @@ export default function LoginPage() {
             <h1 className="text-4xl font-heading font-bold leading-[1.1] tracking-tight xl:text-5xl">
               Your gateway to academic excellence.
             </h1>
-            <p className="text-lg text-muted-foreground max-w-md leading-relaxed">
+            <p className="max-w-md text-base leading-relaxed text-muted-foreground xl:text-lg">
               Access your personalized dashboard, course materials, question papers, and stay updated with the latest college announcements.
             </p>
           </motion.div>
