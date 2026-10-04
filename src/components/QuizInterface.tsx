@@ -53,7 +53,6 @@ export function QuizInterface({
   const submittingRef = useRef(false);
   const autoSubmissionTriggeredRef = useRef(false);
   const focusEventTriggeredRef = useRef(false);
-  const offlineSubmissionPendingRef = useRef(false);
   const handleFinalSubmit = useCallback(async () => {
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -63,7 +62,6 @@ export function QuizInterface({
     try {
       const result = await submitQuizAction(attemptId, answersRef.current);
       if (result.success && result.attemptId) {
-        offlineSubmissionPendingRef.current = false;
         router.push(`/quizzes/${quiz.id}/result?attempt=${result.attemptId}`);
         return;
       }
@@ -78,13 +76,12 @@ export function QuizInterface({
 
   useEffect(() => {
     const handleOffline = () => {
-      offlineSubmissionPendingRef.current = true;
       setIsBrowserOnline(false);
       setConnectionLost(true);
     };
     const handleOnline = () => {
       setIsBrowserOnline(true);
-      if (offlineSubmissionPendingRef.current) void handleFinalSubmit();
+      setConnectionLost(false);
     };
 
     window.addEventListener("offline", handleOffline);
@@ -95,19 +92,7 @@ export function QuizInterface({
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
     };
-  }, [handleFinalSubmit]);
-
-  useEffect(() => {
-    if (!connectionLost || !isBrowserOnline || !offlineSubmissionPendingRef.current) return;
-
-    const retryTimer = window.setInterval(() => {
-      if (navigator.onLine && offlineSubmissionPendingRef.current) {
-        void handleFinalSubmit();
-      }
-    }, 5000);
-
-    return () => window.clearInterval(retryTimer);
-  }, [connectionLost, handleFinalSubmit, isBrowserOnline]);
+  }, []);
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -371,18 +356,17 @@ export function QuizInterface({
             <CardContent className="space-y-4 p-6 text-center">
               <h2 id="connection-lost-title" className="text-xl font-bold">Quiz connection lost</h2>
               <p className="text-sm text-muted-foreground">
-                The quiz is locked. Your saved answers will be submitted when the connection returns.
+                The quiz is temporarily locked while you are offline. It will unlock when your connection returns, and you can continue answering.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                The quiz timer continues while you are offline.
               </p>
               {saveMessage && (
                 <p role="status" className="text-sm text-red-600">{saveMessage}</p>
               )}
-              <Button
-                className="w-full"
-                onClick={() => void handleFinalSubmit()}
-                disabled={!isBrowserOnline || isSubmitting}
-              >
-                {isSubmitting ? "Submitting…" : isBrowserOnline ? "Retry submission" : "Waiting for connection…"}
-              </Button>
+              <p className="text-sm font-medium">
+                {isBrowserOnline ? "Connection restored. Unlocking quiz…" : "Waiting for connection…"}
+              </p>
             </CardContent>
           </Card>
         </div>
