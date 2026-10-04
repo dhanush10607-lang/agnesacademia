@@ -26,10 +26,25 @@ export default async function ResourcesSearchPage({
   let totalCount = 0;
 
   // Fetch filter options
-  const [{ data: categories }, { data: subjects }] = await Promise.all([
+  const [{ data: categories }, { data: subjectRows }, { data: curriculumSubjectRows }] = await Promise.all([
     supabase.from("resource_categories").select("id, name").order("name"),
-    supabase.from("subjects").select("id, name").eq("is_active", true).order("name")
+    supabase.from("subjects").select("id, name").eq("is_active", true).order("name"),
+    supabase.from("curriculum_subjects").select("subject_id, curriculum:curricula(code)")
   ]);
+  const curriculumCodesBySubject = new Map<string, Set<string>>();
+  (curriculumSubjectRows || []).forEach(({ subject_id, curriculum }) => {
+    const linkedCurricula = Array.isArray(curriculum) ? curriculum : curriculum ? [curriculum] : [];
+    linkedCurricula.forEach(({ code }) => {
+      if (!code) return;
+      const codes = curriculumCodesBySubject.get(subject_id) || new Set<string>();
+      codes.add(code);
+      curriculumCodesBySubject.set(subject_id, codes);
+    });
+  });
+  const subjects = (subjectRows || []).map(subject => ({
+    ...subject,
+    curriculumCodes: [...(curriculumCodesBySubject.get(subject.id) || [])].sort(),
+  }));
 
   if (query || categoryFilter || subjectFilter) {
     const formattedQuery = query ? query.split(' ').join(' | ') : '';

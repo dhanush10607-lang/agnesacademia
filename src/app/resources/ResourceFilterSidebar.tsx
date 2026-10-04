@@ -11,16 +11,23 @@ export function ResourceFilterSidebar({
   subjects
 }: {
   categories: { id: string; name: string }[];
-  subjects: { id: string; name: string }[];
+  subjects: { id: string; name: string; curriculumCodes?: string[] }[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const formatSubjectLabel = (subject: { name: string; curriculumCodes?: string[] }) => {
+    const curriculumCodes = subject.curriculumCodes || [];
+    return curriculumCodes.length > 0
+      ? `${subject.name} (${curriculumCodes.join(", ")})`
+      : subject.name;
+  };
   const currentCategory = searchParams.get("category") || "";
   const currentSubject = searchParams.get("subject") || "";
   const selectedCategoryName = categories.find(category => category.id === currentCategory)?.name;
-  const selectedSubjectName = subjects.find(subject => subject.id === currentSubject)?.name;
+  const selectedSubject = subjects.find(subject => subject.id === currentSubject);
+  const selectedSubjectName = selectedSubject ? formatSubjectLabel(selectedSubject) : undefined;
 
   const updateFilters = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -120,7 +127,7 @@ export function ResourceFilterSidebar({
             >
               <option value="all">All Subjects</option>
               {subjects.map(subject => (
-                <option key={subject.id} value={subject.id}>{subject.name}</option>
+                <option key={subject.id} value={subject.id}>{formatSubjectLabel(subject)}</option>
               ))}
             </select>
           </div>
@@ -164,7 +171,7 @@ export function ResourceFilterSidebar({
             {subjects.map(subject => (
               <div key={subject.id} className="flex items-center space-x-2">
                 <RadioGroupItem value={subject.id} id={`${idPrefix}-sub-${subject.id}`} />
-                <Label htmlFor={`${idPrefix}-sub-${subject.id}`} className="line-clamp-1 flex-1 cursor-pointer font-normal">{subject.name}</Label>
+                <Label htmlFor={`${idPrefix}-sub-${subject.id}`} className="line-clamp-1 flex-1 cursor-pointer font-normal">{formatSubjectLabel(subject)}</Label>
               </div>
             ))}
           </RadioGroup>
