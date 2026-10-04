@@ -13,10 +13,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function SubjectSelector({
   availableSubjects,
+  managedSubjectIds,
   initialSelectedIds,
   isLocked
 }: {
   availableSubjects: any[];
+  managedSubjectIds: string[];
   initialSelectedIds: string[];
   isLocked: boolean;
 }) {
@@ -28,6 +30,7 @@ export default function SubjectSelector({
   const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [saveError, setSaveError] = useState("");
   
   const supabase = createClient();
   const router = useRouter();
@@ -47,43 +50,29 @@ export default function SubjectSelector({
     if (isLocked) return;
     setIsSubmitting(true);
     setSuccess(false);
+    setSaveError("");
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { error } = await supabase.rpc("save_student_subjects", {
+        p_subject_ids: Array.from(selectedIds),
+        p_managed_subject_ids: managedSubjectIds,
+      });
 
-    // In a real app we might update the source row instead of delete/insert
-    // Or just set ENROLLED / DROPPED based on selection.
-    // For now we simulate the old logic but respecting new data model slightly
-    
-    // Deactivate old enrollments
-    await supabase.from("student_subjects").update({ enrollment_status: 'DROPPED' }).eq("student_id", user.id);
-
-    // Insert new selections
-    if (selectedIds.size > 0) {
-      const inserts = Array.from(selectedIds).map(subId => ({
-        student_id: user.id,
-        subject_id: subId,
-        enrollment_status: 'ENROLLED'
-      }));
-
-      // We do an upsert or ignore constraint errors depending on schema
-      // A proper API route with a transaction is better, but this handles the client side portion.
-      const { error } = await supabase.from("student_subjects").upsert(inserts, { onConflict: "student_id, subject_id, academic_year, semester" });
-      if (!error) {
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
-        router.refresh();
-      } else {
-        alert("Failed to save subjects.");
-        console.error(error);
+      if (error) {
+        console.error("Failed to save selected subjects:", error);
+        setSaveError("Failed to save subjects. Please try again.");
+        return;
       }
-    } else {
+
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
       router.refresh();
+    } catch (error) {
+      console.error("Could not save selected subjects:", error);
+      setSaveError("Failed to save subjects. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
   };
 
   const filteredSubjects = availableSubjects.filter(s => 
@@ -179,6 +168,13 @@ export default function SubjectSelector({
               </div>
             ))}
           </div>
+        )}
+
+        {saveError && (
+          <Alert variant="destructive">
+            <AlertTitle>Could not save subjects</AlertTitle>
+            <AlertDescription>{saveError}</AlertDescription>
+          </Alert>
         )}
 
         {!isLocked && availableSubjects.length > 0 && (

@@ -41,12 +41,16 @@ export default async function SubjectsPage() {
     })) || [];
   }
 
-  // Fetch currently selected subjects
-  const { data: selected } = await supabase
-    .from("student_subjects")
-    .select("subject_id")
-    .eq("student_id", user.id)
-    .eq("enrollment_status", "ENROLLED");
+  // Keep this selector's state scoped to the semester's available subjects.
+  const availableSubjectIds = availableSubjects.map((subject) => subject.id);
+  const { data: selected } = availableSubjectIds.length
+    ? await supabase
+        .from("student_subjects")
+        .select("subject_id")
+        .eq("student_id", user.id)
+        .eq("enrollment_status", "ENROLLED")
+        .in("subject_id", availableSubjectIds)
+    : { data: [] };
 
   const selectedIds = selected?.map(s => s.subject_id) || [];
 
@@ -67,6 +71,7 @@ export default async function SubjectsPage() {
 
       <SubjectSelector 
         availableSubjects={availableSubjects} 
+        managedSubjectIds={availableSubjectIds}
         initialSelectedIds={selectedIds} 
         isLocked={profile.is_academic_locked || false}
       />
