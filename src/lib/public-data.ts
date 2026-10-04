@@ -138,9 +138,9 @@ const getHomeStats = unstable_cache(
       supabase.from("programmes").select("*", { count: "exact", head: true }),
       supabase.from("subjects").select("*", { count: "exact", head: true }),
       supabase
-        .from("academic_resources")
+        .from("resources")
         .select("*", { count: "exact", head: true })
-        .eq("status", "approved"),
+        .eq("status", "published"),
     ]);
 
     const queryError = departmentError || programmeError || subjectError || resourceError;
@@ -169,13 +169,13 @@ const getRecentlyAddedResources = unstable_cache(
   async () => {
     const supabase = createPublicClient();
     const { data, error } = await supabase
-      .from("academic_resources")
+      .from("resources")
       .select(`
         id, title, created_at,
         subject:subjects(name),
         category:resource_categories(name, slug)
       `)
-      .eq("status", "approved")
+      .eq("status", "published")
       .order("created_at", { ascending: false })
       .limit(6);
 
