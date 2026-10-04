@@ -32,7 +32,7 @@ export function QuizQuestionForm({ quizId }: { quizId: string }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="min-w-0 space-y-6">
       <input type="hidden" name="quiz_id" value={quizId} />
 
       {errorMsg && (
@@ -51,21 +51,21 @@ export function QuizQuestionForm({ quizId }: { quizId: string }) {
         <p className="text-xs text-muted-foreground -mt-2">Select the radio button next to the correct answer.</p>
         
         <RadioGroup name="correct_option" defaultValue="0" className="space-y-3">
-          <div className="flex items-center gap-3">
-            <RadioGroupItem value="0" id="opt0" />
-            <Input id="option_a" name="option_a" placeholder="Option A" required />
+          <div className="flex min-w-0 items-center gap-3">
+            <RadioGroupItem value="0" id="opt0" className="shrink-0" />
+            <Input className="min-w-0 flex-1" id="option_a" name="option_a" placeholder="Option A" required />
           </div>
-          <div className="flex items-center gap-3">
-            <RadioGroupItem value="1" id="opt1" />
-            <Input id="option_b" name="option_b" placeholder="Option B" required />
+          <div className="flex min-w-0 items-center gap-3">
+            <RadioGroupItem value="1" id="opt1" className="shrink-0" />
+            <Input className="min-w-0 flex-1" id="option_b" name="option_b" placeholder="Option B" required />
           </div>
-          <div className="flex items-center gap-3">
-            <RadioGroupItem value="2" id="opt2" />
-            <Input id="option_c" name="option_c" placeholder="Option C (Optional)" />
+          <div className="flex min-w-0 items-center gap-3">
+            <RadioGroupItem value="2" id="opt2" className="shrink-0" />
+            <Input className="min-w-0 flex-1" id="option_c" name="option_c" placeholder="Option C (Optional)" />
           </div>
-          <div className="flex items-center gap-3">
-            <RadioGroupItem value="3" id="opt3" />
-            <Input id="option_d" name="option_d" placeholder="Option D (Optional)" />
+          <div className="flex min-w-0 items-center gap-3">
+            <RadioGroupItem value="3" id="opt3" className="shrink-0" />
+            <Input className="min-w-0 flex-1" id="option_d" name="option_d" placeholder="Option D (Optional)" />
           </div>
         </RadioGroup>
       </div>

@@ -63,17 +63,18 @@ export default async function ManageQuizQuestionsPage({
   }
 
   return (
-    <div className="container px-4 py-8 mx-auto max-w-5xl">
+    <div className="container mx-auto min-w-0 max-w-5xl px-3 py-6 sm:px-4 sm:py-8">
       <Link href="/faculty" className={buttonVariants({ variant: "ghost", className: "mb-6" })}>
         <ChevronLeft className="w-4 h-4 mr-2" /> Back to Dashboard
       </Link>
 
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-heading font-extrabold text-foreground mb-2 flex items-center">
-            <BrainCircuit className="w-8 h-8 mr-3 text-primary" /> {quiz.title}
+          <h1 className="mb-2 flex min-w-0 items-start gap-3 break-words text-2xl font-heading font-extrabold text-foreground [overflow-wrap:anywhere] sm:items-center sm:text-4xl">
+            <BrainCircuit className="mt-1 h-6 w-6 shrink-0 text-primary sm:mt-0 sm:h-8 sm:w-8" />
+            <span className="min-w-0">{quiz.title}</span>
           </h1>
-          <p className="text-lg text-muted-foreground">Manage questions and answers for this quiz.</p>
+            <p className="text-base text-muted-foreground sm:text-lg">Manage questions and answers for this quiz.</p>
           <p className="mt-2 text-sm text-muted-foreground">
             Status: <span className="font-semibold capitalize">{quiz.status}</span>
             {quiz.status === "published" && " · Students can attempt this quiz."}
@@ -87,38 +88,39 @@ export default async function ManageQuizQuestionsPage({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
         {/* Left Column: Existing Questions */}
-        <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-2xl font-bold flex items-center">
-            <ListChecks className="w-5 h-5 mr-2 text-primary" /> 
+        <div className="min-w-0 space-y-6 lg:col-span-2">
+          <h2 className="flex min-w-0 items-start gap-2 break-words text-xl font-bold sm:items-center sm:text-2xl">
+            <ListChecks className="mt-1 h-5 w-5 shrink-0 text-primary sm:mt-0" />
             Existing Questions ({questions?.length || 0})
           </h2>
           
           <div className="space-y-4">
             {questions && questions.length > 0 ? (
               questions.map((q, idx) => (
-                <Card key={q.id} className="border-border">
-                  <CardContent className="p-5">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="font-semibold text-lg">
-                        <span className="text-muted-foreground mr-2">{idx + 1}.</span> 
+                <Card key={q.id} className="min-w-0 overflow-hidden border-border">
+                  <CardContent className="min-w-0 p-4 sm:p-5">
+                    <div className="mb-4 flex min-w-0 items-start gap-3">
+                      <h3 className="min-w-0 flex-1 break-words text-base font-semibold [overflow-wrap:anywhere] sm:text-lg">
+                        <span className="mr-2 text-muted-foreground">{idx + 1}.</span>
                         {q.question_text}
                       </h3>
-                      <span className="text-xs bg-muted px-2 py-1 rounded font-medium shrink-0">
+                      <span className="shrink-0 whitespace-nowrap rounded bg-muted px-2 py-1 text-xs font-medium">
                         {q.marks} Mark(s)
                       </span>
                     </div>
                     
-                    <div className="space-y-2 pl-6">
+                    <div className="min-w-0 space-y-2 sm:pl-6">
                       {(optionsByQuestion.get(q.id) || []).map((opt) => (
-                        <div key={opt.id} className={`p-2 rounded-md text-sm border ${opt.is_correct ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-muted/30 border-transparent'}`}>
-                          {opt.option_text} {opt.is_correct && <span className="text-green-600 dark:text-green-400 font-medium text-xs ml-2">(Correct Answer)</span>}
+                        <div key={opt.id} className={`min-w-0 break-words rounded-md border p-2 text-sm [overflow-wrap:anywhere] ${opt.is_correct ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-muted/30 border-transparent'}`}>
+                          <span>{opt.option_text}</span>
+                          {opt.is_correct && <span className="ml-2 inline-block font-medium text-xs text-green-600 dark:text-green-400">(Correct Answer)</span>}
                         </div>
                       ))}
                     </div>
                     {q.explanation && (
-                      <div className="mt-4 pl-6 text-sm text-muted-foreground bg-muted/20 p-3 rounded-md">
+                      <div className="mt-4 break-words rounded-md bg-muted/20 p-3 text-sm text-muted-foreground [overflow-wrap:anywhere] sm:ml-6">
                         <strong>Explanation:</strong> {q.explanation}
                       </div>
                     )}
@@ -134,8 +136,8 @@ export default async function ManageQuizQuestionsPage({
         </div>
 
         {/* Right Column: Add Question Form */}
-        {quiz.status === "draft" && <div className="space-y-6">
-          <Card className="border-border shadow-sm sticky top-24">
+        {quiz.status === "draft" && <div className="min-w-0 space-y-6">
+          <Card className="min-w-0 border-border shadow-sm lg:sticky lg:top-24">
             <CardHeader className="bg-muted/30 border-b">
               <CardTitle>Add New Question</CardTitle>
             </CardHeader>

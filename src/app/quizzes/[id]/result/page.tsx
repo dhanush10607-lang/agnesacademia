@@ -62,7 +62,7 @@ export default async function QuizResultPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto max-w-4xl px-3 py-6 pb-28 sm:px-4 sm:py-12">
+      <main className="container mx-auto min-w-0 max-w-4xl px-3 py-6 pb-32 sm:px-4 sm:py-12">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/quizzes" className={buttonVariants({ variant: "ghost", className: "w-full justify-start sm:w-auto" })}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Quizzes
@@ -115,7 +115,7 @@ export default async function QuizResultPage({
               <Card key={answer.id} className={`border-l-4 ${answer.is_correct ? 'border-l-green-500' : 'border-l-red-500'}`}>
               <CardContent className="min-w-0 p-4 sm:p-6">
                 <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-                  <div className="flex min-w-0 items-start gap-3 sm:flex-1">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
                     <div className="mt-1 shrink-0">
                       {answer.is_correct ? (
                         <CheckCircle className="w-6 h-6 text-green-500" />
@@ -123,7 +123,7 @@ export default async function QuizResultPage({
                         <XCircle className="w-6 h-6 text-red-500" />
                       )}
                     </div>
-                    <div className="min-w-0 flex-grow">
+                    <div className="min-w-0 flex-1">
                       <h3 className="mb-2 break-words text-lg font-semibold [overflow-wrap:anywhere]">
                         <span className="mr-2 text-muted-foreground">{idx + 1}.</span>
                         {questionText}
@@ -156,7 +156,7 @@ export default async function QuizResultPage({
                       )}
                     </div>
                   </div>
-                  <div className="self-end whitespace-normal rounded bg-muted px-2 py-1 text-sm font-medium sm:self-start sm:shrink-0">
+                  <div className="max-w-full self-end break-words rounded bg-muted px-2 py-1 text-sm font-medium [overflow-wrap:anywhere] sm:self-start sm:shrink-0">
                     {answer.marks_awarded} / {answer.question_marks_snapshot || 1} Marks
                   </div>
                 </div>

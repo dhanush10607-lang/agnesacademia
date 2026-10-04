@@ -89,7 +89,7 @@ export default async function QuizzesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto min-w-0 max-w-6xl px-3 py-6 pb-28 sm:px-4 sm:py-8">
+      <main className="container mx-auto min-w-0 max-w-6xl px-3 py-6 pb-32 sm:px-4 sm:py-8">
         <div className="mb-8">
           <h1 className="mb-2 flex items-start gap-2 text-2xl font-heading font-extrabold sm:items-center sm:gap-3 sm:text-4xl">
             <BrainCircuit className="mt-1 h-6 w-6 shrink-0 text-primary sm:mt-0 sm:h-8 sm:w-8" />
@@ -121,9 +121,9 @@ export default async function QuizzesPage() {
                         {quiz.difficulty}
                       </Badge>
                     </div>
-                    <CardTitle className="text-xl line-clamp-2">{quiz.title}</CardTitle>
+                    <CardTitle className="break-words text-xl [overflow-wrap:anywhere] line-clamp-2">{quiz.title}</CardTitle>
                     {quiz.unit_name && (
-                      <CardDescription className="font-medium text-foreground mt-1">
+                      <CardDescription className="mt-1 break-words font-medium text-foreground [overflow-wrap:anywhere]">
                         {quiz.unit_name}
                       </CardDescription>
                     )}

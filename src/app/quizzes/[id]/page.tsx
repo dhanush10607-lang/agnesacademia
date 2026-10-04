@@ -53,9 +53,9 @@ export default async function QuizIntroPage({
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <main className="flex-grow container mx-auto flex max-w-3xl items-start justify-center px-3 py-6 pb-28 sm:items-center sm:px-4 sm:py-12">
-        <div className="w-full">
-          <Link href="/quizzes" className={buttonVariants({ variant: "ghost", className: "mb-6" })}>
+      <main className="flex-grow container mx-auto flex max-w-3xl items-start justify-center px-3 py-6 pb-32 sm:items-center sm:px-4 sm:py-12">
+        <div className="w-full min-w-0">
+          <Link href="/quizzes" className={buttonVariants({ variant: "ghost", className: "mb-6 max-w-full whitespace-normal" })}>
             <ChevronLeft className="w-4 h-4 mr-2" /> Back to Quizzes
           </Link>
           
@@ -80,7 +80,7 @@ export default async function QuizIntroPage({
             
             <CardContent className="p-5 sm:p-8">
               {quiz.description && (
-                <div className="mb-8 text-center max-w-xl mx-auto">
+                <div className="mx-auto mb-8 max-w-xl text-center">
                   <p className="break-words text-muted-foreground [overflow-wrap:anywhere]">{quiz.description}</p>
                 </div>
               )}

@@ -25,7 +25,7 @@ export default async function QuizHistoryPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto max-w-5xl px-3 py-6 pb-28 sm:px-4 sm:py-8">
+      <main className="container mx-auto min-w-0 max-w-5xl px-3 py-6 pb-32 sm:px-4 sm:py-8">
         <div className="mb-8 flex items-start gap-3">
           <History className="mt-1 h-7 w-7 shrink-0 text-primary sm:h-8 sm:w-8" />
           <div className="min-w-0">
@@ -60,9 +60,11 @@ export default async function QuizHistoryPage() {
                       <h3 className="mb-1 break-words text-lg font-bold text-foreground [overflow-wrap:anywhere]">
                         {(attempt.quiz as any)?.title || "Unknown Quiz"}
                       </h3>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {format(new Date(attempt.started_at), "MMM d, yyyy 'at' h:mm a")}
+                      <div className="flex min-w-0 items-start text-sm text-muted-foreground">
+                        <Clock className="mr-1 mt-0.5 h-4 w-4 shrink-0" />
+                        <span className="break-words [overflow-wrap:anywhere]">
+                          {format(new Date(attempt.started_at), "MMM d, yyyy 'at' h:mm a")}
+                        </span>
                       </div>
                     </div>
 

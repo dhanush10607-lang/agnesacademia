@@ -144,9 +144,9 @@ export function QuizInterface({
   if (!currentQ) return <div className="p-8 text-center">No questions available.</div>;
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/20">
-      <header className="sticky top-0 z-10 border-b bg-background shadow-sm">
-        <div className="container mx-auto flex min-h-16 flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 sm:flex-nowrap sm:px-4">
+    <div className="flex min-h-screen min-w-0 flex-col bg-muted/20">
+      <header className="sticky top-16 z-40 border-b bg-background shadow-sm">
+        <div className="container mx-auto flex min-h-16 min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 sm:flex-nowrap sm:px-4">
           <div className="min-w-0 flex-1 truncate font-bold sm:max-w-md">{quiz.title}</div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-4 lg:gap-8">
             <div className="hidden text-sm font-medium text-muted-foreground sm:block">
@@ -173,7 +173,7 @@ export function QuizInterface({
         </div>
       </header>
 
-      <main className="container mx-auto flex w-full max-w-4xl flex-grow flex-col gap-5 px-3 py-5 pb-8 sm:gap-8 sm:px-4 sm:py-8 md:flex-row">
+      <main className="container mx-auto flex w-full min-w-0 max-w-4xl flex-grow flex-col gap-5 px-3 py-5 pb-8 sm:gap-8 sm:px-4 sm:py-8 md:flex-row">
         <div className="min-w-0 flex-grow space-y-5 sm:space-y-6">
           {saveMessage && (
             <p role="status" className={`text-sm ${saveMessage.includes("could not") || saveMessage.includes("Could not") ? "text-red-600" : "text-muted-foreground"}`}>
@@ -188,11 +188,11 @@ export function QuizInterface({
 
           <Card className="border-border shadow-md">
             <CardContent className="min-w-0 p-4 sm:p-8">
-              <div className="mb-6 flex items-start justify-between">
-                <span className="min-w-0 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+              <div className="mb-6 flex min-w-0 items-start justify-between gap-3">
+                <span className="min-w-0 break-words text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   Question {currentIdx + 1} of {questions.length}
                 </span>
-                <span className="rounded bg-muted px-2 py-1 text-xs font-semibold">{currentQ.marks} Marks</span>
+                <span className="shrink-0 whitespace-nowrap rounded bg-muted px-2 py-1 text-xs font-semibold">{currentQ.marks} Marks</span>
               </div>
               <h2 className="mb-6 break-words text-xl font-semibold [overflow-wrap:anywhere] sm:mb-8 sm:text-2xl">{currentQ.question_text}</h2>
               <RadioGroup
@@ -208,7 +208,7 @@ export function QuizInterface({
                     }`}
                   >
                     <RadioGroupItem value={option.id} id={option.id} className="mr-3 mt-1 shrink-0 sm:mr-4 sm:mt-0" />
-                    <Label htmlFor={option.id} className="min-w-0 flex-grow cursor-pointer break-words text-base leading-relaxed [overflow-wrap:anywhere]">
+                    <Label htmlFor={option.id} className="min-w-0 flex-grow cursor-pointer break-words text-left text-base leading-relaxed [overflow-wrap:anywhere]">
                       {option.option_text}
                     </Label>
                   </div>
