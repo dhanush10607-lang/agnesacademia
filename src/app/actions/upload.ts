@@ -51,19 +51,18 @@ export async function getUploadCurriculumSubjects(
     return { success: false, error: "The semester must belong to the selected curriculum's programme." };
   }
 
-  const { data: curriculumSubjects, error: subjectsError } = await supabase
-    .from("curriculum_subjects")
-    .select("subject:subjects(id, name, semester_id, semester:semesters(name))")
-    .eq("curriculum_id", curriculumId);
+  const { data: semesterSubjects, error: subjectsError } = await supabase
+    .from("subjects")
+    .select("id, name, semester:semesters(name)")
+    .eq("semester_id", semester.id)
+    .eq("is_active", true)
+    .order("name");
   if (subjectsError) {
-    console.error("Load curriculum subjects for upload failed:", subjectsError);
-    return { success: false, error: "Unable to load subjects for this curriculum." };
+    console.error("Load semester subjects for upload failed:", subjectsError);
+    return { success: false, error: "Unable to load subjects for this semester." };
   }
 
-  const subjects = (curriculumSubjects || []).flatMap(row => {
-    const relatedSubject = row.subject;
-    const subject = Array.isArray(relatedSubject) ? relatedSubject[0] : relatedSubject;
-    if (!subject || subject.semester_id !== semester.id) return [];
+  const subjects = (semesterSubjects || []).flatMap(subject => {
     const relatedSemester = subject.semester;
     const subjectSemester = Array.isArray(relatedSemester) ? relatedSemester[0] : relatedSemester;
     return [{
