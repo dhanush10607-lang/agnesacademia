@@ -1,10 +1,16 @@
 "use client";
 
+import { useEffect, useOptimistic, useRef, useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { ChevronDown, Filter } from "lucide-react";
+import { ChevronDown, Filter, LoaderCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
+
+type ResourceFilters = {
+  category: string;
+  subject: string;
+};
 
 export function ResourceFilterSidebar({ 
   categories,
@@ -16,6 +22,14 @@ export function ResourceFilterSidebar({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const currentCategory = searchParams.get("category") || "";
+  const currentSubject = searchParams.get("subject") || "";
+  const [filters, setOptimisticFilters] = useOptimistic(
+    { category: currentCategory, subject: currentSubject },
+    (state, update: Partial<ResourceFilters>) => ({ ...state, ...update }),
+  );
+  const [isPending, startTransition] = useTransition();
+  const latestParams = useRef(searchParams.toString());
 
   const formatSubjectLabel = (subject: { name: string; curriculumCodes?: string[] }) => {
     const curriculumCodes = subject.curriculumCodes || [];
@@ -23,34 +37,39 @@ export function ResourceFilterSidebar({
       ? `${subject.name} (${curriculumCodes.join(", ")})`
       : subject.name;
   };
-  const currentCategory = searchParams.get("category") || "";
-  const currentSubject = searchParams.get("subject") || "";
-  const selectedCategoryName = categories.find(category => category.id === currentCategory)?.name;
-  const selectedSubject = subjects.find(subject => subject.id === currentSubject);
+  const selectedCategoryName = categories.find(category => category.id === filters.category)?.name;
+  const selectedSubject = subjects.find(subject => subject.id === filters.subject);
   const selectedSubjectName = selectedSubject ? formatSubjectLabel(selectedSubject) : undefined;
 
-  const updateFilters = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-    // Reset page to 1 when filters change
+  useEffect(() => {
+    latestParams.current = searchParams.toString();
+  }, [searchParams]);
+
+  const navigateWithFilters = (updates: Partial<ResourceFilters>) => {
+    const params = new URLSearchParams(latestParams.current);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    });
     params.delete("page");
-    
-    router.push(`${pathname}?${params.toString()}`);
+    const nextParams = params.toString();
+    latestParams.current = nextParams;
+
+    startTransition(() => {
+      setOptimisticFilters(updates);
+      router.push(`${pathname}?${nextParams}`, { scroll: false });
+    });
+  };
+
+  const updateFilters = (key: keyof ResourceFilters, value: string) => {
+    navigateWithFilters({ [key]: value });
   };
 
   const clearFilters = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("category");
-    params.delete("subject");
-    params.delete("page");
-    router.push(`${pathname}?${params.toString()}`);
+    navigateWithFilters({ category: "", subject: "" });
   };
 
-  const hasActiveFilters = currentCategory || currentSubject;
+  const hasActiveFilters = filters.category || filters.subject;
 
   return (
     <div className="w-full shrink-0 lg:w-64">
@@ -95,6 +114,12 @@ export function ResourceFilterSidebar({
         </div>
         {renderFilterOptions("desktop")}
       </div>
+      {isPending && (
+        <p role="status" aria-live="polite" className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+          <LoaderCircle className="h-4 w-4 animate-spin" />
+          Updating results…
+        </p>
+      )}
     </div>
   );
 
@@ -106,7 +131,7 @@ export function ResourceFilterSidebar({
             <Label htmlFor="mobile-resource-category">Type</Label>
             <select
               id="mobile-resource-category"
-              value={currentCategory || "all"}
+              value={filters.category || "all"}
               onChange={(event) => updateFilters("category", event.target.value === "all" ? "" : event.target.value)}
               className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
@@ -121,7 +146,7 @@ export function ResourceFilterSidebar({
             <Label htmlFor="mobile-resource-subject">Subject</Label>
             <select
               id="mobile-resource-subject"
-              value={currentSubject || "all"}
+              value={filters.subject || "all"}
               onChange={(event) => updateFilters("subject", event.target.value === "all" ? "" : event.target.value)}
               className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
@@ -140,7 +165,7 @@ export function ResourceFilterSidebar({
         <div>
           <h4 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">Type</h4>
           <RadioGroup
-            value={currentCategory || "all"}
+            value={filters.category || "all"}
             onValueChange={(value) => updateFilters("category", value === "all" ? "" : value)}
             className="space-y-2"
           >
@@ -160,7 +185,7 @@ export function ResourceFilterSidebar({
         <div>
           <h4 className="mb-3 mt-6 text-sm font-medium uppercase tracking-wider text-muted-foreground">Subject</h4>
           <RadioGroup
-            value={currentSubject || "all"}
+            value={filters.subject || "all"}
             onValueChange={(value) => updateFilters("subject", value === "all" ? "" : value)}
             className="space-y-2"
           >
