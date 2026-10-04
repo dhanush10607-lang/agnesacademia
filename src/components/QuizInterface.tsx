@@ -98,6 +98,18 @@ export function QuizInterface({
   }, [handleFinalSubmit]);
 
   useEffect(() => {
+    if (!connectionLost || !isBrowserOnline || !offlineSubmissionPendingRef.current) return;
+
+    const retryTimer = window.setInterval(() => {
+      if (navigator.onLine && offlineSubmissionPendingRef.current) {
+        void handleFinalSubmit();
+      }
+    }, 5000);
+
+    return () => window.clearInterval(retryTimer);
+  }, [connectionLost, handleFinalSubmit, isBrowserOnline]);
+
+  useEffect(() => {
     if (!expiresAt) return;
 
     const deadline = new Date(expiresAt).getTime();
