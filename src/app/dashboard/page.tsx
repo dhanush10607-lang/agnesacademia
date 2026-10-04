@@ -8,7 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { PasskeySettings } from "@/components/auth/PasskeySettings";
 import Link from "next/link";
 import { format } from "@/lib/date-time";
-import { getCurriculumSemesterSubjects } from "@/lib/curriculumSubjects";
+import { getCurriculumSemesterSubjects, uniqueSubjects } from "@/lib/curriculumSubjects";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -44,9 +44,11 @@ export default async function DashboardPage() {
     .eq("enrollment_status", "ENROLLED");
     
   if (enrolledData && enrolledData.length > 0) {
-    const subjData = enrolledData.map(e => e.subject).filter(Boolean);
+    const subjData = uniqueSubjects(
+      enrolledData
+        .map(e => e.subject)
+    );
     for (const subj of subjData as any[]) {
-      if (!subj || Array.isArray(subj)) continue; // handle potential array from supabase types
       const { count } = await supabase
         .from("resources")
         .select("*", { count: 'exact', head: true })
@@ -65,10 +67,11 @@ export default async function DashboardPage() {
     );
     
     if (currData) {
-      for (const cs of currData) {
-        const subj: any = cs.subject;
-        if (!subj || Array.isArray(subj)) continue;
-        
+      const currSubjects = uniqueSubjects(
+        currData.map((cs: any) => cs.subject)
+      );
+      for (const subj of currSubjects) {
+
         const { count } = await supabase
           .from("resources")
           .select("*", { count: 'exact', head: true })

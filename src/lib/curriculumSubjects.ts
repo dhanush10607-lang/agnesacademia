@@ -17,6 +17,15 @@ export function normalizeSemesterName(name?: string | null) {
     .join(" ");
 }
 
+export function uniqueSubjects<T extends { id: string }>(
+  subjects: (T | T[] | null | undefined)[]
+) {
+  const flattened = subjects.flatMap((subject) =>
+    Array.isArray(subject) ? subject : subject ? [subject] : []
+  );
+  return Array.from(new Map(flattened.map((subject) => [subject.id, subject])).values());
+}
+
 export async function getCurriculumSemesterSubjects(
   supabase: any,
   curriculumId: string | null | undefined,
