@@ -27,6 +27,7 @@ export function QuizInterface({
   questions,
   answers: initialAnswers,
   tabSwitchCount: initialTabSwitchCount,
+  watermarkLabel,
 }: {
   attemptId: string;
   expiresAt: string | null;
@@ -34,6 +35,7 @@ export function QuizInterface({
   questions: QuizAttemptQuestion[];
   answers: Record<string, string>;
   tabSwitchCount: number;
+  watermarkLabel: string;
 }) {
   const router = useRouter();
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -87,8 +89,8 @@ export function QuizInterface({
   }, [expiresAt, handleFinalSubmit]);
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== "hidden" || focusEventTriggeredRef.current) return;
+    const handleFocusLoss = () => {
+      if (focusEventTriggeredRef.current) return;
       focusEventTriggeredRef.current = true;
       void recordQuizFocusEventAction(attemptId, answersRef.current).then(result => {
         if (result.success && typeof result.tabSwitchCount === "number") {
@@ -109,10 +111,28 @@ export function QuizInterface({
         setFocusMessage("A tab switch could not be recorded.");
       });
     };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") handleFocusLoss();
+    };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleFocusLoss);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleFocusLoss);
+    };
   }, [attemptId, handleFinalSubmit, quiz.id, router]);
+
+  useEffect(() => {
+    const handleScreenshotShortcut = (event: KeyboardEvent) => {
+      if (event.key !== "PrintScreen" && event.code !== "PrintScreen") return;
+      event.preventDefault();
+      void handleFinalSubmit();
+    };
+
+    window.addEventListener("keydown", handleScreenshotShortcut);
+    return () => window.removeEventListener("keydown", handleScreenshotShortcut);
+  }, [handleFinalSubmit]);
 
   const handleSelectOption = (optionId: string) => {
     const questionId = questions[currentIdx]?.id;
@@ -173,7 +193,18 @@ export function QuizInterface({
         </div>
       </header>
 
-      <main className="container mx-auto flex w-full min-w-0 max-w-4xl flex-grow flex-col gap-5 px-3 py-5 pb-8 sm:gap-8 sm:px-4 sm:py-8 md:flex-row">
+      <main
+        className="container mx-auto flex w-full min-w-0 max-w-4xl flex-grow select-none flex-col gap-5 px-3 py-5 pb-8 sm:gap-8 sm:px-4 sm:py-8 md:flex-row"
+        onCopy={event => event.preventDefault()}
+        onCut={event => event.preventDefault()}
+        onContextMenu={event => event.preventDefault()}
+        onDragStart={event => event.preventDefault()}
+        onKeyDown={event => {
+          if ((event.ctrlKey || event.metaKey) && ["c", "x"].includes(event.key.toLowerCase())) {
+            event.preventDefault();
+          }
+        }}
+      >
         <div className="min-w-0 flex-grow space-y-5 sm:space-y-6">
           {saveMessage && (
             <p role="status" className={`text-sm ${saveMessage.includes("could not") || saveMessage.includes("Could not") ? "text-red-600" : "text-muted-foreground"}`}>
@@ -182,11 +213,14 @@ export function QuizInterface({
           )}
           {focusMessage && <p role="alert" className="text-sm text-red-600">{focusMessage}</p>}
           <p className="break-words text-xs text-muted-foreground">
-            Switching to another tab or app automatically submits your saved answers. Incoming calls and other mobile interruptions may also trigger submission, depending on the device and browser.
+            Leaving this tab or quiz window may automatically submit your saved answers. Browser focus detection is best-effort and cannot prevent all ways of accessing other apps or materials. Incoming calls and other mobile interruptions may also trigger submission, depending on the device and browser.
             {tabSwitchCount > 0 && ` Recorded switches: ${tabSwitchCount}.`}
           </p>
+          <p className="break-words text-xs text-muted-foreground">
+            Text selection and copying are disabled in this quiz where supported. Pressing Print Screen may submit the quiz if your browser reports that key; screenshots taken through device or operating-system controls may not be detectable.
+          </p>
 
-          <Card className="w-full min-w-0 max-w-full overflow-hidden border-border shadow-md">
+          <Card className="relative w-full min-w-0 max-w-full overflow-hidden border-border shadow-md">
             <CardContent className="w-full min-w-0 max-w-full overflow-hidden p-4 sm:p-8">
               <div className="mb-6 flex min-w-0 items-start justify-between gap-3">
                 <span className="min-w-0 break-words text-sm font-bold uppercase tracking-wider text-muted-foreground">
@@ -217,6 +251,19 @@ export function QuizInterface({
                 ))}
               </RadioGroup>
             </CardContent>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-10 grid grid-cols-2 grid-rows-3 overflow-hidden"
+            >
+              {Array.from({ length: 6 }, (_, index) => (
+                <div
+                  key={index}
+                  className="-rotate-12 self-center justify-self-center px-1 text-center text-[10px] font-semibold leading-5 text-foreground/15 sm:text-xs"
+                >
+                  {watermarkLabel}
+                </div>
+              ))}
+            </div>
           </Card>
 
           {saveMessage.includes("could not") || saveMessage.includes("Could not") ? (

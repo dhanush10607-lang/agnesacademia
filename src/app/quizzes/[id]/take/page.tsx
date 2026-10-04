@@ -16,6 +16,16 @@ export default async function TakeQuizPage({
 
   if (!user) redirect("/login");
 
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("Could not load student name for quiz watermark:", profileError);
+  }
+
   const result = await startQuizAttemptAction(id);
   if (!result.success) {
     return (
@@ -33,5 +43,8 @@ export default async function TakeQuizPage({
     redirect(`/quizzes/${id}/result?attempt=${result.completedAttemptId}`);
   }
 
-  return <QuizInterface {...result.attempt} />;
+  const studentLabel = profile?.full_name?.trim() || `Student ${user.id.slice(0, 8)}`;
+  const watermarkLabel = `${studentLabel} · Attempt ${result.attempt.attemptId.slice(0, 8)}`;
+
+  return <QuizInterface {...result.attempt} watermarkLabel={watermarkLabel} />;
 }
