@@ -13,13 +13,22 @@ import { BrainCircuit, CheckCircle } from "lucide-react";
 export function QuizForm({
   subjects
 }: {
-  subjects: { id: string; name: string; code: string }[];
+  subjects: {
+    id: string;
+    name: string;
+    code: string;
+    semester: string | null;
+    programmes: string[];
+    curricula: { name: string; code: string | null }[];
+  }[];
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [newQuizId, setNewQuizId] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const router = useRouter();
+  const selectedSubject = subjects.find(subject => subject.id === selectedSubjectId);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -76,7 +85,12 @@ export function QuizForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="subject_id">Subject <span className="text-red-500">*</span></Label>
-          <Select name="subject_id" required>
+          <Select
+            name="subject_id"
+            value={selectedSubjectId}
+            onValueChange={value => setSelectedSubjectId(value ?? "")}
+            required
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select subject">
                 {(value) => {
@@ -93,6 +107,38 @@ export function QuizForm({
           </Select>
         </div>
       </div>
+
+      {selectedSubject && (
+        <section aria-label="Selected subject academic context" className="rounded-lg border border-primary/20 bg-muted/30 p-4">
+          <h3 className="mb-3 text-sm font-semibold">Academic context for this subject</h3>
+          <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+            <div className="min-w-0">
+              <dt className="text-muted-foreground">Semester</dt>
+              <dd className="break-words font-medium">{selectedSubject.semester || "Not configured"}</dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="text-muted-foreground">Programme</dt>
+              <dd className="break-words font-medium">
+                {selectedSubject.programmes.length
+                  ? selectedSubject.programmes.join(", ")
+                  : "Not configured"}
+              </dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="text-muted-foreground">Curriculum / Combination</dt>
+              <dd className="break-words font-medium">
+                {selectedSubject.curricula.length
+                  ? selectedSubject.curricula
+                    .map(curriculum => curriculum.code
+                      ? `${curriculum.name} (${curriculum.code})`
+                      : curriculum.name)
+                    .join(", ")
+                  : "No curriculum/combination linked"}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="description">Description (Optional)</Label>

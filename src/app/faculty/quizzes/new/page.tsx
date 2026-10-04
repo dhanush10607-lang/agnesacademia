@@ -19,16 +19,87 @@ export default async function NewQuizPage() {
   const { data: facultySubjects, error: subjectError } = await supabase
     .from("faculty_subjects")
     .select(`
-      subject:subjects(id, name, code)
+      subject:subjects(
+        id, name, code,
+        semester:semesters(
+          name,
+          programme:programmes(name)
+        )
+      )
     `)
     .eq("faculty_id", user.id);
 
   if (subjectError) {
     console.error("Could not load faculty quiz subjects:", subjectError);
   }
-  const subjects = (facultySubjects || []).flatMap(fs => {
+  const assignedSubjects = (facultySubjects || []).flatMap(fs => {
     const subject = fs.subject;
     return Array.isArray(subject) ? subject : subject ? [subject] : [];
+  });
+  const subjectIds = assignedSubjects.map(subject => subject.id);
+  const { data: curriculumSubjects, error: curriculumError } = subjectIds.length
+    ? await supabase
+      .from("curriculum_subjects")
+      .select(`
+        subject_id,
+        curriculum:curricula(
+          id, name, code,
+          programme:programmes(name)
+        )
+      `)
+      .in("subject_id", subjectIds)
+      .eq("is_active", true)
+    : { data: [], error: null };
+
+  if (curriculumError) {
+    console.error("Could not load curriculum context for faculty quiz subjects:", curriculumError);
+  }
+
+  const curriculumContext = new Map<string, { id: string; name: string; code: string | null; programmeName: string | null }[]>();
+  for (const row of curriculumSubjects || []) {
+    const curriculumRelation = row.curriculum;
+    const linkedCurricula = Array.isArray(curriculumRelation)
+      ? curriculumRelation
+      : curriculumRelation
+        ? [curriculumRelation]
+        : [];
+    const subjectCurricula = curriculumContext.get(row.subject_id) || [];
+    for (const curriculum of linkedCurricula) {
+      if (!subjectCurricula.some(item => item.id === curriculum.id)) {
+        const programmeRelation = curriculum.programme;
+        const programme = Array.isArray(programmeRelation) ? programmeRelation[0] : programmeRelation;
+        subjectCurricula.push({
+          id: curriculum.id,
+          name: curriculum.name,
+          code: curriculum.code,
+          programmeName: programme?.name ?? null,
+        });
+      }
+    }
+    curriculumContext.set(row.subject_id, subjectCurricula);
+  }
+
+  const subjects = assignedSubjects.map(subject => {
+    const semesterRelation = subject.semester;
+    const semester = Array.isArray(semesterRelation) ? semesterRelation[0] : semesterRelation;
+    const semesterProgrammeRelation = semester?.programme;
+    const semesterProgramme = Array.isArray(semesterProgrammeRelation)
+      ? semesterProgrammeRelation[0]
+      : semesterProgrammeRelation;
+    const curricula = curriculumContext.get(subject.id) || [];
+    const programmes = [...new Set([
+      semesterProgramme?.name,
+      ...curricula.map(curriculum => curriculum.programmeName),
+    ].filter((name): name is string => Boolean(name)))];
+
+    return {
+      id: subject.id,
+      name: subject.name,
+      code: subject.code ?? "",
+      semester: semester?.name ?? null,
+      programmes,
+      curricula: curricula.map(({ name, code }) => ({ name, code })),
+    };
   });
 
   return (
@@ -46,9 +117,9 @@ export default async function NewQuizPage() {
         </p>
       </div>
 
-      {subjectError ? (
+      {subjectError || curriculumError ? (
         <Card className="border-red-300 bg-red-50 text-red-700">
-          <CardContent className="py-8">Could not load your assigned subjects. Refresh the page to try again.</CardContent>
+          <CardContent className="py-8">Could not load your assigned subjects and academic context. Refresh the page to try again.</CardContent>
         </Card>
       ) : subjects.length === 0 ? (
         <Card className="border-dashed bg-muted/20">

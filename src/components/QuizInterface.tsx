@@ -186,8 +186,8 @@ export function QuizInterface({
             {tabSwitchCount > 0 && ` Recorded switches: ${tabSwitchCount}.`}
           </p>
 
-          <Card className="min-w-0 max-w-full overflow-hidden border-border shadow-md">
-            <CardContent className="min-w-0 max-w-full overflow-hidden p-4 sm:p-8">
+          <Card className="w-full min-w-0 max-w-full overflow-hidden border-border shadow-md">
+            <CardContent className="w-full min-w-0 max-w-full overflow-hidden p-4 sm:p-8">
               <div className="mb-6 flex min-w-0 items-start justify-between gap-3">
                 <span className="min-w-0 break-words text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   Question {currentIdx + 1} of {questions.length}
@@ -198,18 +198,18 @@ export function QuizInterface({
               <RadioGroup
                 value={answers[currentQ.id] || ""}
                 onValueChange={handleSelectOption}
-                className="w-full min-w-0 space-y-4"
+                className="w-full min-w-0 max-w-full space-y-4"
               >
                 {currentQ.options.map(option => (
                   <div
                     key={option.id}
-                    className={`flex w-full min-w-0 cursor-pointer items-start overflow-hidden rounded-lg border p-3 transition-colors sm:items-center sm:p-4 ${
+                    className={`grid w-full min-w-0 max-w-full cursor-pointer grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-3 overflow-hidden rounded-lg border p-3 transition-colors sm:items-center sm:p-4 ${
                       answers[currentQ.id] === option.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
                     }`}
                   >
-                    <RadioGroupItem value={option.id} id={option.id} className="mr-3 mt-1 shrink-0 sm:mr-4 sm:mt-0" />
-                    <Label htmlFor={option.id} className="min-w-0 flex-1 cursor-pointer items-start text-left text-base leading-relaxed">
-                      <span className="block w-full min-w-0 whitespace-normal break-all [overflow-wrap:anywhere]">
+                    <RadioGroupItem value={option.id} id={option.id} className="mt-1 shrink-0 sm:mt-0" />
+                    <Label htmlFor={option.id} className="block w-full min-w-0 cursor-pointer whitespace-normal break-words text-left text-base leading-relaxed [overflow-wrap:anywhere]">
+                      <span className="block w-full min-w-0 whitespace-normal break-words [overflow-wrap:anywhere]">
                         {option.option_text}
                       </span>
                     </Label>
