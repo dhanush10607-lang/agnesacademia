@@ -47,16 +47,6 @@ export default function LoginPage() {
 
       {/* Right Panel - Login Form */}
       <div className="flex-1 flex flex-col">
-        {/* Mobile Header (Only visible on small screens) */}
-        <div className="lg:hidden flex items-center justify-between p-4 border-b bg-background/80 backdrop-blur z-10 sticky top-0">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="bg-primary p-1.5 rounded-lg text-primary-foreground">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <span className="font-heading font-bold tracking-tight">AGNES ACADEMIA</span>
-          </Link>
-        </div>
-
         {/* Form Container */}
         <div className="flex-1 flex items-center justify-center p-4 sm:p-8 md:p-12">
           <motion.div 
