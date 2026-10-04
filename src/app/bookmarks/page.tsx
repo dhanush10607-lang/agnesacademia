@@ -5,7 +5,7 @@ import { Bookmark, FileText, ChevronRight, FolderOpen, PlaySquare } from "lucide
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 
 export default async function BookmarksPage({
   searchParams,

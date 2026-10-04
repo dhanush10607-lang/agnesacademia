@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { format, parseDateTimeLocalInIST } from "@/lib/date-time";
 
 export async function createEventAction(formData: FormData) {
   const supabase = await createClient();
@@ -33,6 +34,9 @@ export async function createEventAction(formData: FormData) {
       return { success: false, error: "Title, Category, and Dates are required" };
     }
 
+    const startDate = parseDateTimeLocalInIST(start_time);
+    const endDate = parseDateTimeLocalInIST(end_time);
+
     const { data: insertedEvent, error: insertError } = await supabase
       .from("calendar_events")
       .insert({
@@ -40,8 +44,8 @@ export async function createEventAction(formData: FormData) {
         description,
         category,
         location,
-        start_time: new Date(start_time).toISOString(),
-        end_time: new Date(end_time).toISOString(),
+        start_time: startDate.toISOString(),
+        end_time: endDate.toISOString(),
         department_id,
         programme_id,
         curriculum_id,
@@ -66,7 +70,7 @@ export async function createEventAction(formData: FormData) {
         await sendNotifications({
           userIds: targetIds,
           title: `New Event: ${title}`,
-          message: description || `Scheduled for ${new Date(start_time).toLocaleDateString()}`,
+          message: description || `Scheduled for ${format(startDate, "PPP")}`,
           category: 'calendar',
           actionUrl: `/calendar`,
           priority: 'normal'

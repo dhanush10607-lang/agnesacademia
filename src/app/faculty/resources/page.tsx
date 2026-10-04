@@ -5,7 +5,7 @@ import { FileText, Clock, Archive, CheckCircle, UploadCloud, ChevronLeft, Edit }
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "@/lib/date-time";
 
 export default async function FacultyResourcesPage() {
   const supabase = await createClient();

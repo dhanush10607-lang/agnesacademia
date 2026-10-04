@@ -5,7 +5,7 @@ import { FileText, Clock, AlertTriangle, ShieldCheck, ExternalLink, Filter, Flag
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "@/lib/date-time";
 import { ModerationActionArea } from "@/components/ModerationActionArea";
 
 export default async function ModerationDashboardPage({

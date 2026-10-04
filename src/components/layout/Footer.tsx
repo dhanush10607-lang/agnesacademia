@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
 
+import { format } from "@/lib/date-time";
+
 export function Footer() {
   const links = ["About", "Departments", "Courses", "Resources", "Notices", "Contact"];
 
@@ -49,7 +51,7 @@ export function Footer() {
         </div>
         <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground text-center md:text-left">
-            &copy; {new Date().getFullYear()} AGNES ACADEMIA. All rights reserved.
+            &copy; {format(new Date(), "yyyy")} AGNES ACADEMIA. All rights reserved.
           </p>
         </div>
       </div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 import { buttonVariants } from "@/components/ui/button";
 import { getPublicResourceFileUrl } from "@/lib/storage-file-url";
 

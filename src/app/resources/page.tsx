@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 import { ResourceFilterSidebar } from "./ResourceFilterSidebar";
 import { getPublicResourceFileUrl } from "@/lib/storage-file-url";
 

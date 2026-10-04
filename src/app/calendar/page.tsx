@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, MapPin, Target, CalendarDays, List } from "lucide-react";
 import Link from "next/link";
-import { format, isFuture, isToday, isThisWeek, isThisMonth } from "date-fns";
+import { format, isFuture, isToday, isThisWeek, isThisMonth } from "@/lib/date-time";
 
 export default async function AcademicCalendarPage() {
   const supabase = await createClient();
@@ -122,8 +122,8 @@ export default async function AcademicCalendarPage() {
                           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                             <div className="flex items-center">
                               <Clock className="w-4 h-4 mr-1.5" />
-                              {format(new Date(event.start_time), "h:mm a")} 
-                              {event.end_time && event.start_time !== event.end_time && ` - ${format(new Date(event.end_time), "h:mm a")}`}
+                              {format(new Date(event.start_time), "h:mm a 'IST'")}
+                              {event.end_time && event.start_time !== event.end_time && ` - ${format(new Date(event.end_time), "h:mm a 'IST'")}`}
                             </div>
                             {event.location && (
                               <div className="flex items-center">

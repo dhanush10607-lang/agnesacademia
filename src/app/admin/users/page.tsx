@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, Users } from "lucide-react";
 import { UserRoleSelect, UserStatusToggle, AcademicLockToggle } from "@/components/admin/UserControls";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 import Link from "next/link";
 
 export default async function AdminUsersPage({

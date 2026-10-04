@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database } from "lucide-react";
 import { CreateYearForm, ArchiveYearButton } from "@/components/admin/AcademicControls";
+import { format } from "@/lib/date-time";
 
 export default async function AdminAcademicYearsPage() {
   const supabase = await createClient();
@@ -59,10 +60,10 @@ export default async function AdminAcademicYearsPage() {
                       {year.programmes?.name || "N/A"}
                     </td>
                     <td className="px-6 py-4 font-mono text-muted-foreground">
-                      {year.start_date ? new Date(year.start_date).toLocaleDateString() : 'N/A'}
+                      {year.start_date ? format(new Date(year.start_date), "MMM d, yyyy") : 'N/A'}
                     </td>
                     <td className="px-6 py-4 font-mono text-muted-foreground">
-                      {year.end_date ? new Date(year.end_date).toLocaleDateString() : 'N/A'}
+                      {year.end_date ? format(new Date(year.end_date), "MMM d, yyyy") : 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <ArchiveYearButton id={year.id} />

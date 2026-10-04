@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { parseDateTimeLocalInIST } from "@/lib/date-time";
 
 export async function createAssignmentAction(formData: FormData) {
   const supabase = await createClient();
@@ -58,7 +59,7 @@ export async function createAssignmentAction(formData: FormData) {
         instructions,
         subject_id: subjectId,
         created_by: user.id,
-        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        due_date: dueDate ? parseDateTimeLocalInIST(dueDate).toISOString() : null,
         file_path: filePath,
         status,
       });

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Bell, Calendar as CalendarIcon, ChevronRight, Filter } from "lucide-react";
 import Link from "next/link";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow, format } from "@/lib/date-time";
 
 export default async function NoticesPage({
   searchParams,

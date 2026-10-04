@@ -7,7 +7,7 @@ import {
   Accessibility, Bell, Shield, Settings, ChevronRight 
 } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 
 export default async function ProfilePage() {
   const supabase = await createClient();

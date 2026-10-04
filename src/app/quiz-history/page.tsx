@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { BrainCircuit, Clock, CheckCircle, XCircle, ChevronRight, History } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 
 export default async function QuizHistoryPage() {
   const supabase = await createClient();
@@ -63,7 +63,7 @@ export default async function QuizHistoryPage() {
                       <div className="flex min-w-0 items-start text-sm text-muted-foreground">
                         <Clock className="mr-1 mt-0.5 h-4 w-4 shrink-0" />
                         <span className="break-words [overflow-wrap:anywhere]">
-                          {format(new Date(attempt.started_at), "MMM d, yyyy 'at' h:mm a")}
+                          {format(new Date(attempt.started_at), "MMM d, yyyy 'at' h:mm a 'IST'")}
                         </span>
                       </div>
                     </div>

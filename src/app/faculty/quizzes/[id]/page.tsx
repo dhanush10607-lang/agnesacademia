@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { QuizMonitorRefresh } from "@/components/QuizMonitorRefresh";
 import { ChevronLeft, Clock, Eye, Users } from "lucide-react";
+import { format } from "@/lib/date-time";
 
 export default async function QuizMonitorPage({
   params,
@@ -112,12 +113,12 @@ export default async function QuizMonitorPage({
                   return (
                     <tr key={attempt.id} className="align-top">
                       <td className="px-4 py-4 font-medium">{student?.full_name || "Student"}</td>
-                      <td className="px-4 py-4 text-muted-foreground">{new Date(attempt.started_at).toLocaleString()}</td>
+                      <td className="px-4 py-4 text-muted-foreground">{format(new Date(attempt.started_at), "MMM d, yyyy h:mm a 'IST'")}</td>
                       <td className="px-4 py-4">
                         <Badge variant={attempt.status === "completed" ? "outline" : "secondary"} className="capitalize">
                           {expired ? "Time expired" : attempt.status.replace("_", " ")}
                         </Badge>
-                        {attempt.completed_at && <div className="mt-1 text-xs text-muted-foreground">Submitted {new Date(attempt.completed_at).toLocaleString()}</div>}
+                        {attempt.completed_at && <div className="mt-1 text-xs text-muted-foreground">Submitted {format(new Date(attempt.completed_at), "MMM d, yyyy h:mm a 'IST'")}</div>}
                       </td>
                       <td className="px-4 py-4">{answeredCountByAttempt.get(attempt.id) || 0} / {quiz.questions?.length || 0}</td>
                       <td className="px-4 py-4">

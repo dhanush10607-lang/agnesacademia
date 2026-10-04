@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "@/lib/date-time";
 import { ExternalLink, Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";

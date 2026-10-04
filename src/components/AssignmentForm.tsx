@@ -99,7 +99,7 @@ export function AssignmentForm({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="due_date">Due Date</Label>
+          <Label htmlFor="due_date">Due Date (IST)</Label>
           <Input id="due_date" name="due_date" type="datetime-local" />
         </div>
         <div className="space-y-2">

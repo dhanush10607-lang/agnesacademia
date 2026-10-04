@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ScrollReveal, AnimateList, AnimateItem } from "@/lib/motion";
 import { ChevronRight, Sparkles } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 import { Badge } from "@/components/ui/badge";
 
 export async function RecentlyAddedSection() {

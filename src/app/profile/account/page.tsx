@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Settings, AlertTriangle, LogOut } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 import { logout } from "@/app/actions/auth";
 import { DeleteAccountForm } from "./DeleteAccountForm";
 

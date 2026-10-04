@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { format } from "@/lib/date-time";
 import Link from "next/link";
 
 export default async function AdminNotificationHistoryPage() {
@@ -102,7 +103,7 @@ export default async function AdminNotificationHistoryPage() {
                         <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">{item.category}</div>
                       </td>
                       <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">
-                        {new Date(item.created_at).toLocaleString()}
+                        {format(new Date(item.created_at), "MMM d, yyyy h:mm a 'IST'")}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium

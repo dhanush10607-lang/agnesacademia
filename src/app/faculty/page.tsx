@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { BookOpen, FileText, UploadCloud, FileEdit, Bell, User, Clock, CheckCircle, ClipboardList, BrainCircuit, Megaphone, CalendarDays } from "lucide-react";
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "@/lib/date-time";
 
 export default async function FacultyDashboardPage() {
   const supabase = await createClient();

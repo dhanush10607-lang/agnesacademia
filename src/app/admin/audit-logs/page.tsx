@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollText, Filter } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 
 export default async function AuditLogsPage({
   searchParams,
@@ -55,7 +55,7 @@ export default async function AuditLogsPage({
                 logs.map(log => (
                   <tr key={log.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
-                      {format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss")}
+                      {format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss 'IST'")}
                     </td>
                     <td className="px-6 py-4 font-medium">
                       {(log.actor as any)?.full_name || 'System'}

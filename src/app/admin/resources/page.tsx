@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Layers } from "lucide-react";
 import { ResourceStatusSelect } from "@/components/admin/ResourceControls";
 import { ProcessAIButton } from "@/components/admin/ProcessAIButton";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 
 export default async function AdminResourcesPage({
   searchParams,

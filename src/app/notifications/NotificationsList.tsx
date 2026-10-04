@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "@/lib/date-time";
 import { markNotificationReadAction, markAllNotificationsReadAction } from "@/app/actions/notifications";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

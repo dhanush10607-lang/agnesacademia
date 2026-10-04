@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PasskeySettings } from "@/components/auth/PasskeySettings";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 import { getCurriculumSemesterSubjects } from "@/lib/curriculumSubjects";
 
 export default async function DashboardPage() {

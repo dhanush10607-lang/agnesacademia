@@ -97,12 +97,12 @@ export function EventForm({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="start_time">Start Date & Time <span className="text-red-500">*</span></Label>
+          <Label htmlFor="start_time">Start Date & Time (IST) <span className="text-red-500">*</span></Label>
           <Input id="start_time" name="start_time" type="datetime-local" required />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="end_time">End Date & Time <span className="text-red-500">*</span></Label>
+          <Label htmlFor="end_time">End Date & Time (IST) <span className="text-red-500">*</span></Label>
           <Input id="end_time" name="end_time" type="datetime-local" required />
         </div>
       </div>

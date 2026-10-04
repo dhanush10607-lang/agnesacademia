@@ -5,7 +5,7 @@ import { FileText, Clock, CheckCircle, XCircle, Archive, AlertCircle } from "luc
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default async function MySubmissionsPage() {

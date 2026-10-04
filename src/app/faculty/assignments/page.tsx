@@ -5,7 +5,7 @@ import { FileEdit, Calendar, CheckCircle, ChevronLeft, Edit, Clock, ClipboardLis
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow, format } from "@/lib/date-time";
 
 export default async function FacultyAssignmentsPage() {
   const supabase = await createClient();
@@ -68,7 +68,7 @@ export default async function FacultyAssignmentsPage() {
                       {assignment.due_date && (
                         <span className="flex items-center text-orange-600 dark:text-orange-400">
                           <Calendar className="w-3 h-3 mr-1" />
-                          Due: {format(new Date(assignment.due_date), "MMM d, yyyy h:mm a")}
+                          Due: {format(new Date(assignment.due_date), "MMM d, yyyy h:mm a 'IST'")}
                         </span>
                       )}
                       <span className="flex items-center">

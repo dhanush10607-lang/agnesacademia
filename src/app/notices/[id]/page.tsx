@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Bell, Calendar, ChevronLeft, Paperclip, User, FileText } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 
 export default async function NoticeDetailPage({
   params,

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, TrendingUp, Download, Eye, Clock } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 
 export default async function AdminAnalyticsPage({
   searchParams,
@@ -139,7 +139,7 @@ export default async function AdminAnalyticsPage({
               {recentActivity?.map((act, i) => (
                 <tr key={i} className="border-b border-border/50 hover:bg-muted/10">
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                    {format(new Date(act.viewed_at), "MMM d, HH:mm")}
+                    {format(new Date(act.viewed_at), "MMM d, HH:mm 'IST'")}
                   </td>
                   <td className="px-4 py-3 font-medium">
                     {(act.profile as any)?.full_name || 'Unknown'}

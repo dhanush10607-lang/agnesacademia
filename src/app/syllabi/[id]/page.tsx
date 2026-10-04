@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, FileText, Download, BookOpen, Clock, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 import { TrackView } from "@/components/TrackView";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { checkIsBookmarked } from "@/app/actions/bookmarks";

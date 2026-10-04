@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Search, Filter, BookOpen, FileText, Database, Layers, Layout, Video, CheckCircle2, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format } from "@/lib/date-time";
 import { GlobalSearchBar } from "@/components/search/GlobalSearchBar";
 
 export default async function SearchPage({
