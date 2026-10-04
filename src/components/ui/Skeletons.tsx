@@ -282,6 +282,71 @@ export function LandingPageSkeleton() {
   );
 }
 
+export function DepartmentListingSkeleton() {
+  return (
+    <div className="container mx-auto max-w-5xl px-4 py-12" role="status">
+      <span className="sr-only">Loading departments</span>
+      <div className="mb-12 space-y-4">
+        <Sk className="h-6 w-36 rounded-full" />
+        <Sk className="h-10 w-80 max-w-full" />
+        <Sk className="h-5 w-full max-w-xl" />
+      </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <Sk className="h-5 w-3/4" />
+              <Sk className="h-5 w-5 shrink-0 rounded-full" />
+            </div>
+            <div className="space-y-2">
+              <Sk className="h-3 w-full" />
+              <Sk className="h-3 w-4/5" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function DepartmentDetailSkeleton() {
+  return (
+    <div className="container mx-auto max-w-5xl px-4 py-8" role="status">
+      <span className="sr-only">Loading department details</span>
+      <div className="mb-8 flex items-center gap-2">
+        <Sk className="h-4 w-12" />
+        <Sk className="h-4 w-4 rounded-full" />
+        <Sk className="h-4 w-24" />
+        <Sk className="h-4 w-4 rounded-full" />
+        <Sk className="h-4 w-32 max-w-[30%]" />
+      </div>
+      <div className="mb-12 space-y-4">
+        <Sk className="h-4 w-40" />
+        <Sk className="h-10 w-80 max-w-full" />
+        <Sk className="h-5 w-full max-w-2xl" />
+        <Sk className="h-5 w-4/5 max-w-xl" />
+      </div>
+      <div className="mb-6 border-b border-border pb-2">
+        <Sk className="h-8 w-64 max-w-full" />
+      </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div key={index} className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <Sk className="h-5 w-3/4" />
+              <Sk className="h-5 w-5 shrink-0 rounded-full" />
+            </div>
+            <div className="space-y-2">
+              <Sk className="h-3 w-full" />
+              <Sk className="h-3 w-4/5" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Table Row Skeleton ────────────────────────────────────────────────
 export function TableRowSkeleton({ cols = 4 }: { cols?: number }) {
   return (
