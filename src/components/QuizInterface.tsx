@@ -46,6 +46,7 @@ export function QuizInterface({
   const answersRef = useRef(initialAnswers);
   const submittingRef = useRef(false);
   const autoSubmissionTriggeredRef = useRef(false);
+  const focusEventTriggeredRef = useRef(false);
   const handleFinalSubmit = useCallback(async () => {
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -87,23 +88,31 @@ export function QuizInterface({
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState !== "hidden") return;
-      void recordQuizFocusEventAction(attemptId).then(result => {
+      if (document.visibilityState !== "hidden" || focusEventTriggeredRef.current) return;
+      focusEventTriggeredRef.current = true;
+      void recordQuizFocusEventAction(attemptId, answersRef.current).then(result => {
         if (result.success && typeof result.tabSwitchCount === "number") {
           setTabSwitchCount(result.tabSwitchCount);
           setFocusMessage("");
+          if (result.autoSubmitted && result.attemptId) {
+            router.push(`/quizzes/${quiz.id}/result?attempt=${result.attemptId}`);
+          } else {
+            void handleFinalSubmit();
+          }
         } else if (result.error) {
+          focusEventTriggeredRef.current = false;
           setFocusMessage(result.error);
         }
       }).catch(error => {
         console.error("Could not record quiz tab-switch event:", error);
+        focusEventTriggeredRef.current = false;
         setFocusMessage("A tab switch could not be recorded.");
       });
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [attemptId]);
+  }, [attemptId, handleFinalSubmit, quiz.id, router]);
 
   const handleSelectOption = (optionId: string) => {
     const questionId = questions[currentIdx]?.id;
@@ -173,7 +182,7 @@ export function QuizInterface({
           )}
           {focusMessage && <p role="alert" className="text-sm text-red-600">{focusMessage}</p>}
           <p className="text-xs text-muted-foreground">
-            Tab switches are recorded for faculty review and are not, by themselves, proof of misconduct.
+            Switching to another tab or app automatically submits your saved answers. Incoming calls and other mobile interruptions may also trigger submission, depending on the device and browser.
             {tabSwitchCount > 0 && ` Recorded switches: ${tabSwitchCount}.`}
           </p>
 

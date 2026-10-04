@@ -144,14 +144,32 @@ export async function saveQuizAnswerAction(
   return { success: true };
 }
 
-export async function recordQuizFocusEventAction(attemptId: string): Promise<ActionResult & { tabSwitchCount?: number }> {
-  if (!isUuid(attemptId)) return { success: false, error: "Invalid quiz attempt." };
+export async function recordQuizFocusEventAction(
+  attemptId: string,
+  answers: Record<string, string>,
+): Promise<
+  ActionResult & { tabSwitchCount?: number; autoSubmitted?: boolean; attemptId?: string }
+> {
+  if (!isUuid(attemptId) || !answers || typeof answers !== "object" || Array.isArray(answers)) {
+    return { success: false, error: "Invalid quiz attempt." };
+  }
+
+  const submittedAnswers: Record<string, string> = {};
+  for (const [questionId, optionId] of Object.entries(answers)) {
+    if (!isUuid(questionId) || !isUuid(optionId)) {
+      return { success: false, error: "Invalid quiz answers." };
+    }
+    submittedAnswers[questionId] = optionId;
+  }
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Sign in to continue this quiz." };
 
-  const { data, error } = await supabase.rpc("record_quiz_focus_event", { p_attempt_id: attemptId });
+  const { data, error } = await supabase.rpc("record_quiz_focus_event", {
+    p_attempt_id: attemptId,
+    p_answers: submittedAnswers,
+  });
   if (error) {
     console.error("Quiz focus event RPC failed:", error);
     return { success: false, error: "The focus event could not be recorded." };
@@ -163,6 +181,8 @@ export async function recordQuizFocusEventAction(attemptId: string): Promise<Act
   return {
     success: true,
     tabSwitchCount: typeof data.tabSwitchCount === "number" ? data.tabSwitchCount : undefined,
+    autoSubmitted: data.autoSubmitted === true,
+    attemptId: typeof data.attemptId === "string" ? data.attemptId : undefined,
   };
 }
 
