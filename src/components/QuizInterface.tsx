@@ -47,10 +47,13 @@ export function QuizInterface({
   const [saveMessage, setSaveMessage] = useState("");
   const [tabSwitchCount, setTabSwitchCount] = useState(initialTabSwitchCount);
   const [focusMessage, setFocusMessage] = useState("");
+  const [connectionLost, setConnectionLost] = useState(false);
+  const [isBrowserOnline, setIsBrowserOnline] = useState(true);
   const answersRef = useRef(initialAnswers);
   const submittingRef = useRef(false);
   const autoSubmissionTriggeredRef = useRef(false);
   const focusEventTriggeredRef = useRef(false);
+  const offlineSubmissionPendingRef = useRef(false);
   const handleFinalSubmit = useCallback(async () => {
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -60,6 +63,7 @@ export function QuizInterface({
     try {
       const result = await submitQuizAction(attemptId, answersRef.current);
       if (result.success && result.attemptId) {
+        offlineSubmissionPendingRef.current = false;
         router.push(`/quizzes/${quiz.id}/result?attempt=${result.attemptId}`);
         return;
       }
@@ -71,6 +75,27 @@ export function QuizInterface({
     submittingRef.current = false;
     setIsSubmitting(false);
   }, [attemptId, quiz.id, router]);
+
+  useEffect(() => {
+    const handleOffline = () => {
+      offlineSubmissionPendingRef.current = true;
+      setIsBrowserOnline(false);
+      setConnectionLost(true);
+    };
+    const handleOnline = () => {
+      setIsBrowserOnline(true);
+      if (offlineSubmissionPendingRef.current) void handleFinalSubmit();
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    if (!navigator.onLine) handleOffline();
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [handleFinalSubmit]);
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -323,6 +348,33 @@ export function QuizInterface({
           </Card>
         </div>
       </main>
+      {connectionLost && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="connection-lost-title"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-background/95 p-4 backdrop-blur-sm"
+        >
+          <Card className="w-full max-w-md">
+            <CardContent className="space-y-4 p-6 text-center">
+              <h2 id="connection-lost-title" className="text-xl font-bold">Quiz connection lost</h2>
+              <p className="text-sm text-muted-foreground">
+                The quiz is locked. Your saved answers will be submitted when the connection returns.
+              </p>
+              {saveMessage && (
+                <p role="status" className="text-sm text-red-600">{saveMessage}</p>
+              )}
+              <Button
+                className="w-full"
+                onClick={() => void handleFinalSubmit()}
+                disabled={!isBrowserOnline || isSubmitting}
+              >
+                {isSubmitting ? "Submitting…" : isBrowserOnline ? "Retry submission" : "Waiting for connection…"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
