@@ -1,4 +1,4 @@
-import { ResourceCardSkeleton } from "@/components/ui/Skeletons";
+import { ResourceListItemSkeleton } from "@/components/ui/Skeletons";
 
 export default function ResourcesLoading() {
   return (
@@ -9,15 +9,26 @@ export default function ResourcesLoading() {
         <div className="skeleton h-4 w-80 max-w-full" />
       </div>
       <div className="flex flex-col gap-8 lg:flex-row">
-        <aside className="hidden w-64 shrink-0 space-y-4 lg:block">
-          <div className="skeleton h-6 w-24" />
-          <div className="skeleton h-10 w-full" />
-          <div className="skeleton h-10 w-full" />
+        <aside className="w-full shrink-0 lg:w-64">
+          <div className="mb-4 space-y-4 rounded-xl border border-border bg-card p-4 lg:hidden">
+            <div className="skeleton h-5 w-24" />
+            <div className="skeleton h-4 w-32" />
+          </div>
+          <div className="hidden space-y-4 rounded-xl border border-border bg-card p-5 lg:block">
+            <div className="skeleton h-6 w-24" />
+            <div className="skeleton h-3 w-16" />
+            <div className="skeleton h-10 w-full rounded-md" />
+            <div className="skeleton h-3 w-20" />
+            <div className="skeleton h-10 w-full rounded-md" />
+          </div>
         </aside>
         <main className="min-w-0 flex-1 space-y-4">
-          <div className="skeleton h-11 w-full" />
+          <div className="flex items-center justify-between py-1">
+            <div className="skeleton h-6 w-36" />
+            <div className="skeleton h-4 w-20" />
+          </div>
           {Array.from({ length: 5 }, (_, index) => (
-            <ResourceCardSkeleton key={index} />
+            <ResourceListItemSkeleton key={index} />
           ))}
         </main>
       </div>
