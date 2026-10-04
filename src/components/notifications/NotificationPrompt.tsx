@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { getMessagingForUser, requestForToken } from "@/lib/firebase/client";
+import { getMessagingForUser, refreshForToken, requestForToken } from "@/lib/firebase/client";
 import { registerDeviceAction } from "@/app/actions/notifications";
 import { recordCurrentSessionAction } from "@/app/actions/sessions";
 import { createClient } from "@/lib/supabase/client";
@@ -162,16 +162,14 @@ export function NotificationPrompt() {
       const previousRegistration = readReg();
       const switchedAccounts =
         previousRegistration !== null && previousRegistration.userId !== userId;
-      const token = await requestForToken(userId);
+      const token = switchedAccounts
+        ? await refreshForToken(userId)
+        : await requestForToken(userId);
       if (cancelled || !token) return;
-
-      if (switchedAccounts && token === previousRegistration.token) {
-        console.warn("Could not generate a new push token for the signed-in user.");
-        return;
-      }
 
       const prev = previousRegistration;
       const needsRegister =
+        switchedAccounts ||                 // bind this device to the newly signed-in user
         !prev ||
         prev.token !== token ||            // FCM rotated the token
         !deviceCookieMatches(token) ||     // logged out since (device was deactivated)
