@@ -5,37 +5,73 @@ import { Search, X, Clock, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { getRecentSearches, clearSearchHistory, saveSearchQuery } from "@/app/actions/search";
 
+type SearchSuggestion = {
+  id: string;
+  title: string;
+  item_type: string;
+  subject_name: string | null;
+};
+
 export function GlobalSearchBar({ initialQuery = "", className = "", hiddenInputs = {} }: { initialQuery?: string, className?: string, hiddenInputs?: Record<string, string> }) {
   const [query, setQuery] = useState(initialQuery);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestionError, setSuggestionError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const searchHref = (searchQuery: string) => {
+    const params = new URLSearchParams();
+    params.set("q", searchQuery);
+    Object.entries(hiddenInputs).forEach(([key, value]) => {
+      if (value && value !== "all") params.set(key, value);
+    });
+    return `/search?${params.toString()}`;
+  };
+
+  const clearQuery = () => {
+    setQuery("");
+    inputRef.current?.focus();
+  };
 
   // Debounce setup
   useEffect(() => {
+    const controller = new AbortController();
     if (query.trim().length < 2) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       setIsLoading(false);
+      setSuggestionError(false);
       return;
     }
 
     setIsLoading(true);
+    setSuggestionError(false);
     const delay = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error(`Search suggestions failed (${res.status}).`);
         const data = await res.json();
         setSuggestions(data.suggestions || []);
       } catch (err) {
-        console.error(err);
+        if (controller.signal.aborted) return;
+        console.error("Could not load search suggestions:", err);
+        setSuggestions([]);
+        setSuggestionError(true);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     }, 300);
 
-    return () => clearTimeout(delay);
+    return () => {
+      clearTimeout(delay);
+      controller.abort();
+    };
   }, [query]);
 
   // Fetch recent searches
@@ -60,28 +96,50 @@ export function GlobalSearchBar({ initialQuery = "", className = "", hiddenInput
     setRecentSearches([]);
   };
 
-  const showDropdown = isFocused && (query.length > 0 ? (suggestions.length > 0 || isLoading) : recentSearches.length > 0);
+  const showDropdown = isFocused && (
+    query.trim().length >= 2 || (query.length === 0 && recentSearches.length > 0)
+  );
 
   return (
     <div ref={wrapperRef} className={`relative ${className}`}>
-      <form action="/search" method="GET" onSubmit={() => saveSearchQuery(query)} suppressHydrationWarning>
+      <form
+        action="/search"
+        method="GET"
+        onSubmit={() => {
+          setIsSubmitting(true);
+          void saveSearchQuery(query);
+        }}
+        suppressHydrationWarning
+      >
         {Object.entries(hiddenInputs).map(([k, v]) => (
           <input key={k} type="hidden" name={k} value={v} suppressHydrationWarning />
         ))}
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <input 
+        <input
+          ref={inputRef}
           name="q" 
           type="text" 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
+          aria-label="Search academic resources"
           placeholder="Search notes, subjects, question papers, topics..." 
-          className="w-full h-14 pl-12 pr-4 rounded-xl border-2 border-primary/20 bg-card focus:border-primary focus:ring-0 text-lg shadow-sm transition-all"
+          className="w-full h-14 pl-12 pr-28 rounded-xl border-2 border-primary/20 bg-card focus:border-primary focus:ring-0 text-base sm:text-lg shadow-sm transition-all"
           autoComplete="off"
           suppressHydrationWarning
         />
-        <button type="submit" suppressHydrationWarning className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
-          Search
+        {query && (
+          <button
+            type="button"
+            aria-label="Clear search query"
+            onClick={clearQuery}
+            className="absolute right-[5.5rem] top-1/2 -translate-y-1/2 rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+        <button type="submit" disabled={isSubmitting} suppressHydrationWarning className="absolute right-2 top-1/2 -translate-y-1/2 min-w-16 px-3 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-70 transition-colors">
+          {isSubmitting ? "Searching…" : "Search"}
         </button>
       </form>
 
@@ -92,12 +150,16 @@ export function GlobalSearchBar({ initialQuery = "", className = "", hiddenInput
           {query.length > 0 ? (
             <div className="py-2">
               {isLoading ? (
-                <div className="px-4 py-3 text-sm text-muted-foreground">Searching...</div>
+                <div className="px-4 py-3 text-sm text-muted-foreground" role="status">Searching suggestions…</div>
+              ) : suggestionError ? (
+                <div className="px-4 py-3 text-sm text-muted-foreground" role="status">
+                  Suggestions are unavailable. Press Search to see results.
+                </div>
               ) : suggestions.length > 0 ? (
                 suggestions.map(s => (
                   <Link 
                     key={s.id + s.item_type} 
-                    href={`/search?q=${encodeURIComponent(s.title)}`}
+                    href={searchHref(s.title)}
                     onClick={() => { saveSearchQuery(s.title); setIsFocused(false); }}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
                   >
@@ -110,6 +172,10 @@ export function GlobalSearchBar({ initialQuery = "", className = "", hiddenInput
                     </div>
                   </Link>
                 ))
+              ) : query.trim().length >= 2 ? (
+                <div className="px-4 py-3 text-sm text-muted-foreground" role="status">
+                  No suggestions found. Press Search to see results.
+                </div>
               ) : null}
             </div>
           ) : (
@@ -121,7 +187,7 @@ export function GlobalSearchBar({ initialQuery = "", className = "", hiddenInput
               {recentSearches.map((r, i) => (
                 <Link 
                   key={i} 
-                  href={`/search?q=${encodeURIComponent(r)}`}
+                  href={searchHref(r)}
                   onClick={() => setIsFocused(false)}
                   className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors group"
                 >

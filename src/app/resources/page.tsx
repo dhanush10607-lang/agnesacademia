@@ -302,6 +302,11 @@ export default async function ResourcesSearchPage({
                     Clear Search & Filters
                   </Link>
                 )}
+                {!query && !categoryFilter && !subjectFilter && (
+                  <Link href="/search" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
+                    Search all academic content
+                  </Link>
+                )}
               </CardContent>
             </Card>
           )}

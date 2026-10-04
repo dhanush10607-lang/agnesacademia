@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Search, Filter, BookOpen, FileText, Database, Layers, Layout, Video, CheckCircle2, ChevronDown } from "lucide-react";
+import { Search, Filter, BookOpen, FileText, Database, Layers, Layout, CheckCircle2, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { format } from "@/lib/date-time";
 import { GlobalSearchBar } from "@/components/search/GlobalSearchBar";
@@ -14,7 +14,7 @@ export default async function SearchPage({
   const supabase = await createClient();
 
   // If no query, we show "Popular Discovery"
-  if (!q && type === "all") {
+  if (!q && type === "all" && !searchParamsObj.department && !searchParamsObj.programme && !searchParamsObj.semester) {
     // Discovery Mode
     const { data: popular } = await supabase
       .from("global_search")
@@ -75,13 +75,42 @@ export default async function SearchPage({
     );
   }
 
-  const { data: departments } = await supabase.from("departments").select("id, name").eq("status", "active");
-  const { data: programmes } = await supabase.from("programmes").select("id, name").eq("status", "active");
-  const { data: semesters } = await supabase.from("semesters").select("id, name").eq("status", "active");
-
   const deptFilter = searchParamsObj.department || "all";
   const progFilter = searchParamsObj.programme || "all";
-  const semFilter = searchParamsObj.semester || "all";
+  const requestedSemesterFilter = searchParamsObj.semester || "all";
+
+  const semestersQuery = supabase
+    .from("semesters")
+    .select("id, name")
+    .eq("status", "active");
+  if (progFilter !== "all") semestersQuery.eq("programme_id", progFilter);
+
+  const [
+    { data: departments },
+    { data: programmes },
+    { data: semesters },
+  ] = await Promise.all([
+    supabase.from("departments").select("id, name").eq("status", "active"),
+    supabase.from("programmes").select("id, name").eq("status", "active"),
+    semestersQuery,
+  ]);
+
+  const semFilter = semesters?.some(semester => semester.id === requestedSemesterFilter)
+    ? requestedSemesterFilter
+    : "all";
+  const activeFilters = [
+    type !== "all",
+    deptFilter !== "all",
+    progFilter !== "all",
+    semFilter !== "all",
+  ].filter(Boolean).length;
+  const clearFilterParams = new URLSearchParams();
+  if (q) clearFilterParams.set("q", q);
+  if (type !== "all") clearFilterParams.set("type", type);
+  if (sort !== "relevance") clearFilterParams.set("sort", sort);
+  const clearFiltersHref = clearFilterParams.size
+    ? `/search?${clearFilterParams.toString()}`
+    : "/search";
 
   // Active Search Mode
   let query = supabase
@@ -116,51 +145,78 @@ export default async function SearchPage({
       <aside className="w-full md:w-64 flex-shrink-0">
         <details className="group md:hidden mb-4 bg-card border border-border rounded-xl shadow-sm">
           <summary className="flex items-center justify-between p-4 font-bold text-lg cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-            <span className="flex items-center gap-2"><Filter className="w-5 h-5 text-primary" /> Filter Results</span>
+            <span className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-primary" /> Filter Results
+              {activeFilters > 0 && (
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                  {activeFilters} active
+                </span>
+              )}
+            </span>
             <ChevronDown className="w-5 h-5 transition-transform group-open:rotate-180" />
           </summary>
           <div className="p-4 pt-0 border-t border-border mt-2">
-            <FilterForm departments={departments} programmes={programmes} semesters={semesters} q={q} type={type} sort={sort} deptFilter={deptFilter} progFilter={progFilter} semFilter={semFilter} />
+            <FilterForm idPrefix="mobile" departments={departments} programmes={programmes} semesters={semesters} q={q} type={type} sort={sort} deptFilter={deptFilter} progFilter={progFilter} semFilter={semFilter} clearFiltersHref={clearFiltersHref} hasActiveFilters={activeFilters > 0} />
           </div>
         </details>
 
         <div className="hidden md:block sticky top-20 bg-card border border-border rounded-xl p-5 shadow-sm">
           <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Filter className="w-4 h-4" /> Filters</h3>
-          <FilterForm departments={departments} programmes={programmes} semesters={semesters} q={q} type={type} sort={sort} deptFilter={deptFilter} progFilter={progFilter} semFilter={semFilter} />
+          <FilterForm idPrefix="desktop" departments={departments} programmes={programmes} semesters={semesters} q={q} type={type} sort={sort} deptFilter={deptFilter} progFilter={progFilter} semFilter={semFilter} clearFiltersHref={clearFiltersHref} hasActiveFilters={activeFilters > 0} />
         </div>
       </aside>
 
       {/* Main Results Area */}
       <main className="flex-1">
         <div className="mb-8">
-          <GlobalSearchBar initialQuery={q} hiddenInputs={{ type, sort }} />
+          <GlobalSearchBar
+            initialQuery={q}
+            hiddenInputs={{
+              type,
+              sort,
+              department: deptFilter,
+              programme: progFilter,
+              semester: semFilter,
+            }}
+          />
         </div>
 
         <div className="mb-6 pb-4 border-b">
           <h2 className="text-xl font-bold">
             {q ? `Search results for "${q}"` : `${type !== 'all' ? type.replace('_', ' ') : 'All Resources'}`}
           </h2>
-          <p className="text-muted-foreground text-sm">{results?.length || 0} result(s) found</p>
+          <p className="text-muted-foreground text-sm">
+            {error ? "Search results could not be loaded." : `${results?.length || 0} result(s) found`}
+          </p>
         </div>
 
         {error && (
-          <div className="p-4 bg-destructive/10 text-destructive rounded-lg mb-6">
-            Error loading search results. {error.message}
+          <div className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive" role="alert">
+            <p>We couldn&apos;t load search results. Please try again.</p>
+            <Link
+              href={`/search?${new URLSearchParams(searchParamsObj as Record<string, string>).toString()}`}
+              className="mt-2 inline-flex font-semibold underline underline-offset-4"
+            >
+              Try again
+            </Link>
           </div>
         )}
 
         <div className="space-y-4">
-          {results && results.length > 0 ? (
+          {!error && results && results.length > 0 ? (
             results.map((item, idx) => (
               <SearchResultRow key={item.id + idx.toString()} item={item} query={q} />
             ))
-          ) : (
+          ) : !error ? (
             <div className="text-center py-20 text-muted-foreground">
               <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
               <h3 className="text-lg font-semibold mb-2">No results found</h3>
-              <p>Try adjusting your search query or filters to find what you're looking for.</p>
+              <p>Try adjusting your search query or filters to find what you&apos;re looking for.</p>
+              <Link href="/search" className="mt-4 inline-flex font-semibold text-primary hover:underline">
+                Clear search and filters
+              </Link>
             </div>
-          )}
+          ) : null}
         </div>
       </main>
     </div>
@@ -275,7 +331,33 @@ function EyeIcon(props: any) {
   );
 }
 
-function FilterForm({ departments, programmes, semesters, q, type, sort, deptFilter, progFilter, semFilter }: any) {
+function FilterForm({
+  idPrefix,
+  departments,
+  programmes,
+  semesters,
+  q,
+  type,
+  sort,
+  deptFilter,
+  progFilter,
+  semFilter,
+  clearFiltersHref,
+  hasActiveFilters,
+}: {
+  idPrefix: string;
+  departments: { id: string; name: string }[] | null;
+  programmes: { id: string; name: string }[] | null;
+  semesters: { id: string; name: string }[] | null;
+  q: string;
+  type: string;
+  sort: string;
+  deptFilter: string;
+  progFilter: string;
+  semFilter: string;
+  clearFiltersHref: string;
+  hasActiveFilters: boolean;
+}) {
   return (
     <form action="/search" method="GET" className="space-y-6">
       <input type="hidden" name="q" value={q} />
@@ -283,27 +365,27 @@ function FilterForm({ departments, programmes, semesters, q, type, sort, deptFil
       <div className="space-y-3">
         <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Category</h4>
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
+          <label className="flex min-h-10 items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
             <input type="radio" name="type" value="all" defaultChecked={type === "all"} className="text-primary focus:ring-primary" /> 
             All
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
+          <label className="flex min-h-10 items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
             <input type="radio" name="type" value="resource" defaultChecked={type === "resource"} className="text-primary focus:ring-primary" /> 
             Notes & Materials
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
+          <label className="flex min-h-10 items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
             <input type="radio" name="type" value="question_paper" defaultChecked={type === "question_paper"} className="text-primary focus:ring-primary" /> 
             Question Papers
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
+          <label className="flex min-h-10 items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
             <input type="radio" name="type" value="question_bank" defaultChecked={type === "question_bank"} className="text-primary focus:ring-primary" /> 
             Question Banks
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
+          <label className="flex min-h-10 items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
             <input type="radio" name="type" value="syllabus" defaultChecked={type === "syllabus"} className="text-primary focus:ring-primary" /> 
             Syllabus
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
+          <label className="flex min-h-10 items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors">
             <input type="radio" name="type" value="notice" defaultChecked={type === "notice"} className="text-primary focus:ring-primary" /> 
             Notices
           </label>
@@ -311,32 +393,32 @@ function FilterForm({ departments, programmes, semesters, q, type, sort, deptFil
       </div>
 
       <div className="space-y-3">
-        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Department</h4>
-        <select name="department" defaultValue={deptFilter} className="w-full p-2 rounded-md border bg-background text-sm">
+        <label htmlFor={`${idPrefix}-department`} className="block font-semibold text-sm uppercase tracking-wider text-muted-foreground">Department</label>
+        <select id={`${idPrefix}-department`} name="department" defaultValue={deptFilter} className="min-h-11 w-full rounded-md border bg-background p-2 text-sm">
           <option value="all">All Departments</option>
-          {departments?.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          {departments?.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}
         </select>
       </div>
 
       <div className="space-y-3">
-        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Programme</h4>
-        <select name="programme" defaultValue={progFilter} className="w-full p-2 rounded-md border bg-background text-sm">
+        <label htmlFor={`${idPrefix}-programme`} className="block font-semibold text-sm uppercase tracking-wider text-muted-foreground">Programme</label>
+        <select id={`${idPrefix}-programme`} name="programme" defaultValue={progFilter} className="min-h-11 w-full rounded-md border bg-background p-2 text-sm">
           <option value="all">All Programmes</option>
-          {programmes?.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {programmes?.map((programme) => <option key={programme.id} value={programme.id}>{programme.name}</option>)}
         </select>
       </div>
 
       <div className="space-y-3">
-        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Semester</h4>
-        <select name="semester" defaultValue={semFilter} className="w-full p-2 rounded-md border bg-background text-sm">
+        <label htmlFor={`${idPrefix}-semester`} className="block font-semibold text-sm uppercase tracking-wider text-muted-foreground">Semester</label>
+        <select id={`${idPrefix}-semester`} name="semester" defaultValue={semFilter} className="min-h-11 w-full rounded-md border bg-background p-2 text-sm">
           <option value="all">All Semesters</option>
-          {semesters?.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          {semesters?.map((semester) => <option key={semester.id} value={semester.id}>{semester.name}</option>)}
         </select>
       </div>
 
       <div className="space-y-3">
-        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Sort By</h4>
-        <select name="sort" defaultValue={sort} className="w-full p-2 rounded-md border bg-background text-sm">
+        <label htmlFor={`${idPrefix}-sort`} className="block font-semibold text-sm uppercase tracking-wider text-muted-foreground">Sort By</label>
+        <select id={`${idPrefix}-sort`} name="sort" defaultValue={sort} className="min-h-11 w-full rounded-md border bg-background p-2 text-sm">
           <option value="relevance">Relevance</option>
           <option value="newest">Newest</option>
           <option value="most_viewed">Most Viewed</option>
@@ -344,9 +426,19 @@ function FilterForm({ departments, programmes, semesters, q, type, sort, deptFil
         </select>
       </div>
       
-      <button type="submit" className="w-full py-2 bg-primary/10 text-primary rounded-md font-medium hover:bg-primary/20 transition-colors">
-        Apply Filters
-      </button>
+      <div className="flex flex-col gap-2">
+        <button type="submit" className="w-full min-h-11 rounded-md bg-primary/10 py-2 font-medium text-primary transition-colors hover:bg-primary/20">
+          Apply Filters
+        </button>
+        {hasActiveFilters && (
+          <Link
+            href={clearFiltersHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            Clear filters
+          </Link>
+        )}
+      </div>
     </form>
   );
 }
