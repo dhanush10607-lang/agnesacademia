@@ -24,7 +24,8 @@ export default async function AcademicInfoPage() {
       programme:programmes(name),
       curriculum:curricula(name),
       semester:semesters(name),
-      academic_year:academic_years(name)
+      academic_year:academic_years(name),
+      academic_session:academic_sessions(name)
     `)
     .eq("id", user.id)
     .single();
@@ -125,9 +126,15 @@ export default async function AcademicInfoPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Academic Year</dt>
+              <dt className="text-sm font-medium text-muted-foreground">Study Year</dt>
               <dd className="mt-1 text-base font-semibold text-foreground">
                 {profile.academic_year?.name || "Not set"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Academic Session</dt>
+              <dd className="mt-1 text-base font-semibold text-foreground">
+                {profile.academic_session?.name || "Not set"}
               </dd>
             </div>
             <div>

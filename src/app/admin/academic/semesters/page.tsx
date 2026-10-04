@@ -8,13 +8,17 @@ export default async function AdminSemestersPage() {
 
   const { data: semesters } = await supabase
     .from("semesters")
-    .select("*, academic_year:academic_years(name), programme:programmes(name)")
+    .select("*, academic_year:academic_years(name), academic_session:academic_sessions(name), programme:programmes(name)")
     .eq("status", "active")
     .order("name", { ascending: true });
 
   const { data: programmes } = await supabase.from("programmes").select("id, name").eq("status", "active");
   const { data: years } = await supabase
     .from("academic_years")
+    .select("id, name, programme_id")
+    .eq("status", "active");
+  const { data: sessions } = await supabase
+    .from("academic_sessions")
     .select("id, name, programme_id")
     .eq("status", "active");
 
@@ -32,7 +36,7 @@ export default async function AdminSemestersPage() {
           <CardTitle className="text-lg">Add New Semester</CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <CreateSemesterForm programmes={programmes || []} years={years || []} />
+          <CreateSemesterForm programmes={programmes || []} years={years || []} sessions={sessions || []} />
         </CardContent>
       </Card>
 
@@ -43,7 +47,8 @@ export default async function AdminSemestersPage() {
               <tr>
                 <th className="px-6 py-4 font-semibold">Semester Name</th>
                 <th className="px-6 py-4 font-semibold">Programme</th>
-                <th className="px-6 py-4 font-semibold">Academic Year</th>
+                <th className="px-6 py-4 font-semibold">Study Year</th>
+                <th className="px-6 py-4 font-semibold">Session</th>
                 <th className="px-6 py-4 font-semibold text-right">Status</th>
               </tr>
             </thead>
@@ -60,6 +65,9 @@ export default async function AdminSemestersPage() {
                     <td className="px-6 py-4 text-muted-foreground">
                       {(sem.academic_year as any)?.name || '-'}
                     </td>
+                    <td className="px-6 py-4 text-muted-foreground">
+                      {(sem.academic_session as { name: string } | null)?.name || '-'}
+                    </td>
                     <td className="px-6 py-4 text-right">
                       <ArchiveSemesterButton id={sem.id} />
                     </td>
@@ -67,7 +75,7 @@ export default async function AdminSemestersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                  <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                     No active semesters found.
                   </td>
                 </tr>

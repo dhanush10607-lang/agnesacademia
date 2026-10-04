@@ -3,6 +3,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
+
+async function isAdministrator(supabase: ServerSupabaseClient, userId: string) {
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  return !error && profile?.role === "administrator";
+}
+
 export async function createDepartmentAction(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -117,17 +128,71 @@ export async function createYearAction(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Not authenticated" };
+  if (!(await isAdministrator(supabase, user.id))) {
+    return { success: false, error: "Unauthorized" };
+  }
 
-  const name = formData.get("name") as string;
-  const programme_id = formData.get("programme_id") as string;
-  const start_date = formData.get("start_date") as string;
-  const end_date = formData.get("end_date") as string;
+  const nameValue = formData.get("name");
+  const programmeValue = formData.get("programme_id");
+  const allowedYears = ["I Year", "II Year", "III Year"];
+  if (typeof nameValue !== "string" || !allowedYears.includes(nameValue)) {
+    return { success: false, error: "Select a valid study year." };
+  }
+  if (typeof programmeValue !== "string" || !programmeValue) {
+    return { success: false, error: "Select a programme." };
+  }
+  const name = nameValue;
+  const programme_id = programmeValue;
 
   try {
-    const { data: y, error } = await supabase.from("academic_years").insert({ name, programme_id, start_date, end_date }).select().single();
+    const { data: programme, error: programmeError } = await supabase
+      .from("programmes")
+      .select("id")
+      .eq("id", programme_id)
+      .eq("status", "active")
+      .single();
+    if (programmeError || !programme) {
+      return { success: false, error: "Select an active programme." };
+    }
+
+    const { data: existingYear, error: existingYearError } = await supabase
+      .from("academic_years")
+      .select("id, status")
+      .eq("programme_id", programme_id)
+      .eq("name", name)
+      .maybeSingle();
+    if (existingYearError) throw existingYearError;
+    if (existingYear?.status === "active") {
+      return { success: false, error: "That study year already exists for this programme." };
+    }
+
+    if (existingYear) {
+      const { error } = await supabase
+        .from("academic_years")
+        .update({ status: "active" })
+        .eq("id", existingYear.id);
+      if (error) throw error;
+      await supabase.from("admin_audit_logs").insert({
+        actor_id: user.id,
+        action: "restore",
+        target_type: "academic_year",
+        target_id: existingYear.id,
+        metadata: { name },
+      });
+      revalidatePath("/admin/academic/years");
+      revalidatePath("/admin/academic/semesters");
+      return { success: true };
+    }
+
+    const { data: y, error } = await supabase
+      .from("academic_years")
+      .insert({ name, programme_id })
+      .select()
+      .single();
     if (error) throw error;
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'create', target_type: 'academic_year', target_id: y.id, metadata: { name } });
     revalidatePath("/admin/academic/years");
+    revalidatePath("/admin/academic/semesters");
     return { success: true };
   } catch (error) { return { success: false, error: error instanceof Error ? error.message : JSON.stringify(error) }; }
 }
@@ -136,6 +201,9 @@ export async function archiveYearAction(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Not authenticated" };
+  if (!(await isAdministrator(supabase, user.id))) {
+    return { success: false, error: "Unauthorized" };
+  }
 
   try {
     await supabase.from("academic_years").update({ status: 'archived' }).eq("id", id);
@@ -145,19 +213,135 @@ export async function archiveYearAction(id: string) {
   } catch (error) { return { success: false, error: "Failed" }; }
 }
 
+export async function createAcademicSessionAction(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Not authenticated" };
+  if (!(await isAdministrator(supabase, user.id))) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const nameValue = formData.get("name");
+  const programmeValue = formData.get("programme_id");
+  const startDateValue = formData.get("start_date");
+  const endDateValue = formData.get("end_date");
+  if (typeof nameValue !== "string" || !/^\d{4}-\d{4}$/.test(nameValue)) {
+    return { success: false, error: "Session name must use the YYYY-YYYY format." };
+  }
+  if (typeof programmeValue !== "string" || !programmeValue) {
+    return { success: false, error: "Select a programme." };
+  }
+  if (typeof startDateValue !== "string" || typeof endDateValue !== "string" ||
+      !startDateValue || !endDateValue || startDateValue > endDateValue) {
+    return { success: false, error: "Enter a valid session date range." };
+  }
+
+  try {
+    const { data: programme, error: programmeError } = await supabase
+      .from("programmes")
+      .select("id")
+      .eq("id", programmeValue)
+      .eq("status", "active")
+      .single();
+    if (programmeError || !programme) {
+      return { success: false, error: "Select an active programme." };
+    }
+
+    const { data: session, error } = await supabase
+      .from("academic_sessions")
+      .insert({
+        name: nameValue,
+        programme_id: programmeValue,
+        start_date: startDateValue,
+        end_date: endDateValue,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+
+    await supabase.from("admin_audit_logs").insert({
+      actor_id: user.id,
+      action: "create",
+      target_type: "academic_session",
+      target_id: session.id,
+      metadata: { name: nameValue },
+    });
+    revalidatePath("/admin/academic/years");
+    return { success: true };
+  } catch (error) {
+    console.error("Create academic session error:", error);
+    return { success: false, error: "Failed to create academic session." };
+  }
+}
+
+export async function archiveAcademicSessionAction(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Not authenticated" };
+  if (!(await isAdministrator(supabase, user.id))) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const { error } = await supabase
+      .from("academic_sessions")
+      .update({ status: "archived", updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) throw error;
+
+    await supabase.from("admin_audit_logs").insert({
+      actor_id: user.id,
+      action: "archive",
+      target_type: "academic_session",
+      target_id: id,
+    });
+    revalidatePath("/admin/academic/years");
+    return { success: true };
+  } catch (error) {
+    console.error("Archive academic session error:", error);
+    return { success: false, error: "Failed to archive academic session." };
+  }
+}
+
 export async function createSemesterAction(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Not authenticated" };
+  if (!(await isAdministrator(supabase, user.id))) {
+    return { success: false, error: "Unauthorized" };
+  }
 
-  const name = formData.get("name") as string;
-  const programme_id = formData.get("programme_id") as string;
-  const academic_year_id = formData.get("academic_year_id") as string;
+  const nameValue = formData.get("name");
+  const programmeValue = formData.get("programme_id");
+  const yearValue = formData.get("academic_year_id");
+  const sessionValue = formData.get("academic_session_id");
+  if (typeof nameValue !== "string" || !nameValue.trim()) {
+    return { success: false, error: "Semester name is required." };
+  }
+  if (typeof programmeValue !== "string" || !programmeValue ||
+      typeof yearValue !== "string" || !yearValue ||
+      typeof sessionValue !== "string" || !sessionValue) {
+    return { success: false, error: "Select a programme, study year, and academic session." };
+  }
+  const name = nameValue.trim();
+  const programme_id = programmeValue;
+  const academic_year_id = yearValue;
+  const academic_session_id = sessionValue;
+  const normalizedSemester = name.trim().toLowerCase().match(/^semester\s+(1|2|3|4|5|6|i|ii|iii|iv|v|vi)$/)?.[1];
+  const semesterYear = normalizedSemester
+    ? (["1", "2", "i", "ii"].includes(normalizedSemester)
+      ? "I Year"
+      : (["3", "4", "iii", "iv"].includes(normalizedSemester) ? "II Year" : "III Year"))
+    : null;
+
+  if (!semesterYear) {
+    return { success: false, error: "Semester must be named Semester 1–6 or Semester I–VI." };
+  }
 
   try {
     const { data: academicYear, error: academicYearError } = await supabase
       .from("academic_years")
-      .select("programme_id")
+      .select("programme_id, name")
       .eq("id", academic_year_id)
       .eq("status", "active")
       .single();
@@ -168,8 +352,29 @@ export async function createSemesterAction(formData: FormData) {
     if (academicYear.programme_id !== programme_id) {
       return { success: false, error: "The academic year must belong to the selected programme." };
     }
+    if (academicYear.name !== semesterYear) {
+      return { success: false, error: `${name} must belong to ${semesterYear}.` };
+    }
 
-    const { data: s, error } = await supabase.from("semesters").insert({ name, programme_id, academic_year_id }).select().single();
+    const { data: academicSession, error: academicSessionError } = await supabase
+      .from("academic_sessions")
+      .select("programme_id")
+      .eq("id", academic_session_id)
+      .eq("status", "active")
+      .single();
+    if (academicSessionError || !academicSession) {
+      return { success: false, error: "The selected academic session is not available." };
+    }
+    if (academicSession.programme_id !== programme_id) {
+      return { success: false, error: "The academic session must belong to the selected programme." };
+    }
+
+    const { data: s, error } = await supabase.from("semesters").insert({
+      name,
+      programme_id,
+      academic_year_id,
+      academic_session_id,
+    }).select().single();
     if (error) throw error;
     await supabase.from("admin_audit_logs").insert({ actor_id: user.id, action: 'create', target_type: 'semester', target_id: s.id, metadata: { name } });
     revalidatePath("/admin/academic/semesters");
@@ -181,6 +386,9 @@ export async function archiveSemesterAction(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Not authenticated" };
+  if (!(await isAdministrator(supabase, user.id))) {
+    return { success: false, error: "Unauthorized" };
+  }
 
   try {
     await supabase.from("semesters").update({ status: 'archived' }).eq("id", id);

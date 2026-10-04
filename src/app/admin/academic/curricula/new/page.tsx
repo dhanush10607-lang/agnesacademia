@@ -12,7 +12,7 @@ export default async function NewCurriculumPage() {
 
   const [
     { data: programmes, error: programmesError },
-    { data: academicYears, error: academicYearsError },
+    { data: academicSessions, error: academicSessionsError },
   ] = await Promise.all([
     supabase
       .from("programmes")
@@ -20,7 +20,7 @@ export default async function NewCurriculumPage() {
       .eq("status", "active")
       .order("name"),
     supabase
-      .from("academic_years")
+      .from("academic_sessions")
       .select("id, name, programme_id")
       .eq("status", "active")
       .order("name"),
@@ -31,9 +31,9 @@ export default async function NewCurriculumPage() {
     throw new Error("Unable to load programmes for curriculum creation.");
   }
 
-  if (academicYearsError) {
-    console.error("Error loading academic years for curriculum creation:", academicYearsError);
-    throw new Error("Unable to load academic years for curriculum creation.");
+  if (academicSessionsError) {
+    console.error("Error loading academic sessions for curriculum creation:", academicSessionsError);
+    throw new Error("Unable to load academic sessions for curriculum creation.");
   }
 
   async function createCurriculum(formData: FormData) {
@@ -45,26 +45,26 @@ export default async function NewCurriculumPage() {
     const code = formData.get("code") as string;
     const description = formData.get("description") as string;
     const programme_id = formData.get("programme_id") as string;
-    const academicYearId = formData.get("academic_year_id") as string;
+    const academicSessionId = formData.get("academic_session_id") as string;
     let academic_year: string | null = null;
 
-    if (academicYearId) {
-      const { data: academicYear, error: academicYearError } = await supabase
-        .from("academic_years")
+    if (academicSessionId) {
+      const { data: academicSession, error: academicSessionError } = await supabase
+        .from("academic_sessions")
         .select("name, programme_id")
-        .eq("id", academicYearId)
+        .eq("id", academicSessionId)
         .eq("status", "active")
         .single();
 
-      if (academicYearError || !academicYear) {
-        console.error("Error validating curriculum academic year:", academicYearError);
-        throw new Error("The selected academic year could not be found.");
+      if (academicSessionError || !academicSession) {
+        console.error("Error validating curriculum academic session:", academicSessionError);
+        throw new Error("The selected academic session could not be found.");
       }
-      if (academicYear.programme_id !== programme_id) {
-        throw new Error("The selected academic year does not belong to this programme.");
+      if (academicSession.programme_id !== programme_id) {
+        throw new Error("The selected academic session does not belong to this programme.");
       }
 
-      academic_year = academicYear.name;
+      academic_year = academicSession.name;
     }
 
     const { error } = await supabase.from("curricula").insert({
@@ -104,7 +104,7 @@ export default async function NewCurriculumPage() {
         <CardContent>
           <NewCurriculumForm
             programmes={programmes || []}
-            academicYears={academicYears || []}
+            academicSessions={academicSessions || []}
             action={createCurriculum}
           />
         </CardContent>

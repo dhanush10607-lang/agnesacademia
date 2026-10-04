@@ -31,6 +31,7 @@ export default async function QuestionPaperDetailPage({
       programme:programmes(name),
       semester:semesters(name),
       academic_year:academic_years(name),
+      academic_session:academic_sessions(name),
       uploader:profiles(full_name, role)
     `)
     .eq("id", id)
@@ -89,6 +90,11 @@ export default async function QuestionPaperDetailPage({
                 {paper.academic_year && (
                   <Badge variant="secondary">
                     {paper.academic_year.name}
+                  </Badge>
+                )}
+                {paper.academic_session && (
+                  <Badge variant="outline">
+                    {paper.academic_session.name}
                   </Badge>
                 )}
                 {paper.status !== 'published' && (

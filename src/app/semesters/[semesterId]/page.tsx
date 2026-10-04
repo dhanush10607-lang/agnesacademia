@@ -24,7 +24,8 @@ export default async function SemesterDetailPage({
           *,
           department:departments(*)
         )
-      )
+      ),
+      academic_session:academic_sessions(name)
     `)
     .eq("id", semesterId)
     .single();
@@ -65,6 +66,9 @@ export default async function SemesterDetailPage({
         <div className="flex items-center gap-3 mb-4">
           <h1 className="text-4xl font-heading font-extrabold text-foreground">{semester.name}</h1>
           <Badge variant="outline" className="text-primary bg-primary/5">{semester.academic_year.name}</Badge>
+          {semester.academic_session?.name && (
+            <Badge variant="secondary">{semester.academic_session.name}</Badge>
+          )}
         </div>
         <p className="text-lg text-muted-foreground">Select a subject to view its study materials, notes, and question papers.</p>
       </div>

@@ -9,18 +9,18 @@ import { Save } from "lucide-react";
 import Link from "next/link";
 
 type Programme = { id: string; name: string };
-type AcademicYear = { id: string; name: string; programme_id: string };
+type AcademicSession = { id: string; name: string; programme_id: string };
 
 type Props = {
   programmes: Programme[];
-  academicYears: AcademicYear[];
+  academicSessions: AcademicSession[];
   action: (formData: FormData) => Promise<void>;
 };
 
-export function NewCurriculumForm({ programmes, academicYears, action }: Props) {
+export function NewCurriculumForm({ programmes, academicSessions, action }: Props) {
   const [programmeId, setProgrammeId] = useState("");
-  const [academicYearId, setAcademicYearId] = useState("");
-  const availableYears = academicYears.filter(year => year.programme_id === programmeId);
+  const [academicSessionId, setAcademicSessionId] = useState("");
+  const availableSessions = academicSessions.filter(session => session.programme_id === programmeId);
 
   return (
     <form action={action} className="space-y-4">
@@ -33,7 +33,7 @@ export function NewCurriculumForm({ programmes, academicYears, action }: Props) 
           value={programmeId}
           onChange={event => {
             setProgrammeId(event.target.value);
-            setAcademicYearId("");
+            setAcademicSessionId("");
           }}
           className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -57,24 +57,24 @@ export function NewCurriculumForm({ programmes, academicYears, action }: Props) 
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="academic_year_id">Academic Year</Label>
+          <Label htmlFor="academic_session_id">Academic Session</Label>
           <select
-            id="academic_year_id"
-            name="academic_year_id"
-            value={academicYearId}
-            onChange={event => setAcademicYearId(event.target.value)}
-            disabled={!programmeId || availableYears.length === 0}
+            id="academic_session_id"
+            name="academic_session_id"
+            value={academicSessionId}
+            onChange={event => setAcademicSessionId(event.target.value)}
+            disabled={!programmeId || availableSessions.length === 0}
             className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="">
               {!programmeId
                 ? "Select a programme first"
-                : availableYears.length === 0
-                  ? "No active years for this programme"
-                  : "All academic years"}
+                : availableSessions.length === 0
+                  ? "No active sessions for this programme"
+                  : "All academic sessions"}
             </option>
-            {availableYears.map(year => (
-              <option key={year.id} value={year.id}>{year.name}</option>
+            {availableSessions.map(session => (
+              <option key={session.id} value={session.id}>{session.name}</option>
             ))}
           </select>
         </div>

@@ -37,8 +37,31 @@ export async function saveOnboardingProfile(data: OnboardingData) {
   if (data.department_id)       update.department_id       = data.department_id;
   if (data.programme_id)        update.programme_id        = data.programme_id;
   if (data.curriculum_id)       update.curriculum_id       = data.curriculum_id;
-  if (data.academic_year_id)    update.academic_year_id    = data.academic_year_id;
-  if (data.semester_id)         update.semester_id         = data.semester_id;
+  if (data.semester_id) {
+    const { data: semester, error: semesterError } = await supabase
+      .from("semesters")
+      .select("academic_year_id, academic_session_id, programme_id")
+      .eq("id", data.semester_id)
+      .eq("status", "active")
+      .single();
+
+    if (semesterError || !semester) {
+      return { success: false, error: "Select a valid active semester." };
+    }
+    if (data.academic_year_id && semester.academic_year_id !== data.academic_year_id) {
+      return { success: false, error: "The selected semester does not belong to that study year." };
+    }
+    if (data.programme_id && semester.programme_id !== data.programme_id) {
+      return { success: false, error: "The selected semester does not belong to that programme." };
+    }
+
+    update.academic_year_id = semester.academic_year_id;
+    update.academic_session_id = semester.academic_session_id;
+    update.semester_id = data.semester_id;
+  } else if (data.academic_year_id) {
+    update.academic_year_id = data.academic_year_id;
+    update.academic_session_id = null;
+  }
   if (data.learning_interests)  update.learning_interests  = data.learning_interests;
   if (data.notification_prefs)  update.notification_prefs  = data.notification_prefs;
   if (data.theme_preference)    update.theme_preference    = data.theme_preference;

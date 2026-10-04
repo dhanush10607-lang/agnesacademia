@@ -12,7 +12,7 @@ export default async function EditAcademicProfilePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_academic_locked, department_id, programme_id, curriculum_id, academic_year_id, semester_id")
+    .select("is_academic_locked, department_id, programme_id, curriculum_id, academic_year_id, academic_session_id, semester_id")
     .eq("id", user.id)
     .single();
 
@@ -59,7 +59,7 @@ export default async function EditAcademicProfilePage() {
     if (yearData) initialYears = yearData;
   }
   if (profile.academic_year_id) {
-    const { data } = await supabase.from("semesters").select("id, name").eq("academic_year_id", profile.academic_year_id).order("name");
+    const { data } = await supabase.from("semesters").select("id, name, academic_session_id").eq("academic_year_id", profile.academic_year_id).order("name");
     if (data) initialSemesters = data;
   }
 
@@ -86,6 +86,7 @@ export default async function EditAcademicProfilePage() {
           programme_id: profile.programme_id,
           curriculum_id: profile.curriculum_id,
           academic_year_id: profile.academic_year_id,
+          academic_session_id: profile.academic_session_id,
           semester_id: profile.semester_id,
         }}
       />

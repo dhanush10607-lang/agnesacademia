@@ -4,6 +4,7 @@ import { useState } from "react";
 import { 
   createProgrammeAction, archiveProgrammeAction,
   createYearAction, archiveYearAction,
+  createAcademicSessionAction, archiveAcademicSessionAction,
   createSemesterAction, archiveSemesterAction,
   createSubjectAction, archiveSubjectAction
 } from "@/app/actions/admin-academic";
@@ -11,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type ProgrammeOption = { id: string; name: string };
 
 // Programmes
 export function CreateProgrammeForm({ departments }: { departments: any[] }) {
@@ -63,45 +66,63 @@ export function ArchiveProgrammeButton({ id }: { id: string }) {
 }
 
 // Years
-export function CreateYearForm({ programmes }: { programmes: any[] }) {
+export function CreateYearForm({
+  programmes,
+  years,
+}: {
+  programmes: ProgrammeOption[];
+  years: { id: string; name: string; programme_id: string }[];
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [programmeId, setProgrammeId] = useState("");
+  const [yearName, setYearName] = useState("");
+  const availableYears = ["I Year", "II Year", "III Year"].filter(
+    year => !years.some(existing => existing.programme_id === programmeId && existing.name === year)
+  );
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     const res = await createYearAction(formData);
-    if (res.success) (e.target as HTMLFormElement).reset();
-    else alert(res.error);
+    if (res.success) {
+      (e.target as HTMLFormElement).reset();
+      setProgrammeId("");
+      setYearName("");
+    } else alert(res.error);
     setIsSubmitting(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-wrap gap-4 items-end">
       <div className="flex-grow space-y-2">
-        <Label htmlFor="name">Year Name</Label>
-        <Input id="name" name="name" placeholder="E.g., 2024-2025" required />
-      </div>
-      <div className="flex-grow space-y-2">
-        <Label htmlFor="programme_id">Programme</Label>
-        <Select name="programme_id" required>
+        <Label htmlFor="name">Study Year</Label>
+        <Select name="name" required value={yearName} onValueChange={value => setYearName(value || "")} disabled={!programmeId || availableYears.length === 0}>
           <SelectTrigger>
-            <SelectValue placeholder="Select Programme">
-              {(value) => programmes.find((programme: any) => programme.id === value)?.name || "Select Programme"}
-            </SelectValue>
+            <SelectValue placeholder={!programmeId ? "Select Programme first" : availableYears.length ? "Select Study Year" : "All study years exist"} />
           </SelectTrigger>
           <SelectContent>
-            {programmes.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+            {availableYears.map(year => (
+              <SelectItem key={year} value={year}>{year}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="start_date">Start Date</Label>
-        <Input id="start_date" name="start_date" type="date" required />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="end_date">End Date</Label>
-        <Input id="end_date" name="end_date" type="date" required />
+      <div className="flex-grow space-y-2">
+        <Label htmlFor="programme_id">Programme</Label>
+        <Select name="programme_id" required value={programmeId} onValueChange={value => {
+          setProgrammeId(value || "");
+          setYearName("");
+        }}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Programme">
+              {(value) => programmes.find(programme => programme.id === value)?.name || "Select Programme"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {programmes.map(programme => <SelectItem key={programme.id} value={programme.id}>{programme.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
       <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "..." : "Add"}</Button>
     </form>
@@ -116,18 +137,78 @@ export function ArchiveYearButton({ id }: { id: string }) {
   return <Button variant="destructive" size="sm" onClick={handleArchive}>Archive</Button>;
 }
 
+export function CreateAcademicSessionForm({ programmes }: { programmes: ProgrammeOption[] }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const result = await createAcademicSessionAction(formData);
+    if (result.success) (e.target as HTMLFormElement).reset();
+    else alert(result.error);
+    setIsSubmitting(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-wrap gap-4 items-end">
+      <div className="flex-grow space-y-2">
+        <Label htmlFor="session_name">Session Name</Label>
+        <Input id="session_name" name="name" placeholder="E.g., 2026-2027" pattern="\d{4}-\d{4}" required />
+      </div>
+      <div className="flex-grow space-y-2">
+        <Label htmlFor="session_programme_id">Programme</Label>
+        <Select name="programme_id" required>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Programme">
+              {(value) => programmes.find(programme => programme.id === value)?.name || "Select Programme"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {programmes.map(programme => (
+              <SelectItem key={programme.id} value={programme.id}>{programme.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="session_start_date">Start Date</Label>
+        <Input id="session_start_date" name="start_date" type="date" required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="session_end_date">End Date</Label>
+        <Input id="session_end_date" name="end_date" type="date" required />
+      </div>
+      <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "..." : "Add Session"}</Button>
+    </form>
+  );
+}
+
+export function ArchiveAcademicSessionButton({ id }: { id: string }) {
+  const handleArchive = async () => {
+    if (!confirm("Archive this academic session?")) return;
+    const result = await archiveAcademicSessionAction(id);
+    if (!result.success) alert(result.error);
+  };
+  return <Button variant="destructive" size="sm" onClick={handleArchive}>Archive</Button>;
+}
+
 // Semesters
 export function CreateSemesterForm({
   programmes,
   years,
+  sessions,
 }: {
   programmes: { id: string; name: string }[];
   years: { id: string; name: string; programme_id: string }[];
+  sessions: { id: string; name: string; programme_id: string }[];
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [programmeId, setProgrammeId] = useState("");
   const [academicYearId, setAcademicYearId] = useState("");
+  const [academicSessionId, setAcademicSessionId] = useState("");
   const availableYears = years.filter(year => year.programme_id === programmeId);
+  const availableSessions = sessions.filter(session => session.programme_id === programmeId);
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -138,6 +219,7 @@ export function CreateSemesterForm({
       (e.target as HTMLFormElement).reset();
       setProgrammeId("");
       setAcademicYearId("");
+      setAcademicSessionId("");
     }
     else alert(res.error);
     setIsSubmitting(false);
@@ -158,6 +240,7 @@ export function CreateSemesterForm({
           onValueChange={value => {
             setProgrammeId(value || "");
             setAcademicYearId("");
+            setAcademicSessionId("");
           }}
         >
           <SelectTrigger>
@@ -171,7 +254,7 @@ export function CreateSemesterForm({
         </Select>
       </div>
       <div className="flex-grow space-y-2">
-        <Label htmlFor="academic_year_id">Academic Year</Label>
+        <Label htmlFor="academic_year_id">Study Year</Label>
         <Select
           name="academic_year_id"
           required
@@ -192,6 +275,33 @@ export function CreateSemesterForm({
           </SelectTrigger>
           <SelectContent>
             {availableYears.map(year => <SelectItem key={year.id} value={year.id}>{year.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex-grow space-y-2">
+        <Label htmlFor="academic_session_id">Academic Session</Label>
+        <Select
+          name="academic_session_id"
+          required
+          value={academicSessionId}
+          onValueChange={value => setAcademicSessionId(value || "")}
+          disabled={!programmeId || availableSessions.length === 0}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={
+              !programmeId
+                ? "Select programme first"
+                : availableSessions.length === 0
+                  ? "No sessions for this programme"
+                  : "Select Session"
+            }>
+              {(value) => availableSessions.find(session => session.id === value)?.name || "Select Session"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {availableSessions.map(session => (
+              <SelectItem key={session.id} value={session.id}>{session.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

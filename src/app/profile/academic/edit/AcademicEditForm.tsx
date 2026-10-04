@@ -56,7 +56,7 @@ export default function AcademicEditForm({
   // Load Semesters when Year changes
   useEffect(() => {
     if (!yearId) return;
-    supabase.from("semesters").select("id, name").eq("academic_year_id", yearId).order("name")
+    supabase.from("semesters").select("id, name, academic_session_id").eq("academic_year_id", yearId).order("name")
       .then(({ data }) => setSemesters(data || []));
   }, [yearId, supabase]);
 
@@ -69,6 +69,12 @@ export default function AcademicEditForm({
 
     setIsSubmitting(true);
     setErrorMsg("");
+    const selectedSemester = semesters.find(semester => semester.id === semId);
+    if (!selectedSemester) {
+      setIsSubmitting(false);
+      setErrorMsg("Select a valid semester.");
+      return;
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -86,6 +92,7 @@ export default function AcademicEditForm({
         programme_id: progId,
         curriculum_id: currId || null,
         academic_year_id: yearId,
+        academic_session_id: selectedSemester.academic_session_id,
         semester_id: semId
       })
       .eq("id", user.id)
@@ -191,7 +198,7 @@ export default function AcademicEditForm({
           </div>
 
           <div className="space-y-2">
-            <Label>Academic Year</Label>
+            <Label>Study Year</Label>
             <Select 
               disabled={!progId} 
               value={years.some(y => y.id === yearId) ? yearId : ""} 

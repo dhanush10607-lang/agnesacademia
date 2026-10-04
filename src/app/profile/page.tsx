@@ -25,7 +25,8 @@ export default async function ProfilePage() {
       programme:programmes(name),
       curriculum:curricula(name),
       semester:semesters(name),
-      academic_year:academic_years(name)
+      academic_year:academic_years(name),
+      academic_session:academic_sessions(name)
     `)
     .eq("id", user.id)
     .single();
@@ -143,6 +144,7 @@ export default async function ProfilePage() {
               <div className="flex items-center justify-center md:justify-start gap-2 text-foreground/80 bg-secondary/50 px-3 py-1.5 rounded-full">
                 <BookOpen className="w-4 h-4" />
                 {profile.academic_year.name} &bull; {profile.semester.name}
+                {profile.academic_session?.name ? ` • ${profile.academic_session.name}` : ""}
               </div>
             )}
           </div>
