@@ -92,6 +92,42 @@ export function ResourceFilterSidebar({
   );
 
   function renderFilterOptions(idPrefix: string) {
+    if (idPrefix === "mobile") {
+      return (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="mobile-resource-category">Type</Label>
+            <select
+              id="mobile-resource-category"
+              value={currentCategory || "all"}
+              onChange={(event) => updateFilters("category", event.target.value === "all" ? "" : event.target.value)}
+              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="all">All Types</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="mobile-resource-subject">Subject</Label>
+            <select
+              id="mobile-resource-subject"
+              value={currentSubject || "all"}
+              onChange={(event) => updateFilters("subject", event.target.value === "all" ? "" : event.target.value)}
+              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="all">All Subjects</option>
+              {subjects.map(subject => (
+                <option key={subject.id} value={subject.id}>{subject.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4">
         <div>
