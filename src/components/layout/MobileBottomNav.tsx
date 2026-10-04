@@ -35,6 +35,8 @@ const moderatorItems = [
 
 export function MobileBottomNav({ role }: MobileBottomNavProps) {
   const pathname = usePathname();
+  if (role === "student" && /^\/quizzes\/[^/]+\/take$/.test(pathname)) return null;
+
   const items = role === "student"
     ? studentItems
     : role === "faculty"

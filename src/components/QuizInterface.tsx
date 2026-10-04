@@ -146,9 +146,9 @@ export function QuizInterface({
   return (
     <div className="flex min-h-screen flex-col bg-muted/20">
       <header className="sticky top-0 z-10 border-b bg-background shadow-sm">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="max-w-[200px] truncate font-bold sm:max-w-md">{quiz.title}</div>
-          <div className="flex items-center gap-4 sm:gap-8">
+        <div className="container mx-auto flex min-h-16 flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 sm:flex-nowrap sm:px-4">
+          <div className="min-w-0 flex-1 truncate font-bold sm:max-w-md">{quiz.title}</div>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4 lg:gap-8">
             <div className="hidden text-sm font-medium text-muted-foreground sm:block">
               Answered: {answeredCount}/{questions.length}
             </div>
@@ -164,7 +164,7 @@ export function QuizInterface({
               variant={answeredCount === questions.length ? "default" : "outline"}
               size="sm"
             >
-              {isSubmitting ? "Submitting…" : "Submit Quiz"}
+              {isSubmitting ? "Submitting…" : <><span className="sm:hidden">Submit</span><span className="hidden sm:inline">Submit Quiz</span></>}
             </Button>
           </div>
         </div>
@@ -173,28 +173,28 @@ export function QuizInterface({
         </div>
       </header>
 
-      <main className="container mx-auto flex max-w-4xl flex-grow flex-col gap-8 px-4 py-8 md:flex-row">
-        <div className="flex-grow space-y-6">
+      <main className="container mx-auto flex w-full max-w-4xl flex-grow flex-col gap-5 px-3 py-5 pb-8 sm:gap-8 sm:px-4 sm:py-8 md:flex-row">
+        <div className="min-w-0 flex-grow space-y-5 sm:space-y-6">
           {saveMessage && (
             <p role="status" className={`text-sm ${saveMessage.includes("could not") || saveMessage.includes("Could not") ? "text-red-600" : "text-muted-foreground"}`}>
               {saveMessage}
             </p>
           )}
           {focusMessage && <p role="alert" className="text-sm text-red-600">{focusMessage}</p>}
-          <p className="text-xs text-muted-foreground">
+          <p className="break-words text-xs text-muted-foreground">
             Switching to another tab or app automatically submits your saved answers. Incoming calls and other mobile interruptions may also trigger submission, depending on the device and browser.
             {tabSwitchCount > 0 && ` Recorded switches: ${tabSwitchCount}.`}
           </p>
 
           <Card className="border-border shadow-md">
-            <CardContent className="p-6 sm:p-8">
+            <CardContent className="min-w-0 p-4 sm:p-8">
               <div className="mb-6 flex items-start justify-between">
-                <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="min-w-0 text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   Question {currentIdx + 1} of {questions.length}
                 </span>
                 <span className="rounded bg-muted px-2 py-1 text-xs font-semibold">{currentQ.marks} Marks</span>
               </div>
-              <h2 className="mb-8 text-xl font-semibold sm:text-2xl">{currentQ.question_text}</h2>
+              <h2 className="mb-6 break-words text-xl font-semibold [overflow-wrap:anywhere] sm:mb-8 sm:text-2xl">{currentQ.question_text}</h2>
               <RadioGroup
                 value={answers[currentQ.id] || ""}
                 onValueChange={handleSelectOption}
@@ -203,12 +203,12 @@ export function QuizInterface({
                 {currentQ.options.map(option => (
                   <div
                     key={option.id}
-                    className={`flex cursor-pointer items-center rounded-lg border p-4 transition-colors ${
+                    className={`flex min-w-0 cursor-pointer items-start rounded-lg border p-3 transition-colors sm:items-center sm:p-4 ${
                       answers[currentQ.id] === option.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
                     }`}
                   >
-                    <RadioGroupItem value={option.id} id={option.id} className="mr-4" />
-                    <Label htmlFor={option.id} className="flex-grow cursor-pointer text-base leading-relaxed">
+                    <RadioGroupItem value={option.id} id={option.id} className="mr-3 mt-1 shrink-0 sm:mr-4 sm:mt-0" />
+                    <Label htmlFor={option.id} className="min-w-0 flex-grow cursor-pointer break-words text-base leading-relaxed [overflow-wrap:anywhere]">
                       {option.option_text}
                     </Label>
                   </div>
@@ -223,27 +223,27 @@ export function QuizInterface({
             </Button>
           ) : null}
 
-          <div className="flex items-center justify-between">
-            <Button onClick={() => setCurrentIdx(index => index - 1)} disabled={currentIdx === 0} variant="outline" size="lg">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Button onClick={() => setCurrentIdx(index => index - 1)} disabled={currentIdx === 0} variant="outline" size="lg" className="min-w-0 flex-1 sm:flex-none">
               <ChevronLeft className="mr-2 h-4 w-4" /> Previous
             </Button>
             {currentIdx === questions.length - 1 ? (
-              <Button onClick={() => void handleFinalSubmit()} disabled={isSubmitting} size="lg" className="bg-green-600 text-white hover:bg-green-700">
+              <Button onClick={() => void handleFinalSubmit()} disabled={isSubmitting} size="lg" className="min-w-0 flex-1 bg-green-600 text-white hover:bg-green-700 sm:flex-none">
                 <CheckCircle className="mr-2 h-4 w-4" /> Finish
               </Button>
             ) : (
-              <Button onClick={() => setCurrentIdx(index => index + 1)} size="lg">
+              <Button onClick={() => setCurrentIdx(index => index + 1)} size="lg" className="min-w-0 flex-1 sm:flex-none">
                 Next <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             )}
           </div>
         </div>
 
-        <div className="order-first shrink-0 md:order-last md:w-64">
-          <Card className="sticky top-24 border-border">
+        <div className="order-first min-w-0 shrink-0 md:order-last md:w-64">
+          <Card className="border-border md:sticky md:top-24">
             <CardContent className="p-4">
               <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted-foreground">Question Map</h3>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(2.5rem,1fr))] gap-2">
                 {questions.map((question, index) => {
                   const isAnswered = !!answers[question.id];
                   const isCurrent = index === currentIdx;

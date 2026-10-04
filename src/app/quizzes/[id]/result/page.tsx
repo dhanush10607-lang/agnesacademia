@@ -62,39 +62,39 @@ export default async function QuizResultPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
-        <div className="mb-6 flex justify-between items-center">
-          <Link href="/quizzes" className={buttonVariants({ variant: "ghost" })}>
+      <main className="container mx-auto max-w-4xl px-3 py-6 pb-28 sm:px-4 sm:py-12">
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <Link href="/quizzes" className={buttonVariants({ variant: "ghost", className: "w-full justify-start sm:w-auto" })}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Quizzes
           </Link>
-          <Link href={`/quizzes/${id}`} className={buttonVariants({ variant: "outline" })}>
+          <Link href={`/quizzes/${id}`} className={buttonVariants({ variant: "outline", className: "w-full sm:w-auto" })}>
             <RotateCcw className="w-4 h-4 mr-2" /> Retake Quiz
           </Link>
         </div>
 
         <Card className="border-border shadow-md mb-8 overflow-hidden">
-          <div className={`p-8 text-center text-white ${attemptRecord.is_passed ? 'bg-green-600 dark:bg-green-700' : 'bg-red-600 dark:bg-red-700'}`}>
+          <div className={`p-5 text-center text-white sm:p-8 ${attemptRecord.is_passed ? 'bg-green-600 dark:bg-green-700' : 'bg-red-600 dark:bg-red-700'}`}>
             <BrainCircuit className="w-12 h-12 mx-auto mb-4 opacity-90" />
-            <h1 className="text-3xl font-heading font-extrabold mb-2">
+            <h1 className="mb-2 break-words text-2xl font-heading font-extrabold sm:text-3xl">
               {attemptRecord.is_passed ? 'Quiz Passed!' : 'Quiz Failed'}
             </h1>
-            <p className="font-medium opacity-90">
+            <p className="break-words font-medium opacity-90">
               {quizDetails?.title}
             </p>
           </div>
-          <CardContent className="p-8">
-            <div className="flex flex-wrap justify-center gap-8 text-center">
+          <CardContent className="p-4 sm:p-8">
+            <div className="grid grid-cols-1 gap-5 text-center sm:grid-cols-3 sm:gap-8">
               <div>
                 <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Score</p>
-                <p className="text-4xl font-black">{attemptRecord.score} <span className="text-xl text-muted-foreground font-medium">/ {attemptRecord.total_marks}</span></p>
+                <p className="text-3xl font-black sm:text-4xl">{attemptRecord.score} <span className="text-lg font-medium text-muted-foreground sm:text-xl">/ {attemptRecord.total_marks}</span></p>
               </div>
               <div>
                 <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Percentage</p>
-                <p className="text-4xl font-black">{attemptRecord.percentage}%</p>
+                <p className="text-3xl font-black sm:text-4xl">{attemptRecord.percentage}%</p>
               </div>
               <div>
                 <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Accuracy</p>
-                <p className="text-4xl font-black text-primary">{correctAnswers} <span className="text-xl text-muted-foreground font-medium">/ {totalQuestions}</span></p>
+                <p className="text-3xl font-black text-primary sm:text-4xl">{correctAnswers} <span className="text-lg font-medium text-muted-foreground sm:text-xl">/ {totalQuestions}</span></p>
               </div>
             </div>
           </CardContent>
@@ -113,49 +113,50 @@ export default async function QuizResultPage({
             const explanation = answer.explanation_snapshot || question?.explanation;
             return (
               <Card key={answer.id} className={`border-l-4 ${answer.is_correct ? 'border-l-green-500' : 'border-l-red-500'}`}>
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="mt-1">
-                    {answer.is_correct ? (
-                      <CheckCircle className="w-6 h-6 text-green-500" />
-                    ) : (
-                      <XCircle className="w-6 h-6 text-red-500" />
-                    )}
-                  </div>
-                  <div className="flex-grow">
-                    <h3 className="font-semibold text-lg mb-2">
-                      <span className="text-muted-foreground mr-2">{idx + 1}.</span>
-                      {questionText}
-                    </h3>
-                    
-                    <div className="bg-muted/30 p-3 rounded-md mb-4 text-sm flex flex-col gap-1">
-                      <span className="text-muted-foreground font-medium uppercase text-xs tracking-wider">Your Answer:</span>
-                      <span className="font-medium">
-                        {answer.selected_option_text_snapshot || optionsById.get(answer.selected_option_id || "") || <span className="italic text-muted-foreground">Skipped</span>}
-                      </span>
+              <CardContent className="min-w-0 p-4 sm:p-6">
+                <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                  <div className="flex min-w-0 items-start gap-3 sm:flex-1">
+                    <div className="mt-1 shrink-0">
+                      {answer.is_correct ? (
+                        <CheckCircle className="w-6 h-6 text-green-500" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-red-500" />
+                      )}
                     </div>
+                    <div className="min-w-0 flex-grow">
+                      <h3 className="mb-2 break-words text-lg font-semibold [overflow-wrap:anywhere]">
+                        <span className="mr-2 text-muted-foreground">{idx + 1}.</span>
+                        {questionText}
+                      </h3>
 
-                    {!answer.is_correct && explanation && (
-                      <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-md text-sm text-blue-900 dark:text-blue-200">
-                        <span className="font-bold">Explanation: </span> 
-                        {explanation}
+                      <div className="mb-4 flex flex-col gap-1 rounded-md bg-muted/30 p-3 text-sm">
+                        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Your Answer:</span>
+                        <span className="break-words font-medium [overflow-wrap:anywhere]">
+                          {answer.selected_option_text_snapshot || optionsById.get(answer.selected_option_id || "") || <span className="italic text-muted-foreground">Skipped</span>}
+                        </span>
                       </div>
-                    )}
-                    
-                    {/* If correct, we can also show explanation if desired */}
-                    {answer.is_correct && explanation && (
-                      <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md text-sm text-green-900 dark:text-green-300">
-                        <span className="font-bold">Explanation: </span> 
-                        {explanation}
-                      </div>
-                    )}
-                    {!answer.is_correct && answer.correct_option_text_snapshot && (
-                      <div className="mt-3 text-sm text-green-700 dark:text-green-400">
-                        <span className="font-bold">Correct answer: </span>{answer.correct_option_text_snapshot}
-                      </div>
-                    )}
+
+                      {!answer.is_correct && explanation && (
+                        <div className="break-words rounded-md bg-blue-50 p-4 text-sm text-blue-900 [overflow-wrap:anywhere] dark:bg-blue-950/30 dark:text-blue-200">
+                          <span className="font-bold">Explanation: </span>
+                          {explanation}
+                        </div>
+                      )}
+
+                      {answer.is_correct && explanation && (
+                        <div className="break-words rounded-md bg-green-50 p-4 text-sm text-green-900 [overflow-wrap:anywhere] dark:bg-green-900/20 dark:text-green-300">
+                          <span className="font-bold">Explanation: </span>
+                          {explanation}
+                        </div>
+                      )}
+                      {!answer.is_correct && answer.correct_option_text_snapshot && (
+                        <div className="mt-3 break-words text-sm text-green-700 [overflow-wrap:anywhere] dark:text-green-400">
+                          <span className="font-bold">Correct answer: </span>{answer.correct_option_text_snapshot}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="shrink-0 text-sm font-medium whitespace-nowrap bg-muted px-2 py-1 rounded">
+                  <div className="self-end whitespace-normal rounded bg-muted px-2 py-1 text-sm font-medium sm:self-start sm:shrink-0">
                     {answer.marks_awarded} / {answer.question_marks_snapshot || 1} Marks
                   </div>
                 </div>

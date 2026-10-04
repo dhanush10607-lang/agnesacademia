@@ -89,12 +89,13 @@ export default async function QuizzesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
+      <main className="container mx-auto min-w-0 max-w-6xl px-3 py-6 pb-28 sm:px-4 sm:py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-heading font-extrabold flex items-center mb-2">
-            <BrainCircuit className="w-8 h-8 mr-3 text-primary" /> Practice Quizzes
+          <h1 className="mb-2 flex items-start gap-2 text-2xl font-heading font-extrabold sm:items-center sm:gap-3 sm:text-4xl">
+            <BrainCircuit className="mt-1 h-6 w-6 shrink-0 text-primary sm:mt-0 sm:h-8 sm:w-8" />
+            <span>Practice Quizzes</span>
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base text-muted-foreground sm:text-lg">
             Test your knowledge and prepare for your exams with subject-specific quizzes.
           </p>
         </div>
@@ -104,7 +105,7 @@ export default async function QuizzesPage() {
             {subjectFilterError || (quizError ? "Quizzes could not be loaded." : "Question counts could not be loaded.")} Please refresh the page.
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           {quizzes && quizzes.length > 0 ? (
             quizzes.map((quiz) => {
               const questionCount = countByQuizId.get(quiz.id) || 0;
@@ -112,11 +113,11 @@ export default async function QuizzesPage() {
               return (
                 <Card key={quiz.id} className="border-border shadow-sm flex flex-col h-full hover:border-primary/50 transition-colors">
                   <CardHeader className="pb-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                    <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                      <Badge variant="outline" className="max-w-full whitespace-normal break-words bg-primary/5 text-primary border-primary/20">
                         {subject?.name || "Subject"}
                       </Badge>
-                      <Badge variant="secondary" className="capitalize">
+                      <Badge variant="secondary" className="shrink-0 capitalize">
                         {quiz.difficulty}
                       </Badge>
                     </div>

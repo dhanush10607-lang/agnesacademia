@@ -53,35 +53,35 @@ export default async function QuizIntroPage({
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <main className="flex-grow container mx-auto px-4 py-12 max-w-3xl flex items-center justify-center">
+      <main className="flex-grow container mx-auto flex max-w-3xl items-start justify-center px-3 py-6 pb-28 sm:items-center sm:px-4 sm:py-12">
         <div className="w-full">
           <Link href="/quizzes" className={buttonVariants({ variant: "ghost", className: "mb-6" })}>
             <ChevronLeft className="w-4 h-4 mr-2" /> Back to Quizzes
           </Link>
           
           <Card className="border-border shadow-md overflow-hidden">
-            <div className="bg-primary/5 p-8 border-b text-center">
+            <div className="border-b bg-primary/5 p-5 text-center sm:p-8">
               <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
                 <BrainCircuit className="w-8 h-8" />
               </div>
-              <h1 className="text-3xl font-heading font-extrabold mb-2">{quiz.title}</h1>
-              <p className="text-muted-foreground font-medium flex items-center justify-center gap-2">
-                <span>{subject?.code}</span>
-                <span>•</span>
-                <span>{subject?.name}</span>
+              <h1 className="mb-2 break-words text-2xl font-heading font-extrabold sm:text-3xl">{quiz.title}</h1>
+              <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 break-words text-sm font-medium text-muted-foreground sm:text-base">
+                {subject?.code && <span>{subject.code}</span>}
+                {subject?.code && subject?.name && <span aria-hidden="true">•</span>}
+                {subject?.name && <span>{subject.name}</span>}
                 {quiz.unit_name && (
                   <>
-                    <span>•</span>
+                    <span aria-hidden="true">•</span>
                     <span>{quiz.unit_name}</span>
                   </>
                 )}
               </p>
             </div>
             
-            <CardContent className="p-8">
+            <CardContent className="p-5 sm:p-8">
               {quiz.description && (
                 <div className="mb-8 text-center max-w-xl mx-auto">
-                  <p className="text-muted-foreground">{quiz.description}</p>
+                  <p className="break-words text-muted-foreground [overflow-wrap:anywhere]">{quiz.description}</p>
                 </div>
               )}
 
@@ -103,11 +103,11 @@ export default async function QuizIntroPage({
                 </div>
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg mb-8 text-sm text-blue-800 dark:text-blue-300">
+              <div className="mb-8 rounded-lg bg-blue-50 p-4 text-sm text-blue-800 dark:bg-blue-950/30 dark:text-blue-300">
                 <h4 className="font-bold mb-1 flex items-center">
                   <Info className="w-4 h-4 mr-2" /> Instructions
                 </h4>
-                <ul className="list-disc pl-8 space-y-1 mt-2">
+                <ul className="mt-2 list-disc space-y-1 pl-5 sm:pl-8">
                   <li>Once started, the timer cannot be paused.</li>
                   <li>Do not refresh the page during the exam.</li>
                   <li>Your answers will be automatically submitted when time runs out.</li>

@@ -25,11 +25,11 @@ export default async function QuizHistoryPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8 max-w-5xl">
-        <div className="mb-8 flex items-center">
-          <History className="w-8 h-8 mr-3 text-primary" />
-          <div>
-            <h1 className="text-3xl font-heading font-extrabold text-foreground">
+      <main className="container mx-auto max-w-5xl px-3 py-6 pb-28 sm:px-4 sm:py-8">
+        <div className="mb-8 flex items-start gap-3">
+          <History className="mt-1 h-7 w-7 shrink-0 text-primary sm:h-8 sm:w-8" />
+          <div className="min-w-0">
+            <h1 className="break-words text-2xl font-heading font-extrabold text-foreground sm:text-3xl">
               Quiz Attempt History
             </h1>
             <p className="text-muted-foreground">
@@ -46,18 +46,18 @@ export default async function QuizHistoryPage() {
                   <div className={`w-2 sm:w-3 shrink-0 ${attempt.status !== 'completed' ? 'bg-yellow-500' : attempt.is_passed ? 'bg-green-500' : 'bg-red-500'}`}></div>
                   
                   <div className="p-4 sm:p-6 flex-grow flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex-grow">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                    <div className="min-w-0 flex-grow">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="max-w-full whitespace-normal break-words bg-primary/5 text-primary border-primary/20">
                           {((attempt.quiz as any)?.subject as any)?.code || "Subject"}
                         </Badge>
                         {attempt.status !== 'completed' && (
-                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                          <Badge variant="secondary" className="whitespace-normal bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                             In Progress / Abandoned
                           </Badge>
                         )}
                       </div>
-                      <h3 className="font-bold text-lg mb-1 line-clamp-1 text-foreground">
+                      <h3 className="mb-1 break-words text-lg font-bold text-foreground [overflow-wrap:anywhere]">
                         {(attempt.quiz as any)?.title || "Unknown Quiz"}
                       </h3>
                       <div className="flex items-center text-sm text-muted-foreground">
@@ -67,7 +67,7 @@ export default async function QuizHistoryPage() {
                     </div>
 
                     {attempt.status === 'completed' && (
-                      <div className="flex items-center gap-6 shrink-0 bg-muted/30 px-6 py-3 rounded-lg border">
+                      <div className="flex w-full shrink-0 items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3 py-3 sm:w-auto sm:justify-start sm:gap-6 sm:px-6">
                         <div className="text-center">
                           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Score</p>
                           <p className="font-black text-xl">{attempt.score}<span className="text-muted-foreground text-sm">/{attempt.total_marks}</span></p>
@@ -76,11 +76,11 @@ export default async function QuizHistoryPage() {
                         <div className="text-center">
                           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Result</p>
                           {attempt.is_passed ? (
-                            <p className="font-black text-xl text-green-600 dark:text-green-500 flex items-center">
+                            <p className="flex items-center font-black text-lg text-green-600 dark:text-green-500 sm:text-xl">
                               <CheckCircle className="w-4 h-4 mr-1" /> Pass
                             </p>
                           ) : (
-                            <p className="font-black text-xl text-red-600 dark:text-red-500 flex items-center">
+                            <p className="flex items-center font-black text-lg text-red-600 dark:text-red-500 sm:text-xl">
                               <XCircle className="w-4 h-4 mr-1" /> Fail
                             </p>
                           )}
