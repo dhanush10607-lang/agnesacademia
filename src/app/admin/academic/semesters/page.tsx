@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database } from "lucide-react";
-import { CreateSemesterForm, ArchiveSemesterButton } from "@/components/admin/AcademicControls";
+import {
+  CreateSemesterForm,
+  ArchiveSemesterButton,
+  ChangeSemesterSessionControl,
+} from "@/components/admin/AcademicControls";
 
 export default async function AdminSemestersPage() {
   const supabase = await createClient();
@@ -66,7 +70,13 @@ export default async function AdminSemestersPage() {
                       {(sem.academic_year as any)?.name || '-'}
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">
-                      {(sem.academic_session as { name: string } | null)?.name || '-'}
+                      <ChangeSemesterSessionControl
+                        semesterId={sem.id}
+                        currentSessionId={sem.academic_session_id}
+                        sessions={(sessions || [])
+                          .filter(session => session.programme_id === sem.programme_id)
+                          .map(session => ({ id: session.id, name: session.name }))}
+                      />
                     </td>
                     <td className="px-6 py-4 text-right">
                       <ArchiveSemesterButton id={sem.id} />

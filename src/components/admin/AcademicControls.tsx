@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   createProgrammeAction, archiveProgrammeAction,
   createYearAction, archiveYearAction,
   createAcademicSessionAction, archiveAcademicSessionAction,
   createSemesterAction, archiveSemesterAction,
+  updateSemesterSessionAction,
   createSubjectAction, archiveSubjectAction
 } from "@/app/actions/admin-academic";
 import { Button } from "@/components/ui/button";
@@ -316,6 +318,58 @@ export function ArchiveSemesterButton({ id }: { id: string }) {
     await archiveSemesterAction(id);
   };
   return <Button variant="destructive" size="sm" onClick={handleArchive}>Archive</Button>;
+}
+
+export function ChangeSemesterSessionControl({
+  semesterId,
+  currentSessionId,
+  sessions,
+}: {
+  semesterId: string;
+  currentSessionId: string | null;
+  sessions: { id: string; name: string }[];
+}) {
+  const router = useRouter();
+  const [sessionId, setSessionId] = useState(currentSessionId || "");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSave = async () => {
+    if (!sessionId || sessionId === currentSessionId) return;
+    setIsSubmitting(true);
+    const result = await updateSemesterSessionAction(semesterId, sessionId);
+    if (result.success) {
+      router.refresh();
+    } else {
+      alert(result.error);
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex min-w-52 items-center gap-2">
+      <Select value={sessionId} onValueChange={value => setSessionId(value || "")}>
+        <SelectTrigger aria-label="Academic session">
+          <SelectValue placeholder="Select Session">
+            {(value) => sessions.find(session => session.id === value)?.name || "Select Session"}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {sessions.map(session => (
+            <SelectItem key={session.id} value={session.id}>{session.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={isSubmitting || !sessionId || sessionId === currentSessionId}
+        onClick={handleSave}
+      >
+        {isSubmitting ? "Saving..." : "Save"}
+      </Button>
+    </div>
+  );
 }
 
 // Subjects

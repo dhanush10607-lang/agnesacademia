@@ -382,6 +382,32 @@ export async function createSemesterAction(formData: FormData) {
   } catch (error) { return { success: false, error: "Failed" }; }
 }
 
+export async function updateSemesterSessionAction(semesterId: string, sessionId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Not authenticated" };
+  if (!(await isAdministrator(supabase, user.id))) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const { error } = await supabase.rpc("update_semester_session", {
+      p_semester_id: semesterId,
+      p_academic_session_id: sessionId,
+    });
+    if (error) throw error;
+
+    revalidatePath("/admin/academic/semesters");
+    revalidatePath("/profile");
+    revalidatePath("/profile/academic");
+    revalidatePath("/question-papers", "layout");
+    return { success: true };
+  } catch (error) {
+    console.error("Update semester session error:", error);
+    return { success: false, error: "Failed to update the semester session." };
+  }
+}
+
 export async function archiveSemesterAction(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
