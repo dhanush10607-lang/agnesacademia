@@ -29,7 +29,7 @@ export function Footer() {
             <ul className="space-y-2">
               {links.slice(0, 3).map((link) => (
                 <li key={link}>
-                  <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  <Link href={link === "About" ? "/about" : "#"} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     {link}
                   </Link>
                 </li>
