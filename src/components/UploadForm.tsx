@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { createResourceRecords } from "@/app/actions/upload";
+import { useRef, useState } from "react";
+import { createResourceRecords, getUploadCurriculumSubjects } from "@/app/actions/upload";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,22 +10,66 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { UploadCloud, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
 
 export function UploadForm({
   categories,
-  subjects
+  subjects,
+  isStudent,
+  curricula,
+  semesters,
+  initialCurriculumId,
+  initialSemesterId,
 }: {
   categories: { id: string; name: string }[];
   subjects: { id: string; name: string; semester: { name: string } | null }[];
+  isStudent: boolean;
+  curricula: { id: string; name: string; programme_id: string }[];
+  semesters: { id: string; name: string; programme_id: string | null }[];
+  initialCurriculumId: string;
+  initialSemesterId: string;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [subjectLoadError, setSubjectLoadError] = useState("");
+  const [isLoadingSubjects, setIsLoadingSubjects] = useState(false);
+  const [curriculumId, setCurriculumId] = useState(initialCurriculumId);
+  const [semesterId, setSemesterId] = useState(initialSemesterId);
+  const [availableSubjects, setAvailableSubjects] = useState(subjects);
+  const [subjectId, setSubjectId] = useState("");
+  const subjectRequestId = useRef(0);
   const [uploadProgress, setUploadProgress] = useState("");
   const [progressPercent, setProgressPercent] = useState(0);
   const router = useRouter();
   const supabase = createClient();
+  const selectedCurriculum = curricula.find(curriculum => curriculum.id === curriculumId);
+  const availableSemesters = semesters.filter(
+    semester => semester.programme_id === selectedCurriculum?.programme_id
+  );
+
+  const loadCurriculumSubjects = async (selectedCurriculumId: string, selectedSemesterId: string) => {
+    const requestId = ++subjectRequestId.current;
+    setAvailableSubjects([]);
+    setSubjectId("");
+    setIsLoadingSubjects(true);
+    setSubjectLoadError("");
+
+    try {
+      const result = await getUploadCurriculumSubjects(selectedCurriculumId, selectedSemesterId);
+      if (requestId !== subjectRequestId.current) return;
+      if (result.success) {
+        setAvailableSubjects(result.subjects);
+      } else {
+        setSubjectLoadError(result.error);
+      }
+    } catch (error) {
+      console.error("Load upload curriculum subjects failed:", error);
+      if (requestId !== subjectRequestId.current) return;
+      setSubjectLoadError("Unable to load subjects for this curriculum and semester.");
+    } finally {
+      if (requestId === subjectRequestId.current) setIsLoadingSubjects(false);
+    }
+  };
 
   const ALLOWED_TYPES = ["application/pdf", "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -194,22 +238,98 @@ export function UploadForm({
         </Select>
       </div>
 
+      {isStudent && (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="upload_curriculum_id">Curriculum <span className="text-red-500">*</span></Label>
+            <Select
+              value={curriculumId}
+              onValueChange={value => {
+                subjectRequestId.current += 1;
+                setCurriculumId(value || "");
+                setSemesterId("");
+                setAvailableSubjects([]);
+                setSubjectId("");
+                setSubjectLoadError("");
+                setIsLoadingSubjects(false);
+              }}
+              disabled={isSubmitting}
+            >
+              <SelectTrigger id="upload_curriculum_id">
+                <SelectValue placeholder="Select curriculum">
+                  {(value) => curricula.find(curriculum => curriculum.id === value)?.name || "Select curriculum"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {curricula.map(curriculum => (
+                  <SelectItem key={curriculum.id} value={curriculum.id}>{curriculum.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="upload_semester_id">Semester <span className="text-red-500">*</span></Label>
+            <Select
+              value={semesterId}
+              onValueChange={value => {
+                const selectedSemesterId = value || "";
+                setSemesterId(selectedSemesterId);
+                if (curriculumId && selectedSemesterId) {
+                  void loadCurriculumSubjects(curriculumId, selectedSemesterId);
+                } else {
+                  subjectRequestId.current += 1;
+                  setAvailableSubjects([]);
+                  setSubjectId("");
+                  setSubjectLoadError("");
+                  setIsLoadingSubjects(false);
+                }
+              }}
+              disabled={isSubmitting || !curriculumId || availableSemesters.length === 0}
+            >
+              <SelectTrigger id="upload_semester_id">
+                <SelectValue placeholder={!curriculumId ? "Select curriculum first" : "Select semester"}>
+                  {(value) => availableSemesters.find(semester => semester.id === value)?.name || "Select semester"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {availableSemesters.map(semester => (
+                  <SelectItem key={semester.id} value={semester.id}>{semester.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="subject_id">Subject <span className="text-red-500">*</span></Label>
-        {subjects.length === 0 && (
+        {isLoadingSubjects && (
+          <p className="text-sm text-muted-foreground">Loading curriculum subjects...</p>
+        )}
+        {subjectLoadError && (
+          <p className="text-sm text-destructive">{subjectLoadError}</p>
+        )}
+        {!isLoadingSubjects && !subjectLoadError && availableSubjects.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            No subjects are available for your account. Select your current subjects in{" "}
-            <Link href="/profile/subjects" className="font-medium text-primary underline underline-offset-4">
-              My Subjects
-            </Link>
-            {" "}and try again.
+            {isStudent
+              ? curriculumId && semesterId
+                ? "No subjects are assigned to this curriculum and semester."
+                : "Select a curriculum and semester to view their subjects."
+              : "No subjects are available."}
           </p>
         )}
-        <Select name="subject_id" required disabled={isSubmitting}>
+        <Select
+          name="subject_id"
+          required
+          value={subjectId}
+          onValueChange={value => setSubjectId(value || "")}
+          disabled={isSubmitting || isLoadingSubjects || availableSubjects.length === 0}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select subject">
               {(value) => {
-                const subject = subjects.find(item => item.id === value);
+                const subject = availableSubjects.find(item => item.id === value);
                 return subject
                   ? `${subject.name}${subject.semester?.name ? ` (${subject.semester.name})` : ""}`
                   : "Select subject";
@@ -217,7 +337,7 @@ export function UploadForm({
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {subjects.map((s) => (
+            {availableSubjects.map((s) => (
               <SelectItem key={s.id} value={s.id}>{s.name} {s.semester?.name ? `(${s.semester.name})` : ''}</SelectItem>
             ))}
           </SelectContent>

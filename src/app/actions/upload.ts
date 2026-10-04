@@ -2,7 +2,81 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-export async function createResourceRecords(records: any[]) {
+export type UploadCurriculumSubject = {
+  id: string;
+  name: string;
+  semester: { name: string } | null;
+};
+
+type UploadResourceRecord = {
+  title: string;
+  description: string;
+  subject_id: string;
+  category_id: string;
+  file_path: string;
+  file_type: string;
+  file_size: number;
+};
+
+export async function getUploadCurriculumSubjects(
+  curriculumId: string,
+  semesterId: string,
+): Promise<{ success: true; subjects: UploadCurriculumSubject[] } | { success: false; error: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Not authenticated" };
+
+  const { data: curriculum, error: curriculumError } = await supabase
+    .from("curricula")
+    .select("programme_id, is_active")
+    .eq("id", curriculumId)
+    .eq("is_active", true)
+    .single();
+  if (curriculumError || !curriculum) {
+    console.error("Load upload curriculum failed:", curriculumError);
+    return { success: false, error: "The selected curriculum is not available." };
+  }
+
+  const { data: semester, error: semesterError } = await supabase
+    .from("semesters")
+    .select("id, name, programme_id")
+    .eq("id", semesterId)
+    .eq("status", "active")
+    .single();
+  if (semesterError || !semester) {
+    console.error("Load upload semester failed:", semesterError);
+    return { success: false, error: "The selected semester is not available." };
+  }
+  if (curriculum.programme_id !== semester.programme_id) {
+    return { success: false, error: "The semester must belong to the selected curriculum's programme." };
+  }
+
+  const { data: curriculumSubjects, error: subjectsError } = await supabase
+    .from("curriculum_subjects")
+    .select("subject:subjects(id, name, semester_id, semester:semesters(name))")
+    .eq("curriculum_id", curriculumId);
+  if (subjectsError) {
+    console.error("Load curriculum subjects for upload failed:", subjectsError);
+    return { success: false, error: "Unable to load subjects for this curriculum." };
+  }
+
+  const subjects = (curriculumSubjects || []).flatMap(row => {
+    const relatedSubject = row.subject;
+    const subject = Array.isArray(relatedSubject) ? relatedSubject[0] : relatedSubject;
+    if (!subject || subject.semester_id !== semester.id) return [];
+    const relatedSemester = subject.semester;
+    const subjectSemester = Array.isArray(relatedSemester) ? relatedSemester[0] : relatedSemester;
+    return [{
+      id: subject.id,
+      name: subject.name,
+      semester: subjectSemester ? { name: subjectSemester.name } : { name: semester.name },
+    }];
+  }).sort((a, b) => a.name.localeCompare(b.name));
+
+  return { success: true, subjects };
+}
+
+export async function createResourceRecords(records: UploadResourceRecord[]) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

@@ -53,10 +53,11 @@ export default async function UploadPage() {
     .select("id, name")
     .order("name", { ascending: true });
 
-  // Fetch the student's current academic context.
+  // Load academic choices for the upload form; choosing them here doesn't
+  // change the student's saved profile.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, semester_id, curriculum_id, semester:semesters(name)")
+    .select("role, semester_id, curriculum_id")
     .eq("id", user.id)
     .single();
 
@@ -64,31 +65,54 @@ export default async function UploadPage() {
     console.error("Failed to fetch the student's academic profile for upload.");
   }
 
+  const isStudent = profile?.role === "student";
+  const [
+    { data: curricula, error: curriculaError },
+    { data: semesters, error: semestersError },
+  ] = isStudent
+    ? await Promise.all([
+        supabase
+          .from("curricula")
+          .select("id, name, programme_id")
+          .eq("is_active", true)
+          .order("name"),
+        supabase
+          .from("semesters")
+          .select("id, name, programme_id")
+          .eq("status", "active")
+          .order("name"),
+      ])
+    : [{ data: [], error: null }, { data: [], error: null }];
+
+  if (curriculaError) {
+    console.error("Failed to fetch curricula for upload:", curriculaError);
+    throw new Error("Unable to load curricula for upload.");
+  }
+  if (semestersError) {
+    console.error("Failed to fetch semesters for upload:", semestersError);
+    throw new Error("Unable to load semesters for upload.");
+  }
+
+  const initialCurriculumId = curricula?.some(curriculum => curriculum.id === profile?.curriculum_id)
+    ? profile?.curriculum_id ?? ""
+    : "";
+  const initialProgrammeId = curricula?.find(curriculum => curriculum.id === initialCurriculumId)?.programme_id;
+  const initialSemesterId = semesters?.some(semester =>
+    semester.id === profile?.semester_id &&
+    semester.programme_id === initialProgrammeId
+  )
+    ? profile?.semester_id ?? ""
+    : "";
+
   let subjects: UploadSubject[] = [];
-  if (profile?.role === "student") {
-    const { data: enrolledSubjects, error: enrollmentError } = await supabase
-      .from("student_subjects")
-      .select("subject:subjects(id, name, semester:semesters(name))")
-      .eq("student_id", user.id)
-      .eq("enrollment_status", "ENROLLED");
-
-    if (enrollmentError) {
-      console.error("Failed to fetch the student's enrolled subjects for upload:", enrollmentError);
-    } else {
-      subjects = toUploadSubjects(enrolledSubjects || []);
-    }
-
-    if (subjects.length === 0 && profile?.curriculum_id) {
-      const curriculumSubjects = await getCurriculumSemesterSubjects(
-        supabase,
-        profile.curriculum_id,
-        profile.semester_id,
-        profile.semester?.[0]?.name,
-      );
-
-      subjects = toUploadSubjects(curriculumSubjects);
-    }
-  } else {
+  if (isStudent && initialCurriculumId && initialSemesterId) {
+    const curriculumSubjects = await getCurriculumSemesterSubjects(
+      supabase,
+      initialCurriculumId,
+      initialSemesterId,
+    );
+    subjects = toUploadSubjects(curriculumSubjects);
+  } else if (!isStudent) {
     const { data: availableSubjects, error: subjectError } = await supabase
       .from("subjects")
       .select(`
@@ -130,7 +154,15 @@ export default async function UploadPage() {
           <CardDescription>Fill out the details below to submit your file.</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <UploadForm categories={categories || []} subjects={subjects} />
+          <UploadForm
+            categories={categories || []}
+            subjects={subjects}
+            isStudent={isStudent}
+            curricula={curricula || []}
+            semesters={semesters || []}
+            initialCurriculumId={initialCurriculumId}
+            initialSemesterId={initialSemesterId}
+          />
         </CardContent>
       </Card>
     </div>
