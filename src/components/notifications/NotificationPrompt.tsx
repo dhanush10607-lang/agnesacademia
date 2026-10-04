@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { app, refreshForToken, requestForToken } from "@/lib/firebase/client";
+import { getMessagingForUser, requestForToken } from "@/lib/firebase/client";
 import { registerDeviceAction } from "@/app/actions/notifications";
 import { recordCurrentSessionAction } from "@/app/actions/sessions";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bell, X } from "lucide-react";
-import { getMessaging, onMessage, isSupported } from "firebase/messaging";
+import { onMessage, isSupported } from "firebase/messaging";
 import { toast } from "sonner";
 
 // localStorage keys
@@ -62,7 +62,6 @@ export function NotificationPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const listenerAttached = useRef(false);
   const pathname = usePathname();
 
   // Track the logged-in user (handles login, logout and switching accounts
@@ -80,6 +79,30 @@ export function NotificationPrompt() {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+
+    void isSupported()
+      .then((supported) => {
+        if (!supported || cancelled) return;
+        unsubscribe = onMessage(getMessagingForUser(userId), (payload) => {
+          toast.message(payload.notification?.title || "New Notification", {
+            description: payload.notification?.body,
+            icon: <Bell className="w-4 h-4" />,
+          });
+        });
+      })
+      .catch((error) => console.warn("Foreground listener setup failed:", error));
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -136,27 +159,10 @@ export function NotificationPrompt() {
     (async () => {
       if (!(await isSupported())) return;
 
-      // Foreground messages -> toast (attach once)
-      if (!listenerAttached.current) {
-        listenerAttached.current = true;
-        try {
-          onMessage(getMessaging(app), (payload) => {
-            toast.message(payload.notification?.title || "New Notification", {
-              description: payload.notification?.body,
-              icon: <Bell className="w-4 h-4" />,
-            });
-          });
-        } catch (e) {
-          console.warn("Foreground listener setup failed:", e);
-        }
-      }
-
       const previousRegistration = readReg();
       const switchedAccounts =
         previousRegistration !== null && previousRegistration.userId !== userId;
-      const token = switchedAccounts
-        ? await refreshForToken()
-        : await requestForToken();
+      const token = await requestForToken(userId);
       if (cancelled || !token) return;
 
       if (switchedAccounts && token === previousRegistration.token) {
@@ -191,7 +197,7 @@ export function NotificationPrompt() {
         setShowPrompt(false);
         return;
       }
-      const token = await refreshForToken();
+      const token = await requestForToken(userId);
       if (!token) {
         toast.error("Could not generate push token. Please check browser permissions.");
         return;

@@ -16,5 +16,5 @@ export default async function NotificationSettingsPage() {
     .eq("user_id", user.id)
     .single();
 
-  return <NotificationsClient initialSettings={settings || {}} />;
+  return <NotificationsClient initialSettings={settings || {}} userId={user.id} />;
 }

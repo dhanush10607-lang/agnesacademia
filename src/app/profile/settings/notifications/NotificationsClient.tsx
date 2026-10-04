@@ -8,10 +8,16 @@ import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import { updateUserSettingsAction } from "@/app/actions/settings";
-import { refreshForToken } from "@/lib/firebase/client";
+import { requestForToken } from "@/lib/firebase/client";
 import { registerDeviceAction } from "@/app/actions/notifications";
 
-export default function NotificationsClient({ initialSettings }: { initialSettings: any }) {
+export default function NotificationsClient({
+  initialSettings,
+  userId,
+}: {
+  initialSettings: any;
+  userId: string;
+}) {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [permissionState, setPermissionState] = useState<string>("Checking...");
@@ -28,7 +34,7 @@ export default function NotificationsClient({ initialSettings }: { initialSettin
 
   const handleEnablePush = async () => {
     try {
-      const token = await refreshForToken();
+      const token = await requestForToken(userId);
       if (token) {
         const ua = navigator.userAgent;
         let os = "Unknown";

@@ -12,7 +12,14 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-export const requestForToken = async () => {
+function getUserApp(userId: string) {
+  const name = `push-${userId}`;
+  return getApps().find((app) => app.name === name) ?? initializeApp(firebaseConfig, name);
+}
+
+export const getMessagingForUser = (userId: string) => getMessaging(getUserApp(userId));
+
+export const requestForToken = async (userId: string) => {
   try {
     const messagingSupported = await isSupported();
     if (!messagingSupported) {
@@ -20,7 +27,7 @@ export const requestForToken = async () => {
       return null;
     }
 
-    const messaging = getMessaging(app);
+    const messaging = getMessagingForUser(userId);
 
     let swRegistration = null;
     if ("serviceWorker" in navigator) {
@@ -48,12 +55,12 @@ export const requestForToken = async () => {
 };
 
 // Forces deletion of the locally cached token and grabs a completely fresh one from Google
-export const refreshForToken = async () => {
+export const refreshForToken = async (userId: string) => {
   try {
     const messagingSupported = await isSupported();
     if (!messagingSupported) return null;
 
-    const messaging = getMessaging(app);
+    const messaging = getMessagingForUser(userId);
     try {
       await deleteToken(messaging);
       console.log("Deleted old cached FCM token.");
@@ -61,7 +68,7 @@ export const refreshForToken = async () => {
       console.warn("Could not delete old token (maybe it didn't exist)", e);
     }
 
-    return await requestForToken();
+    return await requestForToken(userId);
   } catch (err) {
     console.error("An error occurred while refreshing token. ", err);
     return null;
