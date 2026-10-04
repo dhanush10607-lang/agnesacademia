@@ -103,6 +103,7 @@ export default async function UploadPage() {
   )
     ? profile?.semester_id ?? ""
     : "";
+  const initialSemesterName = semesters?.find(semester => semester.id === initialSemesterId)?.name;
 
   let subjects: UploadSubject[] = [];
   if (isStudent && initialCurriculumId && initialSemesterId) {
@@ -110,6 +111,7 @@ export default async function UploadPage() {
       supabase,
       initialCurriculumId,
       initialSemesterId,
+      initialSemesterName,
     );
     subjects = toUploadSubjects(curriculumSubjects);
   } else if (!isStudent) {

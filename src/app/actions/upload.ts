@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { normalizeSemesterName } from "@/lib/curriculumSubjects";
 
 export type UploadCurriculumSubject = {
   id: string;
@@ -51,26 +52,60 @@ export async function getUploadCurriculumSubjects(
     return { success: false, error: "The semester must belong to the selected curriculum's programme." };
   }
 
-  const { data: semesterSubjects, error: subjectsError } = await supabase
-    .from("subjects")
-    .select("id, name, semester:semesters(name)")
-    .eq("semester_id", semester.id)
-    .eq("is_active", true)
-    .order("name");
-  if (subjectsError) {
-    console.error("Load semester subjects for upload failed:", subjectsError);
+  const [{ data: semesterSubjects, error: subjectsError }, { data: curriculumAssignments, error: assignmentsError }] =
+    await Promise.all([
+      supabase
+        .from("subjects")
+        .select("id, name, semester:semesters(name)")
+        .eq("semester_id", semester.id)
+        .eq("is_active", true)
+        .order("name"),
+      supabase
+        .from("curriculum_subjects")
+        .select(`
+          subject:subjects(id, name, semester_id, is_active, semester:semesters(id, name))
+        `)
+        .eq("curriculum_id", curriculumId),
+    ]);
+  if (subjectsError || assignmentsError) {
+    console.error("Load upload subjects failed:", subjectsError || assignmentsError);
     return { success: false, error: "Unable to load subjects for this semester." };
   }
 
-  const subjects = (semesterSubjects || []).flatMap(subject => {
+  const subjectsById = new Map<string, UploadCurriculumSubject>();
+  (semesterSubjects || []).forEach(subject => {
     const relatedSemester = subject.semester;
     const subjectSemester = Array.isArray(relatedSemester) ? relatedSemester[0] : relatedSemester;
-    return [{
+    subjectsById.set(subject.id, {
       id: subject.id,
       name: subject.name,
       semester: subjectSemester ? { name: subjectSemester.name } : { name: semester.name },
-    }];
-  }).sort((a, b) => a.name.localeCompare(b.name));
+    });
+  });
+
+  const selectedSemesterName = normalizeSemesterName(semester.name);
+  (curriculumAssignments || []).forEach(assignment => {
+    const relatedSubject = assignment.subject;
+    const subject = Array.isArray(relatedSubject) ? relatedSubject[0] : relatedSubject;
+    if (!subject || !subject.is_active) return;
+
+    const relatedSemester = subject.semester;
+    const subjectSemester = Array.isArray(relatedSemester) ? relatedSemester[0] : relatedSemester;
+    if (
+      subject.semester_id !== semester.id &&
+      (!selectedSemesterName || normalizeSemesterName(subjectSemester?.name) !== selectedSemesterName)
+    ) {
+      return;
+    }
+
+    subjectsById.set(subject.id, {
+      id: subject.id,
+      name: subject.name,
+      semester: subjectSemester ? { name: subjectSemester.name } : { name: semester.name },
+    });
+  });
+
+  const subjects = [...subjectsById.values()].sort((a, b) => a.name.localeCompare(b.name));
 
   return { success: true, subjects };
 }
