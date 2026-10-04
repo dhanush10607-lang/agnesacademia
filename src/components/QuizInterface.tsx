@@ -49,6 +49,7 @@ export function QuizInterface({
   const [focusMessage, setFocusMessage] = useState("");
   const [connectionLost, setConnectionLost] = useState(false);
   const [isBrowserOnline, setIsBrowserOnline] = useState(true);
+  const [hasPendingFocusEvent, setHasPendingFocusEvent] = useState(false);
   const answersRef = useRef(initialAnswers);
   const submittingRef = useRef(false);
   const autoSubmissionTriggeredRef = useRef(false);
@@ -98,7 +99,7 @@ export function QuizInterface({
   }, []);
 
   useEffect(() => {
-    if (!isBrowserOnline || !pendingFocusEventRef.current) return;
+    if (!isBrowserOnline || !hasPendingFocusEvent) return;
 
     const retryTimer = window.setInterval(() => {
       if (navigator.onLine && pendingFocusEventRef.current) {
@@ -107,7 +108,7 @@ export function QuizInterface({
     }, 5000);
 
     return () => window.clearInterval(retryTimer);
-  }, [isBrowserOnline]);
+  }, [hasPendingFocusEvent, isBrowserOnline]);
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -131,6 +132,7 @@ export function QuizInterface({
     const recordFocusEvent = () => {
       if (focusEventTriggeredRef.current) return;
       pendingFocusEventRef.current = false;
+      setHasPendingFocusEvent(false);
       focusEventTriggeredRef.current = true;
       void recordQuizFocusEventAction(attemptId, answersRef.current).then(result => {
         if (result.success && typeof result.tabSwitchCount === "number") {
@@ -144,12 +146,14 @@ export function QuizInterface({
         } else if (result.error) {
           focusEventTriggeredRef.current = false;
           pendingFocusEventRef.current = true;
+          setHasPendingFocusEvent(true);
           setFocusMessage(result.error);
         }
       }).catch(error => {
         console.error("Could not record quiz tab-switch event:", error);
         focusEventTriggeredRef.current = false;
         pendingFocusEventRef.current = true;
+        setHasPendingFocusEvent(true);
         setFocusMessage("A tab switch could not be recorded.");
       });
     };
@@ -158,6 +162,7 @@ export function QuizInterface({
     };
     const handleFocusLoss = () => {
       pendingFocusEventRef.current = true;
+      setHasPendingFocusEvent(true);
       recordFocusEvent();
     };
     const handleVisibilityChange = () => {
