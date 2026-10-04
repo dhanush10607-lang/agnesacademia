@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Book, FileText, Library, ClipboardList, GraduationCap } from "lucide-react";
+import { Search, Book, FileText, Library, ClipboardList, GraduationCap, Building2 } from "lucide-react";
 import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -24,7 +24,8 @@ export function HeroSection() {
     { icon: FileText, label: "Question Papers", href: "/resources?type=question_paper", color: "bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400" },
     { icon: Library, label: "Question Bank", href: "/resources?type=question_bank", color: "bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400" },
     { icon: ClipboardList, label: "Syllabus", href: "/resources?type=syllabus", color: "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400" },
-    { icon: GraduationCap, label: "Exam Prep", href: "/ai", color: "bg-pink-500/10 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400" }
+    { icon: GraduationCap, label: "Exam Prep", href: "/ai", color: "bg-pink-500/10 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400" },
+    { icon: Building2, label: "Departments", href: "/departments", color: "bg-teal-500/10 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400" }
   ];
 
   const containerVariants: Variants = {
@@ -67,6 +68,13 @@ export function HeroSection() {
             <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg md:text-xl">
               The professionally designed digital ecosystem for St. Agnes College. Everything you need to excel, instantly accessible.
             </p>
+            <Link
+              href="/departments"
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              <Building2 className="h-4 w-4" />
+              Explore Departments
+            </Link>
           </motion.div>
 
           <motion.div variants={itemVariants} className="w-full max-w-2xl">
