@@ -167,6 +167,11 @@ export function NotificationPrompt() {
         : await requestForToken(userId);
       if (cancelled || !token) return;
 
+      if (switchedAccounts && token === previousRegistration.token) {
+        console.error("Firebase returned the previous account's push token; this account was not registered.");
+        return;
+      }
+
       const prev = previousRegistration;
       const needsRegister =
         switchedAccounts ||                 // bind this device to the newly signed-in user

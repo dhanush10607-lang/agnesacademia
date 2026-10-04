@@ -47,7 +47,7 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then((clientList) => {
       for (const client of clientList) {
-        if (client.url.includes(self.registration.scope) && 'focus' in client) {
+        if (new URL(client.url).origin === self.location.origin && 'focus' in client) {
           client.navigate(actionUrl);
           return client.focus();
         }

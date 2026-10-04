@@ -29,17 +29,42 @@ export const requestForToken = async (userId: string) => {
 
     const messaging = getMessagingForUser(userId);
 
-    let swRegistration = null;
+    let swRegistration: ServiceWorkerRegistration | undefined;
     if ("serviceWorker" in navigator) {
       const swUrl = `/firebase-messaging-sw.js?apiKey=${firebaseConfig.apiKey}&authDomain=${firebaseConfig.authDomain}&projectId=${firebaseConfig.projectId}&messagingSenderId=${firebaseConfig.messagingSenderId}&appId=${firebaseConfig.appId}`;
-      await navigator.serviceWorker.register(swUrl);
-      // Wait for the service worker to be fully ready before asking for a token
-      swRegistration = await navigator.serviceWorker.ready;
+      const scope = `/push/notifications/${encodeURIComponent(userId)}/`;
+      const registration = await navigator.serviceWorker.register(swUrl, { scope });
+      swRegistration = registration;
+
+      if (!registration.active) {
+        const worker = registration.installing ?? registration.waiting;
+        if (!worker) throw new Error("Could not activate this account's push service worker.");
+
+        await new Promise<void>((resolve, reject) => {
+          const finish = (error?: Error) => {
+            worker.removeEventListener("statechange", handleStateChange);
+            if (error) reject(error);
+            else resolve();
+          };
+          const handleStateChange = () => {
+            if (registration.active) finish();
+            else if (worker.state === "redundant") {
+              finish(new Error("The account's push service worker failed to activate."));
+            }
+          };
+
+          worker.addEventListener("statechange", handleStateChange);
+          if (registration.active) finish();
+          else if (worker.state === "redundant") {
+            finish(new Error("The account's push service worker failed to activate."));
+          }
+        });
+      }
     }
 
     const currentToken = await getToken(messaging, {
       vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-      serviceWorkerRegistration: swRegistration || undefined,
+      serviceWorkerRegistration: swRegistration,
     });
 
     if (currentToken) {
