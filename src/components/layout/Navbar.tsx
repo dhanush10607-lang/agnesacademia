@@ -37,6 +37,7 @@ export async function Navbar() {
 
   // Role-based desktop nav links
   const studentLinks = [
+    { href: "/quizzes",          label: "Quizzes",        icon: Brain },
     { href: "/search",          label: "Search",         icon: Search },
     { href: "/my-semester",     label: "My Subjects",    icon: Library },
     { href: "/upload",          label: "Upload",         icon: Upload },

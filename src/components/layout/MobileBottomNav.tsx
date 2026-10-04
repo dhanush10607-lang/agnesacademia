@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, FileCheck2, Home, LayoutDashboard, Library, Search, Shield, Sparkles, Upload } from "lucide-react";
+import { BookOpen, Brain, FileCheck2, Home, LayoutDashboard, Library, Search, Shield, Sparkles, Upload } from "lucide-react";
 
 type MobileBottomNavProps = {
   role: "student" | "faculty" | "moderator";
@@ -11,6 +11,7 @@ type MobileBottomNavProps = {
 const studentItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/my-semester", label: "Subjects", icon: Library },
+  { href: "/quizzes", label: "Quizzes", icon: Brain },
   { href: "/search", label: "Search", icon: Search },
   { href: "/ai", label: "Exam Prep", icon: Sparkles },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

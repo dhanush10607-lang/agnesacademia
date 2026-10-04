@@ -31,6 +31,7 @@ export function MobileNavMenu({ role }: Props) {
   }, [open]);
 
   const studentLinks = [
+    { href: "/quizzes",     label: "Quizzes",             icon: Brain },
     { href: "/search",      label: "Search Resources",   icon: Search },
     { href: "/my-semester", label: "My Subjects",        icon: Library },
     { href: "/resources?type=notes", label: "Notes",     icon: BookOpen },
