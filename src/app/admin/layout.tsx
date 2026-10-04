@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ShieldAlert, LayoutDashboard, Users, BookOpen, Layers, BarChart3, Settings, ScrollText, Database, Shield, LogOut } from "lucide-react";
-import { logout } from "@/app/actions/auth";
+import { LogoutForm } from "@/components/auth/LogoutForm";
 
 export default async function AdminLayout({
   children,
@@ -138,12 +138,12 @@ export default async function AdminLayout({
           <Link href="/dashboard" className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md bg-muted/50 text-foreground hover:bg-muted transition-colors">
             &larr; Back to App
           </Link>
-          <form action={logout} className="w-full">
+          <LogoutForm className="w-full">
             <button type="submit" className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md text-red-600 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-950/30 dark:hover:bg-red-950/50 transition-colors">
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </button>
-          </form>
+          </LogoutForm>
         </div>
       </aside>
 

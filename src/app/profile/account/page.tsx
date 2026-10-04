@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Settings, AlertTriangle, LogOut } from "lucide-react";
 import Link from "next/link";
 import { format } from "@/lib/date-time";
-import { logout } from "@/app/actions/auth";
+import { LogoutForm } from "@/components/auth/LogoutForm";
 import { DeleteAccountForm } from "./DeleteAccountForm";
 
 export default async function AccountPage() {
@@ -73,11 +73,11 @@ export default async function AccountPage() {
               <h4 className="font-medium text-foreground">Sign Out</h4>
               <p className="text-sm text-muted-foreground">End your current session.</p>
             </div>
-            <form action={logout}>
+            <LogoutForm>
               <Button variant="outline" type="submit" className="shrink-0">
                 <LogOut className="w-4 h-4 mr-2" /> Sign Out
               </Button>
-            </form>
+            </LogoutForm>
           </div>
           
           <div className="pt-4 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

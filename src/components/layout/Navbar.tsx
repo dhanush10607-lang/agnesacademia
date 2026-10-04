@@ -7,7 +7,7 @@ import {
   CalendarDays, Shield, FileCheck2
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/actions/auth";
+import { LogoutForm } from "@/components/auth/LogoutForm";
 import { MobileNavMenu } from "./MobileNavMenu";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
@@ -273,11 +273,11 @@ export async function Navbar() {
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem>
-                        <form action={logout} className="w-full">
+                        <LogoutForm className="w-full">
                           <button type="submit" className="flex w-full cursor-pointer items-center text-red-600 dark:text-red-400">
                             Sign Out
                           </button>
-                        </form>
+                        </LogoutForm>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

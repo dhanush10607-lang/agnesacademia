@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Menu, X, Search, Library, BookOpen, FileText, Brain, Bell, HelpCircle, LayoutDashboard, Upload, GraduationCap, CalendarDays, Shield, Settings, Users, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { logout } from "@/app/actions/auth";
+import { LogoutForm } from "@/components/auth/LogoutForm";
 
 interface Props {
   role: string;
@@ -236,11 +236,11 @@ export function MobileNavMenu({ role }: Props) {
                 <Link href="/profile" className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border rounded-xl text-sm font-semibold hover:bg-muted transition-colors" onClick={() => setOpen(false)}>
                   <Settings className="w-4 h-4" /> Profile & Settings
                 </Link>
-                <form action={logout} onSubmit={() => setOpen(false)}>
+                <LogoutForm onSubmit={() => setOpen(false)}>
                   <Button type="submit" variant="destructive" className="w-full bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:text-white dark:hover:bg-red-600">
                     Sign Out
                   </Button>
-                </form>
+                </LogoutForm>
               </div>
             )}
 
